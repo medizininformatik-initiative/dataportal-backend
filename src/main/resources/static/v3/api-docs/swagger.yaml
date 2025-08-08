@@ -1442,13 +1442,17 @@ components:
           examples:
             - 1
         referencedCriteriaSet:
-          type: string
-          examples:
-            - http://fdpg.mii.cds/CriteriaSet/Diagnose/icd-10-gm
+          type: array
+          items:
+            type: string
+            examples:
+              - http://fdpg.mii.cds/CriteriaSet/Diagnose/icd-10-gm
         referencedValueSet:
-          type: string
-          examples:
-            - http://hl7.org/fhir/sid/icd-o-3
+          type: array
+          items:
+            type: string
+            examples:
+              - http://hl7.org/fhir/sid/icd-o-3
         type:
           type: string
           examples:

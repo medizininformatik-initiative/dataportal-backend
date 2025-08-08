@@ -23,8 +23,8 @@ class AttributeDefinitionTest {
         .precision(0.0)
         .min(0.0)
         .max(0.0)
-        .referencedCriteriaSet(null)
-        .referencedValueSet(null)
+        .referencedCriteriaSets(null)
+        .referencedValueSets(null)
         .build();
 
     assertNotNull(attributeDefinition);
@@ -47,8 +47,8 @@ class AttributeDefinitionTest {
         .precision(0.0)
         .min(0.0)
         .max(0.0)
-        .referencedCriteriaSet(null)
-        .referencedValueSet(null)
+        .referencedCriteriaSets(null)
+        .referencedValueSets(null)
       .build();
 
     assertNotNull(attributeDefinition);
