@@ -6,7 +6,6 @@ import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
-import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResult;
 import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntry;
 import de.numcodex.feasibility_gui_backend.terminology.api.RelationEntry;
@@ -23,7 +22,6 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregatio
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
@@ -255,12 +253,13 @@ public class TerminologyEsService {
 
   private TermFilter getFilter(String termApi) {
     final var termElastic = termApi.equalsIgnoreCase("context") ? "context.code" : termApi;
-    var aggQuery = NativeQuery.builder()
+    var aggregationQuery = NativeQuery.builder()
         .withAggregation(termElastic, Aggregation.of(a -> a
-            .terms(ta -> ta.field(termElastic))))
+            .terms(ta -> ta.field(termElastic).size(50))))
+        .withMaxResults(0)
         .build();
 
-    SearchHits<OntologyListItemDocument> searchHits = operations.search(aggQuery, OntologyListItemDocument.class);
+    SearchHits<OntologyListItemDocument> searchHits = operations.search(aggregationQuery, OntologyListItemDocument.class);
     ElasticsearchAggregations aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
     assert aggregations != null;
     List<StringTermsBucket> buckets = aggregations.aggregationsAsMap().get(termElastic).aggregation().getAggregate().sterms().buckets().array();
