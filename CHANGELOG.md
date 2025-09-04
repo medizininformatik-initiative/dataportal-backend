@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [7.4.1] - 2025-09-04
+
+- Based on ontology **[v3.8.3](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.8.3)**
+
+### Fixed
+- Correctly display all filter options when searching for criteria (was restricted to 10) ([#628](https://github.com/medizininformatik-initiative/feasibility-backend/issues/628))
+- Correctly find terminology entries when translations are empty strings ([#626](https://github.com/medizininformatik-initiative/feasibility-backend/issues/626))
+### Security
+- Updated dependencies and GitHub actions
+
 ## [7.4.0] - 2025-08-12
 
 - Based on ontology **[v3.8.3](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.8.3)**
