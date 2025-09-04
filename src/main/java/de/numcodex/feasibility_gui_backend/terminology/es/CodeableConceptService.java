@@ -33,7 +33,7 @@ import java.util.UUID;
 public class CodeableConceptService {
   public static final String FIELD_NAME_DISPLAY_DE = "display.de";
   public static final String FIELD_NAME_DISPLAY_EN = "display.en";
-  public static final String FIELD_NAME_DISPLAY_ORIGINAL = "display.original";
+  public static final String FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^0.5";
   public static final String FIELD_NAME_TERMCODE_WITH_BOOST = "termcode.code^2";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;
@@ -101,55 +101,28 @@ public class CodeableConceptService {
       });
     }
 
-    BoolQuery outerBoolQuery;
+    BoolQuery boolQuery;
 
     if (keyword.isEmpty()) {
-      outerBoolQuery = new BoolQuery.Builder()
+      boolQuery = new BoolQuery.Builder()
           .filter(filterTerms.isEmpty() ? List.of() : filterTerms)
           .build();
 
     } else {
-      var translationDeExistsQuery = new ExistsQuery.Builder()
-          .field(FIELD_NAME_DISPLAY_DE)
-          .build();
-
-      var translationEnExistsQuery = new ExistsQuery.Builder()
-          .field(FIELD_NAME_DISPLAY_EN)
-          .build();
-
-      var mmQueryWithTranslations = new MultiMatchQuery.Builder()
+      var multiMatchQuery = new MultiMatchQuery.Builder()
           .query(keyword)
-          .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST))
+          .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
           .build();
 
-      var boolQueryWithTranslations = new BoolQuery.Builder()
-          .should(List.of(translationDeExistsQuery._toQuery(), translationEnExistsQuery._toQuery()))
-          .must(List.of(mmQueryWithTranslations._toQuery()))
+      boolQuery = new BoolQuery.Builder()
+          .must(List.of(multiMatchQuery._toQuery()))
           .filter(filterTerms.isEmpty() ? List.of() : filterTerms)
           .build();
 
-
-      // The "lower" part that will only be considered when the translations are empty
-      var mmQueryWithOriginal = new MultiMatchQuery.Builder()
-          .query(keyword)
-          .fields(List.of(FIELD_NAME_DISPLAY_ORIGINAL, FIELD_NAME_TERMCODE_WITH_BOOST))
-          .build();
-
-      var boolQueryWithOriginal = new BoolQuery.Builder()
-          .mustNot(List.of(translationDeExistsQuery._toQuery(), translationEnExistsQuery._toQuery()))
-          .must(List.of(mmQueryWithOriginal._toQuery()))
-          .filter(filterTerms.isEmpty() ? List.of() : filterTerms)
-          .minimumShouldMatch("1")
-          .build();
-
-      // Combine both parts in the top level bool query
-      outerBoolQuery = new BoolQuery.Builder()
-          .should(List.of(boolQueryWithTranslations._toQuery(), boolQueryWithOriginal._toQuery()))
-          .build();
     }
 
     var query = new NativeQueryBuilder()
-        .withQuery(outerBoolQuery._toQuery())
+        .withQuery(boolQuery._toQuery())
         .withPageable(pageRequest)
         .build();
 

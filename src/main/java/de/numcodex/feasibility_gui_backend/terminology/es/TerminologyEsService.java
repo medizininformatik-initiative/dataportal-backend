@@ -6,7 +6,6 @@ import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
-import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResult;
 import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntry;
 import de.numcodex.feasibility_gui_backend.terminology.api.RelationEntry;
@@ -23,7 +22,6 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregatio
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
@@ -45,7 +43,7 @@ public class TerminologyEsService {
   public static final String FILTER_KEY_TERMINOLOGY = "terminology";
   public static final String FIELD_NAME_DISPLAY_DE = "display.de";
   public static final String FIELD_NAME_DISPLAY_EN = "display.en";
-  public static final String FIELD_NAME_DISPLAY_ORIGINAL = "display.original";
+  public static final String FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^0.5";
   public static final String FIELD_NAME_TERMCODE_WITH_BOOST = "termcode^2";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;
@@ -174,38 +172,14 @@ public class TerminologyEsService {
           .filter(filterTerms.isEmpty() ? List.of() : filterTerms)
           .build();
     } else {
-      var translationDeExistsQuery = new ExistsQuery.Builder()
-          .field(FIELD_NAME_DISPLAY_DE)
-          .build();
-
-      var translationEnExistsQuery = new ExistsQuery.Builder()
-          .field(FIELD_NAME_DISPLAY_EN)
-          .build();
-
-      var mmQueryWithTranslations = new MultiMatchQuery.Builder()
+      var multiMatchQuery = new MultiMatchQuery.Builder()
           .query(keyword)
-          .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST))
-          .build();
-
-      var boolQueryWithTranslations = new BoolQuery.Builder()
-          .should(List.of(translationDeExistsQuery._toQuery(), translationEnExistsQuery._toQuery()))
-          .must(mmQueryWithTranslations._toQuery())
-          .build();
-
-      var mmQueryWithOriginal = new MultiMatchQuery.Builder()
-          .query(keyword)
-          .fields(List.of(FIELD_NAME_DISPLAY_ORIGINAL, FIELD_NAME_TERMCODE_WITH_BOOST))
-          .build();
-
-      var boolQueryWithOriginal = new BoolQuery.Builder()
-          .mustNot(List.of(translationDeExistsQuery._toQuery(), translationEnExistsQuery._toQuery()))
-          .must(mmQueryWithOriginal._toQuery())
+          .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
           .build();
 
       boolQuery = new BoolQuery.Builder()
-          .should(List.of(boolQueryWithTranslations._toQuery(), boolQueryWithOriginal._toQuery()))
+          .must(multiMatchQuery._toQuery())
           .filter(filterTerms.isEmpty() ? List.of() : filterTerms)
-          .minimumShouldMatch("1")
           .build();
     }
 
@@ -255,12 +229,13 @@ public class TerminologyEsService {
 
   private TermFilter getFilter(String termApi) {
     final var termElastic = termApi.equalsIgnoreCase("context") ? "context.code" : termApi;
-    var aggQuery = NativeQuery.builder()
+    var aggregationQuery = NativeQuery.builder()
         .withAggregation(termElastic, Aggregation.of(a -> a
-            .terms(ta -> ta.field(termElastic))))
+            .terms(ta -> ta.field(termElastic).size(50))))
+        .withMaxResults(0)
         .build();
 
-    SearchHits<OntologyListItemDocument> searchHits = operations.search(aggQuery, OntologyListItemDocument.class);
+    SearchHits<OntologyListItemDocument> searchHits = operations.search(aggregationQuery, OntologyListItemDocument.class);
     ElasticsearchAggregations aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
     assert aggregations != null;
     List<StringTermsBucket> buckets = aggregations.aggregationsAsMap().get(termElastic).aggregation().getAggregate().sterms().buckets().array();
