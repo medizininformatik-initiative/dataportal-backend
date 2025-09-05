@@ -74,6 +74,7 @@ class DSFFhirWebClientProvider implements FhirWebClientProvider {
                 securityContext.getTrustStore(),
                 securityContext.getKeyStore(),
                 securityContext.getKeyStorePassword(),
+                null,
                 proxyContext.getProxyHost(),
                 proxyContext.getUsername(),
                 proxyContext.getPassword(),
