@@ -6,6 +6,7 @@ import org.hl7.fhir.r4.model.DomainResource;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.MeasureReport;
 import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.Task;
 
 import java.util.Optional;
@@ -48,7 +49,7 @@ class DSFQueryResultHandler {
      * @param resource An arbitrary FHIR resource.
      * @return The feasibility query result if there is any.
      */
-    public Optional<DSFQueryResult> onResult(DomainResource resource) {
+    public Optional<DSFQueryResult> onResult(Resource resource) {
         if (resource instanceof Task task) {
 
             if (!hasSingleQueryResultProfile(task)) {
