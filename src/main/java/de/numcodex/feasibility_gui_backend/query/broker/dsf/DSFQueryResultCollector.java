@@ -8,7 +8,7 @@ import de.numcodex.feasibility_gui_backend.query.collect.QueryStatus;
 import de.numcodex.feasibility_gui_backend.query.collect.QueryStatusListener;
 import de.numcodex.feasibility_gui_backend.query.collect.QueryStatusUpdate;
 import dev.dsf.fhir.client.WebsocketClient;
-import org.hl7.fhir.r4.model.DomainResource;
+import org.hl7.fhir.r4.model.Resource;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -53,14 +53,14 @@ class DSFQueryResultCollector implements QueryResultCollector {
     private void listenForQueryResults() throws FhirWebClientProvisionException {
         if (!websocketConnectionEstablished) {
             WebsocketClient fhirWebsocketClient = fhirWebClientProvider.provideFhirWebsocketClient();
-            fhirWebsocketClient.setDomainResourceHandler(this::setUpQueryResultHandler, this::setUpResourceParser);
+            fhirWebsocketClient.setResourceHandler(this::setUpQueryResultHandler, this::setUpResourceParser);
 
             fhirWebsocketClient.connect();
             websocketConnectionEstablished = true;
         }
     }
 
-    private void setUpQueryResultHandler(DomainResource resource) {
+    private void setUpQueryResultHandler(Resource resource) {
         resultHandler.onResult(resource).ifPresent((res) -> {
             store.storeResult(res);
             notifyResultListeners(res);

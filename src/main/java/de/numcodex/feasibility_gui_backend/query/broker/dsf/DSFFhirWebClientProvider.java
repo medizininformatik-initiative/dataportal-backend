@@ -111,7 +111,7 @@ class DSFFhirWebClientProvider implements FhirWebClientProvider {
                 proxyContext.getProxyHost(),
                 proxyContext.getUsername(),
                 proxyContext.getPassword(),
-                subscriptionId);
+                null, subscriptionId);
     }
 
     /**
