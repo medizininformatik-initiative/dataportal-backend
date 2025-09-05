@@ -246,7 +246,7 @@ jobs:
 
     - name: Report invalid version
       if: ${{ startsWith(github.ref, 'refs/tags/v') && steps.version.outputs.is_valid != 'true' }}
-      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
       with:
         script: |
             core.setFailed('Tag name "${{ github.ref_name }}" is not a valid semantic version!')
