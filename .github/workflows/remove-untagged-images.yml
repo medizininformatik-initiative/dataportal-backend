@@ -1,7 +1,7 @@
-name: remove-untagged-images.yml
+name: Daily Untagged Image Cleanup
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 3 * * *"
   workflow_dispatch:
 jobs:
   delete-untagged-images:
@@ -11,6 +11,3 @@ jobs:
       packages: write
     steps:
       - uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1
-        with:
-          delete-untagged: true
-          exclude-tags: latest, pr-*, *.*.*

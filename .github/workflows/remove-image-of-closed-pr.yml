@@ -1,0 +1,13 @@
+name: Remove Pull Request Images When PR is Closed
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  delete-pr-image:
+    name: Delete PR image after PR was closed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete PR image
+        uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1
+        with:
+          delete-tags: pr-${{github.event.pull_request.number}}
