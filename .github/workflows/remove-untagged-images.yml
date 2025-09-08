@@ -1,0 +1,17 @@
+name: remove-untagged-images.yml
+on:
+#  schedule:
+#    - cron: "0 0 * * *"
+  workflow_dispatch:
+jobs:
+  delete-untagged-images:
+    name: Delete Untagged Images
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          dry-run: true
+          delete-untagged: true
+          exclude-tags: latest, pr-*, *.*.*
