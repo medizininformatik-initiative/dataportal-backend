@@ -1,4 +1,5 @@
 name: Daily Untagged Image Cleanup
+permissions: read-all
 on:
   schedule:
     - cron: "0 3 * * *"
@@ -10,4 +11,9 @@ jobs:
     permissions:
       packages: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
       - uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1
