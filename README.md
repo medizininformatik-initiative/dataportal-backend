@@ -153,6 +153,18 @@ To configure the location of the external service, use the following parameters.
 | ELASTIC_SEARCH_HOST           | Host and port of the elastic search endpoint    | `192.168.1.1:9200` | `localhost:9200`                 |
 | ELASTIC_SEARCH_FILTER         | Which parameters can be used to filter results  | `foo,bar,baz`      | `context,terminology,kds_module` |  
 
+### Passthrough Variables
+
+There are a few variables that are not used in the backend itself, but are forwarded to the frontend if requested.
+
+
+| EnvVar                     | Description                                                      | Example           | Default                                                                                                         |
+|----------------------------|------------------------------------------------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------|
+| PT_CCDL_VERSION            | The used version of the Clinical Cohort Definition Language      | ``                | `unknown`                                                                                                       |
+| PT_PORTAL_LINK             | URL to the portal page                                           | `https://foo.bar` | `https://antrag.forschen-fuer-gesundheit.de`                                                                    |
+| PT_DSE_PATIENT_PROFILE_URL | URL of the patient profile used in data selection and extraction | `foo,bar,baz`     | `https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert` |  
+| PT_POLLING_TIME_UI         | How long should the UI poll for a result                         | `PT10S`           | `PT1M`                                                                                                          |
+
 ## Support for self-signed certificates
 
 The dataportal backend supports the use of self-signed certificates from your own CAs.
