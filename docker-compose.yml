@@ -110,7 +110,7 @@ services:
         source: dataportal-postgres-data
         target: /var/lib/postgresql/data
   dataportal-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.4
     restart: unless-stopped
     container_name: dataportal-elastic
     ports:
