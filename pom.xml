@@ -27,7 +27,7 @@
     <java.version>17</java.version>
     <mockwebserver.version>5.1.0</mockwebserver.version>
     <okhttp3.version>4.10.0</okhttp3.version>
-    <ontology-tag>v3.8.3</ontology-tag>
+    <ontology-tag>v3.8.4</ontology-tag>
   </properties>
 
   <dependencies>
