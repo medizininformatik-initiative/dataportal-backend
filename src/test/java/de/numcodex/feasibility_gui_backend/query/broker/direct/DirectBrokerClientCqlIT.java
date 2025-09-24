@@ -43,7 +43,7 @@ class DirectBrokerClientCqlIT {
     private static final int ASYNC_TIMEOUT_WAIT_MS = 2000;
     private static final Long TEST_BACKEND_QUERY_ID = 1L;
 
-    private final GenericContainer<?> blaze = new GenericContainer<>(DockerImageName.parse("samply/blaze:1.0.3"))
+    private final GenericContainer<?> blaze = new GenericContainer<>(DockerImageName.parse("samply/blaze:1.1.2"))
             .withImagePullPolicy(PullPolicy.alwaysPull())
             .withExposedPorts(8080)
             .waitingFor(Wait.forHttp("/health").forStatusCodeMatching(c -> c >= 200 && c <= 500))

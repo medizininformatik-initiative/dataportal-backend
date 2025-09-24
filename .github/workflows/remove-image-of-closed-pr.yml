@@ -1,0 +1,21 @@
+name: Remove Pull Request Images When PR is Closed
+permissions: read-all
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  delete-pr-image:
+    name: Delete PR image after PR was closed
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+
+      - name: Delete PR image
+        uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1
+        with:
+          delete-tags: pr-${{github.event.pull_request.number}}

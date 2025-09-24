@@ -86,7 +86,7 @@ services:
       POSTGRES_DB: "dataportal"
 
   dataportal-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.4
     container_name: dataportal-elastic
     ports:
       - '9200:9200'
@@ -104,7 +104,7 @@ services:
       xpack.security.enabled: false
 
   blaze:
-    image: "samply/blaze:1.0.4"
+    image: "samply/blaze:1.1.2"
     environment:
       BASE_URL: "http://blaze:8080"
       JAVA_TOOL_OPTIONS: "-Xmx1g"

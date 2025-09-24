@@ -11,6 +11,7 @@ import org.hl7.fhir.r4.model.DomainResource;
 import org.hl7.fhir.r4.model.MeasureReport;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Task;
 import org.junit.jupiter.api.BeforeEach;
@@ -222,7 +223,7 @@ public class DSFQueryResultCollectorIT {
 
     private static class WebsocketClientMock implements WebsocketClient {
 
-        private Consumer<DomainResource> consumer;
+        private Consumer<Resource> consumer;
 
         @Override
         public void connect() {
@@ -235,7 +236,7 @@ public class DSFQueryResultCollectorIT {
         }
 
         @Override
-        public void setDomainResourceHandler(Consumer<DomainResource> consumer, Supplier<IParser> supplier) {
+        public void setResourceHandler(Consumer<Resource> consumer, Supplier<IParser> supplier) {
             this.consumer = consumer;
         }
 

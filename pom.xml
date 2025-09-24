@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.5</version>
+    <version>3.5.6</version>
     <relativePath /> <!-- lookup parent from repository -->
   </parent>
 
   <groupId>de.medizininformatik-initiative</groupId>
   <artifactId>DataportalBackend</artifactId>
-  <version>7.4.1</version>
+  <version>7.5.0</version>
 
   <name>Dataportal Backend</name>
   <description>Backend of the Dataportal</description>
@@ -25,9 +25,9 @@
 
   <properties>
     <java.version>17</java.version>
-    <mockwebserver.version>4.12.0</mockwebserver.version>
+    <mockwebserver.version>5.1.0</mockwebserver.version>
     <okhttp3.version>4.10.0</okhttp3.version>
-    <ontology-tag>v3.8.3</ontology-tag>
+    <ontology-tag>v3.9.0</ontology-tag>
   </properties>
 
   <dependencies>
@@ -46,6 +46,24 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-undertow</artifactId>
     </dependency>
+
+    <!-- Manually override undertow version due to CVE-2025-9784, remove when updated in springboot -->
+    <dependency>
+      <groupId>io.undertow</groupId>
+      <artifactId>undertow-core</artifactId>
+      <version>2.3.19.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>io.undertow</groupId>
+      <artifactId>undertow-servlet</artifactId>
+      <version>2.3.19.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>io.undertow</groupId>
+      <artifactId>undertow-websockets-jsr</artifactId>
+      <version>2.3.19.Final</version>
+    </dependency>
+    <!-- Until here -->
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -85,7 +103,7 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>oauth2-oidc-sdk</artifactId>
-      <version>11.28</version>
+      <version>11.29.1</version>
     </dependency>
 
     <dependency>
@@ -101,7 +119,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.7.7</version>
+      <version>42.7.8</version>
       <scope>runtime</scope>
     </dependency>
 
@@ -114,7 +132,7 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>2.8.11</version>
+      <version>2.8.13</version>
     </dependency>
 
     <dependency>
@@ -166,7 +184,7 @@
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>org.hl7.fhir.utilities</artifactId>
-      <version>6.6.3</version>
+      <version>6.6.7</version>
     </dependency>
 
     <dependency>
@@ -189,19 +207,38 @@
     <dependency>
       <groupId>dev.dsf</groupId>
       <artifactId>dsf-fhir-webservice-client</artifactId>
-      <version>1.0.0</version>
+      <version>1.8.0</version>
     </dependency>
 
     <dependency>
       <groupId>dev.dsf</groupId>
       <artifactId>dsf-fhir-websocket-client</artifactId>
-      <version>1.0.0</version>
+      <version>1.8.0</version>
+    </dependency>
+
+    <!--
+    Bouncycastle updates for fixing several CVEs
+    -->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk18on</artifactId>
+      <version>1.82</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcutil-jdk18on</artifactId>
+      <version>1.82</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk18on</artifactId>
+      <version>1.82</version>
     </dependency>
 
     <dependency>
       <groupId>dev.dsf</groupId>
       <artifactId>dsf-fhir-rest-adapter</artifactId>
-      <version>1.0.0</version>
+      <version>1.8.0</version>
     </dependency>
 
     <dependency>
@@ -254,7 +291,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>5.19.0</version>
+      <version>5.20.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -313,7 +350,7 @@
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-test</artifactId>
-      <version>3.8.0-M6</version>
+      <version>3.8.0-M7</version>
       <scope>test</scope>
     </dependency>
 
@@ -373,7 +410,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.5.3</version>
+        <version>3.5.4</version>
         <executions>
           <execution>
             <goals>
