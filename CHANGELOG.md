@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [7.5.0] - 2025-09-24
+
+- Based on ontology **[v3.9.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.0)**
+
+### Changed
+- Update UI profile model to allow support of multiple value sets ([#599](https://github.com/medizininformatik-initiative/feasibility-backend/issues/599))
+### Fixed
+- Correctly display the git branch in the info actuator ([#645](https://github.com/medizininformatik-initiative/feasibility-backend/issues/645))
+### Security
+- Updated dependencies and GitHub actions
+
 ## [7.4.1] - 2025-09-04
 
 - Based on ontology **[v3.8.3](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.8.3)**
