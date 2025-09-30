@@ -135,7 +135,7 @@ services:
       - "dataportal-auth-db:/var/lib/postgresql/data"
 
   auth:
-    image: keycloak/keycloak:26.3
+    image: keycloak/keycloak:26.4
     command: ["start", "--import-realm"]
     restart: unless-stopped
     environment:
