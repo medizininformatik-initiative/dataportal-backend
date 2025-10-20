@@ -5,7 +5,7 @@
         "edge_ngram_tokenizer": {
           "type": "edge_ngram",
           "min_gram": 1,
-          "max_gram": 20,
+          "max_gram": 50,
           "token_chars": [
             "letter",
             "digit"
@@ -14,7 +14,7 @@
         "edge_ngram_tokenizer_include_punctuation": {
           "type": "edge_ngram",
           "min_gram": 1,
-          "max_gram": 20,
+          "max_gram": 50,
           "token_chars": [
             "letter",
             "digit",
@@ -70,6 +70,42 @@
           "name": {
             "type": "text",
             "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
+          }
+        }
+      },
+      "parents": {
+        "properties": {
+          "contextualized_termcode_hash": {
+            "type": "text",
+            "index": false
+          },
+          "name": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
+          }
+        }
+      },
+      "related_terms": {
+        "properties": {
+          "contextualized_termcode_hash": {
+            "type": "text",
+            "index": false
+          },
+          "name": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
           }
         }
       },
@@ -111,30 +147,6 @@
             "type": "text",
             "analyzer": "edge_ngram_analyzer_include_punctuation",
             "search_analyzer": "lowercase_analyzer"
-          }
-        }
-      },
-      "parents": {
-        "properties": {
-          "contextualized_termcode_hash": {
-            "type": "text",
-            "index": false
-          },
-          "name": {
-            "type": "text",
-            "index": false
-          }
-        }
-      },
-      "related_terms": {
-        "properties": {
-          "contextualized_termcode_hash": {
-            "type": "text",
-            "index": false
-          },
-          "name": {
-            "type": "text",
-            "index": false
           }
         }
       },

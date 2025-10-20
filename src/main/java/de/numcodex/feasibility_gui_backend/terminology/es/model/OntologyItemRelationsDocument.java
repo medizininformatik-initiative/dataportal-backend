@@ -11,6 +11,8 @@ import java.util.Collection;
 public record OntologyItemRelationsDocument(
     @Field(name = "display")
     Display display,
+    @Field(name = "selectable")
+    boolean selectable,
     @Field(name = "parents")
     Collection<Relative> parents,
     @Field(name = "children")
