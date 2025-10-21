@@ -6,9 +6,7 @@ import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
-import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResult;
-import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntry;
-import de.numcodex.feasibility_gui_backend.terminology.api.RelationEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.*;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.*;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.OntologyItemEsRepository;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.OntologyItemNotFoundException;
@@ -45,6 +43,7 @@ public class TerminologyEsService {
   public static final String FIELD_NAME_DISPLAY_EN = "display.en";
   public static final String FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^0.5";
   public static final String FIELD_NAME_TERMCODE_WITH_BOOST = "termcode^2";
+  public static final String FIELD_NAME_TERMCODE_KEYWORD = "termcode.keyword";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;
 
@@ -137,6 +136,24 @@ public class TerminologyEsService {
         .build();
   }
 
+  public EsBulkSearchResult performExactSearch(TerminologyBulkSearchRequest request) {
+    List<EsSearchResultEntryExtended> results = new ArrayList<>();
+    List<String> notFound = new ArrayList<>(request.searchterms());
+
+    SearchHits<OntologyItemDocument> searchHitPage = findExactMatchesByBulkSearchRequest(request);
+    searchHitPage.getSearchHits().forEach(hit -> {
+      OntologyItemDocument content = hit.getContent();
+      results.add(EsSearchResultEntryExtended.of(content));
+      notFound.remove(content.termcode());
+    });
+
+    return EsBulkSearchResult.builder()
+        .found(results)
+        .notFound(notFound)
+        .uiProfileId(null)
+        .build();
+  }
+
   private SearchHits<OntologyListItemDocument> findByNameOrTermcode(String keyword,
                                                                     List<Pair<String,List<String>>> filterList,
                                                                     boolean availability,
@@ -213,6 +230,29 @@ public class TerminologyEsService {
 
     return operations.search(finalQuery, OntologyListItemDocument.class);
 
+  }
+
+  private SearchHits<OntologyItemDocument> findExactMatchesByBulkSearchRequest(TerminologyBulkSearchRequest request) {
+    var boolQueryBuilder = new BoolQuery.Builder();
+
+    boolQueryBuilder
+        .filter(f -> f.term(t -> t.field(FILTER_KEY_TERMINOLOGY).value(request.terminology())))
+        .filter(f -> f.term(t -> t.field(FILTER_KEY_CONTEXT_CODE).value(request.context())));
+
+    for (String code : request.searchterms()) {
+      boolQueryBuilder.should(s -> s.term(t -> t.field(FIELD_NAME_TERMCODE_KEYWORD).value(code)));
+    }
+
+    boolQueryBuilder.minimumShouldMatch("1");
+
+    var innerQuery = Query.of(q -> q.bool(boolQueryBuilder.build()));
+
+    var finalQuery = new NativeQueryBuilder()
+        .withQuery(innerQuery)
+        .build();
+
+    log.info(finalQuery.getQuery().toString());
+    return operations.search(finalQuery, OntologyItemDocument.class);
   }
 
   public RelationEntry getRelationEntryByHash(String hash) {

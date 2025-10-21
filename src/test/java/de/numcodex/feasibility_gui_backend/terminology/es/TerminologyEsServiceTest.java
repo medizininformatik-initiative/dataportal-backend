@@ -5,7 +5,9 @@ import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.DisplayEntry;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntryExtended;
 import de.numcodex.feasibility_gui_backend.terminology.api.RelativeEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.TerminologyBulkSearchRequest;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.*;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.OntologyItemEsRepository;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.OntologyItemNotFoundException;
@@ -161,11 +163,23 @@ public class TerminologyEsServiceTest {
     return list.stream();
   }
 
+  private static Stream<Arguments> generateArgumentsForTestPerformExactSearch() {
+    var list = new ArrayList<Arguments>();
+
+    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of(), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of(), List.of("unavailable-term-0", "unavailable-term-1"), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of("unavailable-term-0", "unavailable-term-1"), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of(), List.of(), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of(), List.of(), "", ""));
+
+    return list.stream();
+  }
+
   @ParameterizedTest
   @MethodSource("generateArgumentsForTestPerformOntologySearchWithPaging")
   void testPerformOntologySearchWithPaging(List<String> criteriaSets, List<String> context, List<String> kdsModule, List<String> terminology, Boolean availability, Integer pageSize, Integer page) {
     int totalHits = new Random().nextInt(100);
-    SearchHits<OntologyListItemDocument> dummySearchHitsPage = createDummySearchHitsPage(totalHits);
+    SearchHits<OntologyListItemDocument> dummySearchHitsPage = createDummySearchHitsPageWithOntologyListItemDocuments(totalHits);
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
     var searchResult = assertDoesNotThrow(
@@ -182,7 +196,7 @@ public class TerminologyEsServiceTest {
   @MethodSource("generateArgumentsForTestPerformOntologySearchWithPaging")
   void testPerformOntologySearchWithPagingEmptyKeyword(List<String> criteriaSets, List<String> context, List<String> kdsModule, List<String> terminology, Boolean availability, Integer pageSize, Integer page) {
     int totalHits = new Random().nextInt(100);
-    SearchHits<OntologyListItemDocument> dummySearchHitsPage = createDummySearchHitsPage(totalHits);
+    SearchHits<OntologyListItemDocument> dummySearchHitsPage = createDummySearchHitsPageWithOntologyListItemDocuments(totalHits);
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
     var searchResult = assertDoesNotThrow(
@@ -200,6 +214,31 @@ public class TerminologyEsServiceTest {
     assertThrows(IllegalArgumentException.class, () -> terminologyEsService.performOntologySearchWithPaging(
             "foobar", null, null, null, null, false, 0, 0)
     );
+  }
+
+  @ParameterizedTest
+  @MethodSource("generateArgumentsForTestPerformExactSearch")
+  void testPerformExactSearch(List<String> searchtermsFound, List<String> searchtermsNotFound, String terminology, String context) {
+    List<String> searchterms =
+        Stream.concat(searchtermsFound.stream(), searchtermsNotFound.stream()).collect(Collectors.toList());
+
+    SearchHits<OntologyItemDocument> dummySearchHitsPage = createDummySearchHitsPageWithOntologyItemDocuments(searchtermsFound.size());
+    var request = TerminologyBulkSearchRequest.builder()
+        .terminology(terminology)
+        .context(context)
+        .searchterms(searchterms)
+        .build();
+
+    doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
+    var searchResult = assertDoesNotThrow(
+        () -> terminologyEsService.performExactSearch(request)
+    );
+
+    assertThat(searchResult.uiProfileId()).isNull();
+    assertThat(searchResult.found().size()).isEqualTo(searchtermsFound.size());
+    assertThat(searchResult.notFound().size()).isEqualTo(searchtermsNotFound.size());
+    assertThat(searchResult.found()).containsExactlyInAnyOrderElementsOf(dummySearchHitsPage.getSearchHits().stream().map(sh -> EsSearchResultEntryExtended.of(sh.getContent())).toList());
+    assertThat(searchResult.notFound()).containsExactlyInAnyOrderElementsOf(searchtermsNotFound);
   }
 
   @Test
@@ -278,6 +317,7 @@ public class TerminologyEsServiceTest {
         .terminology("Some Terminology")
         .termcode("Some Termcode")
         .kdsModule("Some KDS Module")
+        .selectable(true)
         .build();
   }
 
@@ -289,7 +329,7 @@ public class TerminologyEsServiceTest {
         .build();
   }
 
-  private OntologyItemDocument createDummyOntologyItem(String id) {
+  private OntologyItemDocument createDummyOntologyItem(String id, String termcode) {
     TermCode termCode = createDummyTermCode();
     Collection<Relative> parents = List.of(createDummyRelative(), createDummyRelative());
     Collection<Relative> children = List.of(createDummyRelative(), createDummyRelative(), createDummyRelative(), createDummyRelative());
@@ -301,12 +341,17 @@ public class TerminologyEsServiceTest {
         .availability(1)
         .context(termCode)
         .terminology("Some Terminology")
-        .termcode("Some Termcode")
+        .termcode(termcode)
         .kdsModule("Some KDS Module")
+        .selectable(true)
         .parents(parents)
         .children(children)
         .relatedTerms(relatedTerms)
         .build();
+  }
+
+  private OntologyItemDocument createDummyOntologyItem(String id) {
+    return createDummyOntologyItem(id, "Some Termcode");
   }
 
   private Relative createDummyRelative() {
@@ -365,7 +410,7 @@ public class TerminologyEsServiceTest {
     return termFilters;
   }
 
-  private SearchHits<OntologyListItemDocument> createDummySearchHitsPage(int totalHits) {
+  private SearchHits<OntologyListItemDocument> createDummySearchHitsPageWithOntologyListItemDocuments(int totalHits) {
     var searchHitsList = new ArrayList<SearchHit<OntologyListItemDocument>>();
 
     for (int i = 0; i < totalHits; ++i) {
@@ -382,6 +427,29 @@ public class TerminologyEsServiceTest {
               null,
               null,
               createDummyOntologyListItem(UUID.randomUUID().toString())
+          )
+      );
+    }
+    return new SearchHitsImpl<>(totalHits, TotalHitsRelation.OFF, 10.0F, null, null, null, searchHitsList, null, null, null);
+  }
+
+  private SearchHits<OntologyItemDocument> createDummySearchHitsPageWithOntologyItemDocuments(int totalHits) {
+    var searchHitsList = new ArrayList<SearchHit<OntologyItemDocument>>();
+
+    for (int i = 0; i < totalHits; ++i) {
+      searchHitsList.add(
+          new SearchHit<>(
+              null,
+              null,
+              null,
+              10.0F,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              createDummyOntologyItem(UUID.randomUUID().toString(), String.format("available-term-%d", i))
           )
       );
     }

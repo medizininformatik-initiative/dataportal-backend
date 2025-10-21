@@ -3,8 +3,7 @@ package de.numcodex.feasibility_gui_backend.terminology.es;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
-import de.numcodex.feasibility_gui_backend.terminology.api.CcSearchResult;
-import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.*;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.CodeableConceptDocument;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.CodeableConceptEsRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +18,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +32,8 @@ public class CodeableConceptService {
   public static final String FIELD_NAME_DISPLAY_EN = "display.en";
   public static final String FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^0.5";
   public static final String FIELD_NAME_TERMCODE_WITH_BOOST = "termcode.code^2";
+  public static final String FIELD_NAME_TERMCODE_KEYWORD = "termcode.code.keyword";
+  public static final String FILTER_KEY_VALUE_SETS = "value_sets";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;
 
@@ -53,7 +52,7 @@ public class CodeableConceptService {
 
     List<Pair<String, List<String>>> filterList = new ArrayList<>();
     if (!CollectionUtils.isEmpty(valueSets)) {
-      filterList.add(Pair.of("value_sets", valueSets));
+      filterList.add(Pair.of(FILTER_KEY_VALUE_SETS, valueSets));
     }
 
     var searchHitPage = findByCodeOrDisplay(keyword, filterList, PageRequest.of(page, pageSize));
@@ -63,6 +62,23 @@ public class CodeableConceptService {
     return CcSearchResult.builder()
         .totalHits(searchHitPage.getTotalHits())
         .results(codeableConceptEntries)
+        .build();
+  }
+
+  public CodeableConceptBulkSearchResult performExactSearch(CodeableConceptBulkSearchRequest request) {
+    List<CodeableConceptEntry> results = new ArrayList<>();
+    List<String> notFound = new ArrayList<>(request.searchterms());
+
+    SearchHits<CodeableConceptDocument> searchHitPage = findExactMatchesByBulkSearchRequest(request);
+    searchHitPage.getSearchHits().forEach(hit -> {
+      CodeableConceptDocument content = hit.getContent();
+      results.add(CodeableConceptEntry.of(content));
+      notFound.remove(content.termCode().code());
+    });
+
+    return CodeableConceptBulkSearchResult.builder()
+        .found(results)
+        .notFound(notFound)
         .build();
   }
 
@@ -129,6 +145,28 @@ public class CodeableConceptService {
     log.info(Objects.requireNonNull(query.getQuery()).toString());
 
     return operations.search(query, CodeableConceptDocument.class);
+  }
+
+  private SearchHits<CodeableConceptDocument> findExactMatchesByBulkSearchRequest(CodeableConceptBulkSearchRequest request) {
+    var boolQueryBuilder = new BoolQuery.Builder();
+
+    boolQueryBuilder
+        .filter(f -> f.term(t -> t.field(FILTER_KEY_VALUE_SETS).value(request.valueSet())));
+
+    for (String code : request.searchterms()) {
+      boolQueryBuilder.should(s -> s.term(t -> t.field(FIELD_NAME_TERMCODE_KEYWORD).value(code)));
+    }
+
+    boolQueryBuilder.minimumShouldMatch("1");
+
+    var innerQuery = Query.of(q -> q.bool(boolQueryBuilder.build()));
+
+    var finalQuery = new NativeQueryBuilder()
+        .withQuery(innerQuery)
+        .build();
+
+    log.info(finalQuery.getQuery().toString());
+    return operations.search(finalQuery, CodeableConceptDocument.class);
   }
 
 }

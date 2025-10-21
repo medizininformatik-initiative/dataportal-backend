@@ -3,12 +3,17 @@ package de.numcodex.feasibility_gui_backend.terminology.es;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.dse.api.LocalizedValue;
+import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptBulkSearchRequest;
+import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptEntry;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.CodeableConceptDocument;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.Display;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.CodeableConceptEsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,6 +23,8 @@ import org.springframework.data.elasticsearch.core.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +47,18 @@ class CodeableConceptServiceTest {
 
   private CodeableConceptService createCodeableConceptService() {
     return new CodeableConceptService(operations, repository);
+  }
+
+  private static Stream<Arguments> generateArgumentsForTestPerformExactSearch() {
+    var list = new ArrayList<Arguments>();
+
+    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of(), "valid-valueset"));
+    list.add(Arguments.of(List.of(), List.of("unavailable-term-0", "unavailable-term-1"), "valid-valueset"));
+    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of("unavailable-term-0", "unavailable-term-1"), "valid-valueset"));
+    list.add(Arguments.of(List.of(), List.of(), "valid-valueset"));
+    list.add(Arguments.of(List.of(), List.of(), ""));
+
+    return list.stream();
   }
 
   @BeforeEach
@@ -145,6 +164,29 @@ class CodeableConceptServiceTest {
     assertThat(result.getTotalHits()).isNotZero();
   }
 
+  @ParameterizedTest
+  @MethodSource("generateArgumentsForTestPerformExactSearch")
+  void testPerformExactSearch(List<String> searchtermsFound, List<String> searchtermsNotFound, String valueSet) {
+    List<String> searchterms =
+        Stream.concat(searchtermsFound.stream(), searchtermsNotFound.stream()).collect(Collectors.toList());
+
+    SearchHits<CodeableConceptDocument> dummySearchHitsPage = createDummySearchHitsPage(searchtermsFound.size());
+    var request = CodeableConceptBulkSearchRequest.builder()
+        .valueSet(valueSet)
+        .searchterms(searchterms)
+        .build();
+
+    doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
+    var searchResult = assertDoesNotThrow(
+        () -> codeableConceptService.performExactSearch(request)
+    );
+
+    assertThat(searchResult.found().size()).isEqualTo(searchtermsFound.size());
+    assertThat(searchResult.notFound().size()).isEqualTo(searchtermsNotFound.size());
+    assertThat(searchResult.found()).containsExactlyInAnyOrderElementsOf(dummySearchHitsPage.getSearchHits().stream().map(sh -> CodeableConceptEntry.of(sh.getContent())).toList());
+    assertThat(searchResult.notFound()).containsExactlyInAnyOrderElementsOf(searchtermsNotFound);
+  }
+
   @Test
   void testGetSearchResultsEntryByIds_succeeds() {
     CodeableConceptDocument dummyCodeableConceptDocument = createDummyCodeableConceptDocument("1");
@@ -227,20 +269,24 @@ class CodeableConceptServiceTest {
               null,
               null,
               null,
-              createDummyCodeableConceptDocument(UUID.randomUUID().toString())
+              createDummyCodeableConceptDocument(UUID.randomUUID().toString(), String.format("available-term-%d", i))
           )
       );
     }
     return new SearchHitsImpl<>(totalHits, TotalHitsRelation.OFF, 10.0F, null, null, null, searchHitsList, null, null, null);
   }
 
-  private CodeableConceptDocument createDummyCodeableConceptDocument(String id) {
+  private CodeableConceptDocument createDummyCodeableConceptDocument(String id, String termCodeCode) {
     return CodeableConceptDocument.builder()
         .id(id)
-        .termCode(createDummyTermcode())
+        .termCode(createDummyTermcode(termCodeCode))
         .display(createDummyDisplay())
         .valueSets(List.of())
         .build();
+  }
+
+  private CodeableConceptDocument createDummyCodeableConceptDocument(String id) {
+    return createDummyCodeableConceptDocument(id, createDummyTermcode().code());
   }
 
   private Display createDummyDisplay() {
@@ -251,12 +297,16 @@ class CodeableConceptServiceTest {
         .build();
   }
 
-  private TermCode createDummyTermcode() {
+  private TermCode createDummyTermcode(String code) {
     return TermCode.builder()
-        .code("code-1")
+        .code(code)
         .display("Code 1")
         .system("http://system1")
         .version("9000")
         .build();
+  }
+
+  private TermCode createDummyTermcode() {
+    return createDummyTermcode("code-1");
   }
 }

@@ -71,6 +71,17 @@ public class TerminologyRestController {
             .performOntologySearchWithPaging(keyword, criteriaSets, contexts, kdsModules, terminologies, availability, pageSize, page);
     }
 
+    @PostMapping("entry/bulk-search")
+    public EsBulkSearchResult searchOntologyItemsBulk(@RequestBody TerminologyBulkSearchRequest bulkSearchRequest) {
+      var preliminaryResult = terminologyEsService.performExactSearch(bulkSearchRequest);
+      if (!preliminaryResult.found().isEmpty()) {
+        var criteriaProfileData = terminologyService
+            .getCriteriaProfileData(List.of(preliminaryResult.found().get(0).id()));
+        return preliminaryResult.withUiProfileId(criteriaProfileData.get(0).uiProfileId());
+      }
+      return preliminaryResult.withUiProfileId(null);
+    }
+
     @GetMapping("entry/{hash}/relations")
     public RelationEntry getOntologyItemRelationsByHash(@PathVariable("hash") String hash) {
         return terminologyEsService.getRelationEntryByHash(hash);

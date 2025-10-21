@@ -1,6 +1,8 @@
 package de.numcodex.feasibility_gui_backend.terminology.es;
 
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
+import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptBulkSearchRequest;
+import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptEntry;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.CodeableConceptEsRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +20,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -114,6 +117,90 @@ public class CodeableConceptServiceIT {
     assertNotNull(pageOneFilter);
     Assertions.assertEquals(2, pageNoFilter.getTotalHits());
     Assertions.assertEquals(1, pageOneFilter.getTotalHits());
+  }
+
+  @Test
+  void testPerformExactSearch_succeeds() {
+    List<String> expectedFoundResults = List.of("A1.1");
+    List<String> expectedNotFoundResults = List.of();
+    List<String> searchterms =
+        Stream.concat(expectedFoundResults.stream(), expectedNotFoundResults.stream()).collect(Collectors.toList());
+    var request = CodeableConceptBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .valueSet("some-value-set")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> codeableConceptService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().size()).isEqualTo(expectedNotFoundResults.size());
+    assertThat(exactResult.found().size()).isEqualTo(expectedFoundResults.size());
+    assertThat(exactResult.found().get(0)).isInstanceOf(CodeableConceptEntry.class);
+    assertThat(exactResult.found().get(0).termCode().code()).isEqualTo("A1.1");
+    assertThat(exactResult.notFound()).containsAll(expectedNotFoundResults);
+  }
+
+  @Test
+  void testPerformExactSearch_succeedsWithMixedResults() {
+    List<String> expectedFoundResults = List.of("A1.1");
+    List<String> expectedNotFoundResults = List.of("foo");
+    List<String> searchterms =
+        Stream.concat(expectedFoundResults.stream(), expectedNotFoundResults.stream()).collect(Collectors.toList());
+    var request = CodeableConceptBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .valueSet("some-value-set")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> codeableConceptService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().size()).isEqualTo(expectedNotFoundResults.size());
+    assertThat(exactResult.found().size()).isEqualTo(expectedFoundResults.size());
+    assertThat(exactResult.found().get(0)).isInstanceOf(CodeableConceptEntry.class);
+    assertThat(exactResult.found().get(0).termCode().code()).isEqualTo("A1.1");
+    assertThat(exactResult.notFound()).containsAll(expectedNotFoundResults);
+  }
+
+  @Test
+  void testPerformExactSearch_succeedsWithInvalidValueSet() {
+    List<String> expectedFoundResults = List.of();
+    List<String> expectedNotFoundResults = List.of("A1.1");
+    List<String> searchterms =
+        Stream.concat(expectedFoundResults.stream(), expectedNotFoundResults.stream()).collect(Collectors.toList());
+    var request = CodeableConceptBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .valueSet("does not exist")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> codeableConceptService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().size()).isEqualTo(expectedNotFoundResults.size());
+    assertThat(exactResult.found().size()).isEqualTo(expectedFoundResults.size());
+    assertThat(exactResult.notFound()).containsAll(expectedNotFoundResults);
+  }
+
+  @Test
+  void testPerformExactSearch_succeedsWithEmptySearchterms() {
+    List<String> searchterms = List.of();
+    var request = CodeableConceptBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .valueSet("some-value-set")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> codeableConceptService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().isEmpty());
+    assertThat(exactResult.found().isEmpty());
   }
 
   @Test
