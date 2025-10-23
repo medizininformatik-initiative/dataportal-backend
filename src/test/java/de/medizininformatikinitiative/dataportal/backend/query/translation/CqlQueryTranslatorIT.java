@@ -4,7 +4,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
 import de.medizininformatikinitiative.dataportal.backend.query.api.AttributeFilter;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilter;
 import org.junit.jupiter.api.Tag;
@@ -69,7 +69,7 @@ public class CqlQueryTranslatorIT {
         .context(context)
         .valueFilter(valueFilter)
         .build();
-    var testQuery = StructuredQuery.builder()
+    var testQuery = Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .build();
@@ -99,7 +99,7 @@ public class CqlQueryTranslatorIT {
         .timeRestriction(timeRestriction)
         .context(context)
         .build();
-    var testQuery = StructuredQuery.builder()
+    var testQuery = Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .build();
@@ -159,7 +159,7 @@ public class CqlQueryTranslatorIT {
         .attributeFilters(List.of(attributeFilter1, attributeFilter2))
         .build();
 
-    var testQuery = StructuredQuery.builder()
+    var testQuery = Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .build();

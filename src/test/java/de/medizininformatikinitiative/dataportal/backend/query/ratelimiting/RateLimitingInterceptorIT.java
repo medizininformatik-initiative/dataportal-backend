@@ -5,11 +5,14 @@ import de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerServi
 import de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService.ResultDetail;
 import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResult;
 import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResultLine;
-import de.medizininformatikinitiative.dataportal.backend.query.api.validation.StructuredQueryValidatorSpringConfig;
+import de.medizininformatikinitiative.dataportal.backend.query.api.validation.CcdlValidatorSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine;
 import de.medizininformatikinitiative.dataportal.backend.query.v5.FeasibilityQueryHandlerRestController;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
+import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -42,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Tag("query")
 @Tag("rate-limiting")
 @ExtendWith(SpringExtension.class)
-@Import({StructuredQueryValidatorSpringConfig.class,
+@Import({CcdlValidatorSpringConfig.class,
     RateLimitingServiceSpringConfig.class
 })
 @WebMvcTest(
@@ -65,9 +68,18 @@ public class RateLimitingInterceptorIT {
   @MockitoBean
   private QueryHandlerService queryHandlerService;
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
   @MockitoBean
   private UserBlacklistRepository userBlacklistRepository;
+
+  @MockitoBean
+  private TerminologyEsService terminologyEsService;
+
+  @MockitoBean
+  private TerminologyService terminologyService;
+
+  @MockitoBean
+  private CodeableConceptService codeableConceptService;
 
   @NotNull
   private static QueryResult createTestQueryResult(ResultDetail resultDetail) {

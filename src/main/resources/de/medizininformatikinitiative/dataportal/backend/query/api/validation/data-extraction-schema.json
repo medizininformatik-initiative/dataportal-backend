@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "http://to_be_decided.com/dataextraction.schema.json",
+  "type": "object",
+  "properties": {
+    "attributeGroups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "groupReference": {
+            "type": "string",
+            "format": "uri"
+          },
+          "includeReferenceOnly": {
+            "type": "boolean"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attributeRef": {
+                  "type": "string"
+                },
+                "mustHave": {
+                  "type": "boolean"
+                },
+                "linkedGroups": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "attributeRef",
+                "mustHave"
+              ]
+            }
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "codes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string"
+                      },
+                      "system": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "display": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "system",
+                      "display"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "start": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "end": {
+                  "type": "string",
+                  "format": "date"
+                }
+              },
+              "required": [
+                "type",
+                "name"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "groupReference",
+          "attributes",
+          "id"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "attributeGroups"
+  ],
+  "additionalProperties": false
+}

@@ -86,7 +86,7 @@ class DataqueryCsvExportServiceTest {
                               boolean includeTimerestriction,
                               boolean withAfterDate,
                               boolean withBeforeDate) throws IOException {
-    var structuredQuery = createValidStructuredQuery(valueFilterType, includeTimerestriction, withAfterDate, withBeforeDate);
+    var ccdl = createValidCcdl(valueFilterType, includeTimerestriction, withAfterDate, withBeforeDate);
     DisplayEntry displayEntry = createDisplayEntry();
 
     EsSearchResultEntry esSearchResultEntry = mock(EsSearchResultEntry.class);
@@ -95,7 +95,7 @@ class DataqueryCsvExportServiceTest {
     doReturn(Optional.of(createUiProfile())).when(uiProfileRepository).findByContextualizedTermcodeHash(any(String.class));
     doReturn(createUiProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.terminology.api.UiProfile.class));
 
-    String csvResult = dataqueryCsvExportService.jsonToCsv(structuredQuery.inclusionCriteria(), language);
+    String csvResult = dataqueryCsvExportService.jsonToCsv(ccdl.inclusionCriteria(), language);
 
     assertNotNull(csvResult);
     switch (language) {
@@ -233,7 +233,7 @@ class DataqueryCsvExportServiceTest {
     );
   }
 
-  private StructuredQuery createValidStructuredQuery(ValueFilterType valueFilterType, boolean withTimerestriction, boolean withAfterDate, boolean withBeforeDate) {
+  private Ccdl createValidCcdl(ValueFilterType valueFilterType, boolean withTimerestriction, boolean withAfterDate, boolean withBeforeDate) {
     var termCode = TermCode.builder()
         .code("LL2191-6")
         .system("http://loinc.org")
@@ -250,7 +250,7 @@ class DataqueryCsvExportServiceTest {
         .valueFilter(createValueFilter(valueFilterType))
         .timeRestriction(withTimerestriction ? createTimeRestriction(withAfterDate, withBeforeDate) : null)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(inclusionCriterion)))
         .exclusionCriteria(null)

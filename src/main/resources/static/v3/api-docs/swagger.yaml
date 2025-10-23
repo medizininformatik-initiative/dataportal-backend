@@ -357,11 +357,11 @@ paths:
       operationId: runQuery
       parameters:
       requestBody:
-        description: Structured query to create and dispatch
+        description: CCDL to create and dispatch
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StructuredQuery"
+              $ref: "#/components/schemas/CCDL"
         required: true
       responses:
         201:
@@ -513,16 +513,16 @@ paths:
     post:
       tags:
         - feasibility
-      summary: Translate a structured query to cql
+      summary: Translate a CCDL to cql
       description: Nothing will be persisted in the backend. It simply returns the cql.
       operationId: sq2Cql
       parameters:
       requestBody:
-        description: Structured query to translate
+        description: CCDL to translate
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StructuredQuery"
+              $ref: "#/components/schemas/CCDL"
         required: true
       responses:
         200:
@@ -1017,7 +1017,7 @@ components:
             - Example CRTDL
         cohortDefinition:
           type: object
-          $ref: "#/components/schemas/StructuredQuery"
+          $ref: "#/components/schemas/CCDL"
         dataExtraction:
           type: object
           $ref: "#/components/schemas/DataExtractionQuery"
@@ -1076,7 +1076,7 @@ components:
           type: integer
           format: int64
         content:
-          $ref: "#/components/schemas/StructuredQuery"
+          $ref: "#/components/schemas/CCDL"
         label:
           type: string
         results:
@@ -1149,7 +1149,7 @@ components:
         remaining:
           type: number
           format: int64
-    StructuredQuery:
+    CCDL:
       type: object
       required:
         - version
