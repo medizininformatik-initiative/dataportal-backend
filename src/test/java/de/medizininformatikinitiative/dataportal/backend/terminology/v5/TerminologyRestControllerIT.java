@@ -11,7 +11,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.Terminology
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.*;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.*;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
+import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +55,7 @@ public class TerminologyRestControllerIT {
   private ObjectMapper jsonUtil;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private TerminologyService terminologyService;

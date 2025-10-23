@@ -2,7 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.validation
 
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import org.jetbrains.annotations.NotNull;
@@ -26,15 +26,15 @@ import static org.mockito.Mockito.doReturn;
 
 @Tag("terminology")
 @ExtendWith(MockitoExtension.class)
-class StructuredQueryValidationTest {
+class CcdlValidationTest {
 
   @Mock
   private TerminologyService terminologyService;
 
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @NotNull
-  private static StructuredQuery createValidStructuredQuery(boolean withExclusionCriteria) {
+  private static Ccdl createValidCcdl(boolean withExclusionCriteria) {
     var context = TermCode.builder()
         .code("Laboruntersuchung")
         .system("fdpg.mii.cds")
@@ -51,7 +51,7 @@ class StructuredQueryValidationTest {
         .context(context)
         .attributeFilters(List.of())
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .exclusionCriteria(withExclusionCriteria ? List.of(List.of(criterion)) : List.of())
@@ -60,7 +60,7 @@ class StructuredQueryValidationTest {
   }
 
   @NotNull
-  private static StructuredQuery createStructuredQueryWithoutContext() {
+  private static Ccdl createCcdlWithoutContext() {
     var termCode = TermCode.builder()
         .code("19113-0")
         .system("http://loinc.org")
@@ -70,7 +70,7 @@ class StructuredQueryValidationTest {
         .termCodes(List.of(termCode))
         .attributeFilters(List.of())
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .exclusionCriteria(List.of())
@@ -79,7 +79,7 @@ class StructuredQueryValidationTest {
   }
 
   @NotNull
-  private static StructuredQuery createStructuredQueryWithInvalidTimeRestriction() {
+  private static Ccdl createCcdlWithInvalidTimeRestriction() {
     var context = TermCode.builder()
         .code("Laboruntersuchung")
         .system("fdpg.mii.cds")
@@ -101,7 +101,7 @@ class StructuredQueryValidationTest {
         .attributeFilters(List.of())
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .exclusionCriteria(List.of())
@@ -110,7 +110,7 @@ class StructuredQueryValidationTest {
   }
 
   @NotNull
-  private static StructuredQuery createStructuredQueryWithOnlyBeforeDate() {
+  private static Ccdl createCcdlWithOnlyBeforeDate() {
     var context = TermCode.builder()
         .code("Laboruntersuchung")
         .system("fdpg.mii.cds")
@@ -131,7 +131,7 @@ class StructuredQueryValidationTest {
         .attributeFilters(List.of())
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .exclusionCriteria(List.of())
@@ -140,7 +140,7 @@ class StructuredQueryValidationTest {
   }
 
   @NotNull
-  private static StructuredQuery createStructuredQueryWithOnlyAfterDate() {
+  private static Ccdl createCcdlWithOnlyAfterDate() {
     var context = TermCode.builder()
         .code("Laboruntersuchung")
         .system("fdpg.mii.cds")
@@ -161,7 +161,7 @@ class StructuredQueryValidationTest {
         .attributeFilters(List.of())
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .exclusionCriteria(List.of())
@@ -171,12 +171,12 @@ class StructuredQueryValidationTest {
 
   @BeforeEach
   void setUp() {
-    structuredQueryValidation = new StructuredQueryValidation(terminologyService);
+    ccdlValidation = new CcdlValidation(terminologyService);
   }
 
   @Test
   void testInvalidOnNull() {
-    var isValid = structuredQueryValidation.isValid(null);
+    var isValid = ccdlValidation.isValid(null);
 
     assertFalse(isValid);
   }
@@ -186,7 +186,7 @@ class StructuredQueryValidationTest {
   void testIsValid_trueOnValidCriteria(boolean withExclusionCriteria) {
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
 
-    var isValid = structuredQueryValidation.isValid(createValidStructuredQuery(withExclusionCriteria));
+    var isValid = ccdlValidation.isValid(createValidCcdl(withExclusionCriteria));
 
     assertTrue(isValid);
   }
@@ -196,21 +196,21 @@ class StructuredQueryValidationTest {
   void testIsValid_falseOnInvalidCriteria(boolean withExclusionCriteria) {
     doReturn(false).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
 
-    var isValid = structuredQueryValidation.isValid(createValidStructuredQuery(withExclusionCriteria));
+    var isValid = ccdlValidation.isValid(createValidCcdl(withExclusionCriteria));
 
     assertFalse(isValid);
   }
 
   @Test
   void testIsValid_falseOnMissingContext() {
-    var isValid = structuredQueryValidation.isValid(createStructuredQueryWithoutContext());
+    var isValid = ccdlValidation.isValid(createCcdlWithoutContext());
 
     assertFalse(isValid);
   }
 
   @Test
   void testIsValid_falseOnInvalidTimeRestriction() {
-    var isValid = structuredQueryValidation.isValid(createStructuredQueryWithInvalidTimeRestriction());
+    var isValid = ccdlValidation.isValid(createCcdlWithInvalidTimeRestriction());
 
     assertFalse(isValid);
   }
@@ -218,7 +218,7 @@ class StructuredQueryValidationTest {
   @Test
   void testIsValid_trueOnOnlyBeforeDateTimeRestriction() {
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
-    var isValid = structuredQueryValidation.isValid(createStructuredQueryWithOnlyBeforeDate());
+    var isValid = ccdlValidation.isValid(createCcdlWithOnlyBeforeDate());
 
     assertTrue(isValid);
   }
@@ -226,64 +226,64 @@ class StructuredQueryValidationTest {
   @Test
   void testIsValid_trueOnOnlyAfterDateTimeRestriction() {
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
-    var isValid = structuredQueryValidation.isValid(createStructuredQueryWithOnlyAfterDate());
+    var isValid = ccdlValidation.isValid(createCcdlWithOnlyAfterDate());
 
     assertTrue(isValid);
   }
 
   @ParameterizedTest
   @CsvSource({"true,true", "true,false", "false,true", "false,false"})
-  void testAnnotateStructuredQuery_emptyIssuesOnValidCriteriaOrSkippedValidation(String withExclusionCriteriaString, String skipValidationString) {
+  void testAnnotateCcdl_emptyIssuesOnValidCriteriaOrSkippedValidation(String withExclusionCriteriaString, String skipValidationString) {
     boolean withExclusionCriteria = Boolean.parseBoolean(withExclusionCriteriaString);
     boolean skipValidation = Boolean.parseBoolean(skipValidationString);
     if (!skipValidation) {
       doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     }
 
-    var annotatedStructuredQuery = structuredQueryValidation.annotateStructuredQuery(createValidStructuredQuery(withExclusionCriteria), skipValidation);
+    var annotatedCcdl = ccdlValidation.annotateCcdl(createValidCcdl(withExclusionCriteria), skipValidation);
 
-    assertTrue(annotatedStructuredQuery.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+    assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
   }
 
   @ParameterizedTest
   @CsvSource({"true,true", "true,false", "false,true", "false,false"})
-  void testAnnotateStructuredQuery_nonEmptyIssuesOnInvalidCriteria(String withExclusionCriteriaString, String skipValidationString) {
+  void testAnnotateCcdl_nonEmptyIssuesOnInvalidCriteria(String withExclusionCriteriaString, String skipValidationString) {
     boolean withExclusionCriteria = Boolean.parseBoolean(withExclusionCriteriaString);
     boolean skipValidation = Boolean.parseBoolean(skipValidationString);
     if (!skipValidation) {
       doReturn(false).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     }
 
-    var annotatedStructuredQuery = structuredQueryValidation.annotateStructuredQuery(createValidStructuredQuery(withExclusionCriteria), skipValidation);
+    var annotatedCcdl = ccdlValidation.annotateCcdl(createValidCcdl(withExclusionCriteria), skipValidation);
 
     if (skipValidation) {
-      assertTrue(annotatedStructuredQuery.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
     } else {
-      assertFalse(annotatedStructuredQuery.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
     }
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void testAnnotateStructuredQuery_nonEmptyIssuesOnMissingContext(boolean skipValidation) {
-    var annotatedStructuredQuery = structuredQueryValidation.annotateStructuredQuery(createStructuredQueryWithoutContext(), skipValidation);
+  void testAnnotateCcdl_nonEmptyIssuesOnMissingContext(boolean skipValidation) {
+    var annotatedCcdl = ccdlValidation.annotateCcdl(createCcdlWithoutContext(), skipValidation);
 
     if (skipValidation) {
-      assertTrue(annotatedStructuredQuery.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
     } else {
-      assertFalse(annotatedStructuredQuery.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
     }
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void testAnnotateStructuredQuery_nonEmptyIssuesOnInvalidTimeRestriction(boolean skipValidation) {
-    var annotatedStructuredQuery = structuredQueryValidation.annotateStructuredQuery(createStructuredQueryWithInvalidTimeRestriction(), skipValidation);
+  void testAnnotateCcdl_nonEmptyIssuesOnInvalidTimeRestriction(boolean skipValidation) {
+    var annotatedCcdl = ccdlValidation.annotateCcdl(createCcdlWithInvalidTimeRestriction(), skipValidation);
 
     if (skipValidation) {
-      assertTrue(annotatedStructuredQuery.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
     } else {
-      assertFalse(annotatedStructuredQuery.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
     }
   }
 }

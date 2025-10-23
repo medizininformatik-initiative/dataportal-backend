@@ -4,11 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilter;
+import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
 import jakarta.validation.ConstraintValidatorContext;
-import org.junit.jupiter.api.BeforeAll;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -24,31 +28,55 @@ import static de.medizininformatikinitiative.dataportal.backend.common.api.Compa
 import static de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilterType.QUANTITY_COMPARATOR;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @Tag("query")
 @Tag("api")
 @Tag("validation")
 @ExtendWith(MockitoExtension.class)
-public class StructuredQueryValidatorTest {
-  public static StructuredQueryValidator validator;
+public class CcdlValidatorTest {
+
+  public static CcdlValidator validator;
 
   @Mock
   private ConstraintValidatorContext constraintValidatorContext;
 
-  @BeforeAll
-  public static void setUp() throws IOException {
-    validator = new StructuredQueryValidator(new ObjectMapper());
+  @Mock
+  private ConstraintValidatorContext.ConstraintViolationBuilder violationBuilder;
+
+  @Mock
+  private TerminologyService terminologyService;
+
+  @Mock
+  private TerminologyEsService terminologyEsService;
+
+  @Mock
+  private CodeableConceptService codeableConceptService;
+
+  @BeforeEach
+  public void setUp() throws IOException {
+    var jsonUtil = new ObjectMapper();
+    lenient().when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString()))
+        .thenReturn(violationBuilder);
+    lenient().when(violationBuilder.addConstraintViolation())
+        .thenReturn(constraintValidatorContext);
+    validator = new CcdlValidator(terminologyService, terminologyEsService, codeableConceptService, jsonUtil);
   }
 
   @Test
   public void testValidate_validQueryOk() {
-    var structuredQuery = buildValidQuery();
-    assertTrue(validator.isValid(structuredQuery, constraintValidatorContext));
+    var ccdl = buildValidQuery();
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
   }
 
-  @Disabled("For this intermediate step, the validator always returns valid. This will change again...so just disable this for now")
   @Test
   public void testValidate_invalidQueriesFail() {
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(anyString());
+
     var queryWithoutVersion = buildInvalidQueryWithoutVersion();
     assertFalse(validator.isValid(queryWithoutVersion, constraintValidatorContext));
 
@@ -78,7 +106,7 @@ public class StructuredQueryValidatorTest {
         validator.isValid(queryWithTimeRestrictionsWithoutDates, constraintValidatorContext));
   }
 
-  private StructuredQuery buildValidQuery() {
+  private Ccdl buildValidQuery() {
     var bodyWeightTermCode = TermCode.builder()
         .code("27113001")
         .system("http://snomed.info/sct")
@@ -111,7 +139,7 @@ public class StructuredQueryValidatorTest {
         .valueFilter(bodyWeightValueFilter)
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
@@ -119,9 +147,9 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithoutVersion() {
+  private Ccdl buildInvalidQueryWithoutVersion() {
     var validQuery = buildValidQuery();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .inclusionCriteria(validQuery.inclusionCriteria())
         .exclusionCriteria(validQuery.exclusionCriteria())
@@ -129,9 +157,9 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithoutInclusionCriteria() {
+  private Ccdl buildInvalidQueryWithoutInclusionCriteria() {
     var validQuery = buildValidQuery();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(validQuery.version())
         .exclusionCriteria(validQuery.exclusionCriteria())
@@ -139,9 +167,9 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithEmptyInclusionCriteria() {
+  private Ccdl buildInvalidQueryWithEmptyInclusionCriteria() {
     var validQuery = buildValidQuery();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(validQuery.version())
         .inclusionCriteria(List.of())
@@ -150,7 +178,7 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithEmptyTermCodes() {
+  private Ccdl buildInvalidQueryWithEmptyTermCodes() {
     var bodyWeightTermCode = TermCode.builder().build();
     var kgUnit = Unit.builder()
         .code("kg")
@@ -171,7 +199,7 @@ public class StructuredQueryValidatorTest {
         .valueFilter(bodyWeightValueFilter)
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
@@ -179,7 +207,7 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithEmptyTermCodeCodes() {
+  private Ccdl buildInvalidQueryWithEmptyTermCodeCodes() {
     var bodyWeightTermCode = TermCode.builder()
         .system("http://snomed.info/sct")
         .version("v1")
@@ -204,7 +232,7 @@ public class StructuredQueryValidatorTest {
         .valueFilter(bodyWeightValueFilter)
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
@@ -212,7 +240,7 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithEmptyTermCodeSystems() {
+  private Ccdl buildInvalidQueryWithEmptyTermCodeSystems() {
     var bodyWeightTermCode = TermCode.builder()
         .code("27113001")
         .version("v1")
@@ -237,7 +265,7 @@ public class StructuredQueryValidatorTest {
         .valueFilter(bodyWeightValueFilter)
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
@@ -245,7 +273,7 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithEmptyTermCodeDisplays() {
+  private Ccdl buildInvalidQueryWithEmptyTermCodeDisplays() {
     var bodyWeightTermCode = TermCode.builder()
         .code("27113001")
         .system("http://snomed.info/sct")
@@ -270,7 +298,7 @@ public class StructuredQueryValidatorTest {
         .valueFilter(bodyWeightValueFilter)
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
@@ -278,7 +306,7 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithMalformedTimeRestrictions() {
+  private Ccdl buildInvalidQueryWithMalformedTimeRestrictions() {
     var bodyWeightTermCode = TermCode.builder()
         .code("27113001")
         .system("http://snomed.info/sct")
@@ -304,7 +332,7 @@ public class StructuredQueryValidatorTest {
         .valueFilter(bodyWeightValueFilter)
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
@@ -312,7 +340,7 @@ public class StructuredQueryValidatorTest {
         .build();
   }
 
-  private StructuredQuery buildInvalidQueryWithTimeRestrictionsWithoutDates() {
+  private Ccdl buildInvalidQueryWithTimeRestrictionsWithoutDates() {
     var bodyWeightTermCode = TermCode.builder()
         .code("27113001")
         .system("http://snomed.info/sct")
@@ -335,12 +363,48 @@ public class StructuredQueryValidatorTest {
         .valueFilter(bodyWeightValueFilter)
         .timeRestriction(timeRestriction)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .display("display-value")
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
         .exclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
         .build();
+  }
+
+  @NotNull
+  private String createValidUiProfileString() {
+    return """
+          {
+              "attributeDefinitions": [],
+              "name": "Patient1",
+              "timeRestrictionAllowed": false,
+              "valueDefinition": {
+                  "allowedUnits": [],
+                  "display": {
+                      "original": "Geschlecht",
+                      "translations": [
+                          {
+                              "language": "en-US",
+                              "value": "Gender"
+                          },
+                          {
+                              "language": "de-DE",
+                              "value": "Geschlecht"
+                          }
+                      ]
+                  },
+                  "max": null,
+                  "min": null,
+                  "optional": false,
+                  "precision": 1,
+                  "referencedCriteriaSet": [],
+                  "referencedValueSet": [
+                      "http://hl7.org/fhir/ValueSet/administrative-gender"
+                  ],
+                  "type": "concept"
+              }
+          }
+          """;
   }
 
 }

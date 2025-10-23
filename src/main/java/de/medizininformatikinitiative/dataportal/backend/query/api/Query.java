@@ -9,7 +9,7 @@ import lombok.Builder;
 @Builder
 public record Query(
     @JsonProperty long id,
-    @JsonProperty StructuredQuery content,
+    @JsonProperty Ccdl content,
     @JsonProperty String label,
     @JsonProperty String comment,
     @JsonProperty long totalNumberOfPatients

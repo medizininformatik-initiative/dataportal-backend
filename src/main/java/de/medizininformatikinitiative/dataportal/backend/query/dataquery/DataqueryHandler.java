@@ -200,6 +200,21 @@ public class DataqueryHandler {
     return byteArrayOutputStream;
   }
 
+  public List<IssueWrapper> validateDataquery(JsonNode dataqueryNode) {
+    List<IssueWrapper> issues = new ArrayList<>();
+    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAQUERY, dataqueryNode);
+    if (!validationErrors.isEmpty()) {
+      issues = validationErrors.stream()
+          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .toList();
+    }
+    return issues;
+  }
+
+  public Dataquery dataqueryFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, Dataquery.class);
+  }
+
   public List<IssueWrapper> validateCrtdl(JsonNode crtdlNode) {
     List<IssueWrapper> issues = new ArrayList<>();
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CRTDL, crtdlNode);

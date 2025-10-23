@@ -4,23 +4,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Query;
-import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResult;
-import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResultLine;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.QueryQuota;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.QueryQuotaEntry;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatcher;
-import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContentRepository;
-import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryRepository;
+import de.medizininformatikinitiative.dataportal.backend.query.persistence.*;
 import de.medizininformatikinitiative.dataportal.backend.query.result.RandomSiteNameGenerator;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultService;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationException;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslator;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
+import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -34,20 +31,17 @@ import java.util.List;
 @Service
 public class QueryHandlerService {
 
-  private final QueryDispatcher queryDispatcher;
-  private final QueryRepository queryRepository;
-  private final QueryContentRepository queryContentRepository;
-  private final ResultService resultService;
-  private final StructuredQueryValidation structuredQueryValidation;
-  private final JsonSchemaValidator jsonSchemaValidator;
-  private QueryTranslator queryTranslator;
-  private ObjectMapper jsonUtil;
+  public enum ResultDetail {
+    SUMMARY,
+    DETAILED_OBFUSCATED,
+    DETAILED
+  }
 
   public QueryHandlerService(@NonNull QueryDispatcher queryDispatcher,
                              @NonNull QueryRepository queryRepository,
                              @NonNull QueryContentRepository queryContentRepository,
                              @NonNull ResultService resultService,
-                             @NonNull StructuredQueryValidation structuredQueryValidation,
+                             @NonNull CcdlValidation ccdlValidation,
                              @NonNull @Qualifier("cql") QueryTranslator queryTranslator,
                              @NonNull JsonSchemaValidator jsonSchemaValidator,
                              @NonNull ObjectMapper jsonUtil) {
@@ -55,15 +49,31 @@ public class QueryHandlerService {
     this.queryRepository = queryRepository;
     this.queryContentRepository = queryContentRepository;
     this.resultService = resultService;
-    this.structuredQueryValidation = structuredQueryValidation;
+    this.ccdlValidation = ccdlValidation;
     this.queryTranslator = queryTranslator;
     this.jsonSchemaValidator = jsonSchemaValidator;
     this.jsonUtil = jsonUtil;
   }
 
-  public Mono<Long> runQuery(StructuredQuery structuredQuery, String userId) {
+  private final QueryDispatcher queryDispatcher;
+
+  private final QueryRepository queryRepository;
+
+  private final QueryContentRepository queryContentRepository;
+
+  private final ResultService resultService;
+
+  private final CcdlValidation ccdlValidation;
+
+  private QueryTranslator queryTranslator;
+
+  private final JsonSchemaValidator jsonSchemaValidator;
+
+  private ObjectMapper jsonUtil;
+
+  public Mono<Long> runQuery(Ccdl ccdl, String userId) {
     try {
-      var queryId = queryDispatcher.enqueueNewQuery(structuredQuery, userId);
+      var queryId = queryDispatcher.enqueueNewQuery(ccdl, userId);
       return queryDispatcher.dispatchEnqueuedQuery(queryId)
           .thenReturn(queryId);
     } catch (QueryDispatchException e) {
@@ -72,14 +82,14 @@ public class QueryHandlerService {
   }
 
   @Transactional
-  public QueryResult getQueryResult(Long queryId, ResultDetail resultDetail) {
+  public QueryResult getQueryResult(Long queryId, de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService.ResultDetail resultDetail) {
     var singleSiteResults = resultService.findSuccessfulByQuery(queryId);
     List<QueryResultLine> resultLines = new ArrayList<>();
 
-    if (resultDetail != ResultDetail.SUMMARY) {
+    if (resultDetail != de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService.ResultDetail.SUMMARY) {
       resultLines = singleSiteResults.stream()
           .map(ssr -> QueryResultLine.builder()
-              .siteName(resultDetail == ResultDetail.DETAILED_OBFUSCATED ? RandomSiteNameGenerator.generateRandomSiteName() : ssr.siteName())
+              .siteName(resultDetail == de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService.ResultDetail.DETAILED_OBFUSCATED ? RandomSiteNameGenerator.generateRandomSiteName() : ssr.siteName())
               .numberOfPatients(ssr.result())
               .build())
           .toList();
@@ -104,21 +114,22 @@ public class QueryHandlerService {
     }
   }
 
-  public StructuredQuery getQueryContent(Long queryId) throws JsonProcessingException {
+  public Ccdl getQueryContent(Long queryId) throws JsonProcessingException {
     var queryContent = queryContentRepository.findByQueryId(queryId);
     if (queryContent.isPresent()) {
-      return jsonUtil.readValue(queryContent.get().getQueryContent(), StructuredQuery.class);
+      return jsonUtil.readValue(queryContent.get().getQueryContent(), Ccdl.class);
     } else {
       return null;
     }
   }
+
 
   private Query convertQueryToApi(de.medizininformatikinitiative.dataportal.backend.query.persistence.Query in)
       throws JsonProcessingException {
 
     return Query.builder()
         .id(in.getId())
-        .content(jsonUtil.readValue(in.getQueryContent().getQueryContent(), StructuredQuery.class))
+        .content(jsonUtil.readValue(in.getQueryContent().getQueryContent(), Ccdl.class))
         .build();
   }
 
@@ -156,8 +167,8 @@ public class QueryHandlerService {
         .build();
   }
 
-  public String translateQueryToCql(StructuredQuery structuredQuery) throws QueryTranslationException {
-    return queryTranslator.translate(structuredQuery);
+  public String translateQueryToCql(Ccdl ccdl) throws QueryTranslationException {
+    return queryTranslator.translate(ccdl);
   }
 
   public List<IssueWrapper> validateCcdl(JsonNode ccdlNode) {
@@ -171,13 +182,7 @@ public class QueryHandlerService {
     return issues;
   }
 
-  public StructuredQuery ccdlFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, StructuredQuery.class);
-  }
-
-  public enum ResultDetail {
-    SUMMARY,
-    DETAILED_OBFUSCATED,
-    DETAILED
+  public Ccdl ccdlFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, Ccdl.class);
   }
 }
