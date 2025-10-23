@@ -42,7 +42,8 @@ public class DataqueryHandlerRestController {
   private final String apiBaseUrl;
 
   public DataqueryHandlerRestController(DataqueryHandler dataqueryHandler,
-                                        StructuredQueryValidation structuredQueryValidation, @Value("${app.apiBaseUrl}") String apiBaseUrl) {
+                                        StructuredQueryValidation structuredQueryValidation,
+                                        @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.dataqueryHandler = dataqueryHandler;
     this.structuredQueryValidation = structuredQueryValidation;
     this.apiBaseUrl = apiBaseUrl;
@@ -319,5 +320,11 @@ public class DataqueryHandlerRestController {
   @GetMapping("/query-slots")
   public ResponseEntity<Object> getDataquerySlots(Principal principal) {
     return new ResponseEntity<>(dataqueryHandler.getDataquerySlotsJson(principal.getName()), HttpStatus.OK);
+  }
+
+  @PostMapping("/validate")
+  public ResponseEntity<Object> validateStructuredQuery(
+      @Valid @RequestBody Dataquery dataquery) {
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 }

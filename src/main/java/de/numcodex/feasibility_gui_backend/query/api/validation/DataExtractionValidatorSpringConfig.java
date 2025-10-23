@@ -4,44 +4,43 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.erosb.jsonsKema.JsonParser;
 import com.github.erosb.jsonsKema.Schema;
 import com.github.erosb.jsonsKema.SchemaLoader;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.dse.DseService;
+import de.numcodex.feasibility_gui_backend.query.api.DataExtraction;
 import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
-import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
+import jakarta.validation.ConstraintValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import jakarta.validation.ConstraintValidator;
-
 import java.io.InputStream;
 
 @Configuration
 @Slf4j
-public class StructuredQueryValidatorSpringConfig {
+public class DataExtractionValidatorSpringConfig {
 
-  private static final String JSON_SCHEMA = "/de/numcodex/feasibility_gui_backend/query/api/validation/query-schema.json";
+  private static final String JSON_SCHEMA = "/de/numcodex/feasibility_gui_backend/query/api/validation/data-extraction-schema.json";
 
   @Value("${app.enableQueryValidation}")
   private boolean enabled;
 
   @Bean
-  public ConstraintValidator<StructuredQueryValidation, StructuredQuery> createQueryValidator(
-      @Qualifier("ccdl") Schema schema,
+  public ConstraintValidator<DataExtractionValidation, DataExtraction> createDataExtractionValidator(
+      @Qualifier("dataExtraction") Schema schema,
       TerminologyService terminologyService,
-      TerminologyEsService terminologyEsService,
-      CodeableConceptService codeableConceptService) {
+      CodeableConceptService codeableConceptService,
+      DseService dseService) {
     return enabled
-        ? new StructuredQueryValidator(schema, terminologyService, terminologyEsService, codeableConceptService, new ObjectMapper())
-        : new StructuredQueryPassValidator();
+        ? new DataExtractionValidator(schema, terminologyService, codeableConceptService, dseService, new ObjectMapper())
+        : new DataExtractionPassValidator();
   }
 
-  @Qualifier("ccdl")
+  @Qualifier("dataExtraction")
   @Bean
-  public Schema createQueryValidatorJsonSchema() {
-    InputStream inputStream = StructuredQueryValidator.class.getResourceAsStream(JSON_SCHEMA);
+  public Schema createDataExtractionValidatorJsonSchema() {
+    InputStream inputStream = DataExtractionValidator.class.getResourceAsStream(JSON_SCHEMA);
     var jsonSchema = new JsonParser(inputStream).parse();
     return new SchemaLoader(jsonSchema).load();
   }

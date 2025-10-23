@@ -2,6 +2,7 @@ package de.numcodex.feasibility_gui_backend.query.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.Builder;
 
 @Builder
@@ -9,7 +10,7 @@ import lombok.Builder;
 public record Crtdl(
     @JsonProperty String version,
     @JsonProperty String display,
-    @JsonProperty StructuredQuery cohortDefinition,
-    @JsonProperty DataExtraction dataExtraction
+    @Valid @JsonProperty StructuredQuery cohortDefinition,
+    @Valid @JsonProperty DataExtraction dataExtraction
 ) {
 }

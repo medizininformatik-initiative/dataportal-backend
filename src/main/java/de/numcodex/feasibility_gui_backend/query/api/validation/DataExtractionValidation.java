@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = StructuredQueryValidator.class)
-public @interface StructuredQueryValidation {
-  String message() default "Structured query is invalid";
+@Constraint(validatedBy = DataExtractionValidator.class)
+public @interface DataExtractionValidation {
+  String message() default "DataExtraction is invalid";
 
   Class<?>[] groups() default {};
 

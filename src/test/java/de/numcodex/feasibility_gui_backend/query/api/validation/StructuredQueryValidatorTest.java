@@ -1,14 +1,21 @@
 package de.numcodex.feasibility_gui_backend.query.api.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.erosb.jsonsKema.JsonParser;
+import com.github.erosb.jsonsKema.SchemaLoader;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.common.api.Unit;
 import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
 import de.numcodex.feasibility_gui_backend.query.api.TimeRestriction;
 import de.numcodex.feasibility_gui_backend.query.api.ValueFilter;
+import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
+import de.numcodex.feasibility_gui_backend.terminology.UiProfileNotFoundException;
+import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
+import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import jakarta.validation.ConstraintValidatorContext;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,6 +32,8 @@ import static de.numcodex.feasibility_gui_backend.common.api.Comparator.GREATER_
 import static de.numcodex.feasibility_gui_backend.query.api.ValueFilterType.QUANTITY_COMPARATOR;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 @Tag("query")
 @Tag("api")
@@ -36,14 +45,29 @@ public class StructuredQueryValidatorTest {
   @Mock
   private ConstraintValidatorContext constraintValidatorContext;
 
-  @BeforeAll
-  public static void setUp() throws IOException {
-    validator = new StructuredQueryValidator(new ObjectMapper());
+  @Mock
+  private TerminologyService terminologyService;
+
+  @Mock
+  private TerminologyEsService terminologyEsService;
+
+  @Mock
+  private CodeableConceptService codeableConceptService;
+
+  @BeforeEach
+  public void setUp() throws IOException {
+    var jsonUtil = new ObjectMapper();
+    InputStream inputStream = StructuredQueryValidator.class.getResourceAsStream(
+        "/de/numcodex/feasibility_gui_backend/query/api/validation/query-schema.json");
+    var jsonSchema = new JsonParser(inputStream).parse();
+    var schema = new SchemaLoader(jsonSchema).load();
+    validator = new StructuredQueryValidator(schema, terminologyService, terminologyEsService, codeableConceptService, jsonUtil);
   }
 
   @Test
   public void testValidate_validQueryOk() {
     var structuredQuery = buildValidQuery();
+    doThrow(UiProfileNotFoundException.class).when(terminologyService).getUiProfile(any(String.class));
     assertTrue(validator.isValid(structuredQuery, constraintValidatorContext));
   }
 

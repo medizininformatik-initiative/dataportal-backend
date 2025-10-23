@@ -99,7 +99,7 @@ public class FeasibilityQueryHandlerRestController {
   }
 
   @PostMapping
-  public Mono<ResponseEntity<Object>> runQuery(
+  public ResponseEntity<Object> runQuery(
       @RequestBody JsonNode queryNode,
       @Context HttpServletRequest request,
       Authentication authentication)
@@ -107,7 +107,7 @@ public class FeasibilityQueryHandlerRestController {
 
     var validationErrors = queryHandlerService.validateCcdl(queryNode);
     if (!validationErrors.isEmpty()) {
-      return Mono.just(new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST));
+      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
     }
 
     var query = queryHandlerService.ccdlFromJsonNode(queryNode);
@@ -122,9 +122,8 @@ public class FeasibilityQueryHandlerRestController {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
               .build();
-      return Mono.just(
-          new ResponseEntity<>(issues,
-              HttpStatus.FORBIDDEN));
+      return new ResponseEntity<>(issues,
+              HttpStatus.FORBIDDEN);
     }
 
     Long amountOfQueriesByUserAndHardInterval = queryHandlerService.getAmountOfQueriesByUserAndInterval(
@@ -148,9 +147,8 @@ public class FeasibilityQueryHandlerRestController {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
               .build();
-      return Mono.just(
-          new ResponseEntity<>(issues,
-              HttpStatus.FORBIDDEN));
+      return new ResponseEntity<>(issues,
+              HttpStatus.FORBIDDEN);
     }
     Long amountOfQueriesByUserAndSoftInterval = queryHandlerService.getAmountOfQueriesByUserAndInterval(
         userId, quotaSoftCreateInterval);
@@ -162,13 +160,10 @@ public class FeasibilityQueryHandlerRestController {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.QUOTA_EXCEEDED))
               .build();
-      return Mono.just(
-          new ResponseEntity<>(issues, httpHeaders,
-              HttpStatus.TOO_MANY_REQUESTS));
+      return new ResponseEntity<>(issues, httpHeaders,
+              HttpStatus.TOO_MANY_REQUESTS);
     }
-    // Note: this is using a ResponseEntity instead of a ServerResponse since this is a
-    //       @Controller annotated class. This can be adjusted as soon as we switch to the new
-    //       functional web framework (if ever).
+
     return queryHandlerService.runQuery(query, userId)
         .map(queryId -> buildResultLocationUri(request, queryId))
         .map(resultLocation -> ResponseEntity.created(resultLocation).build())
@@ -176,7 +171,7 @@ public class FeasibilityQueryHandlerRestController {
           log.error("running a query for '%s' failed".formatted(userId), e);
           return Mono.just(ResponseEntity.internalServerError()
               .body(e.getMessage()));
-        });
+        }).block();
   }
 
   private URI buildResultLocationUri(HttpServletRequest httpServletRequest,

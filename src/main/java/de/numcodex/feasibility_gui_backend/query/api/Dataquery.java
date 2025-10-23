@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.Builder;
 
 import java.sql.Timestamp;
@@ -13,7 +14,7 @@ import java.sql.Timestamp;
 @Builder
 public record Dataquery(
     @JsonProperty long id,
-    @JsonProperty Crtdl content,
+    @Valid @JsonProperty Crtdl content,
     @JsonProperty String label,
     @JsonProperty String comment,
     @JsonProperty String lastModified,

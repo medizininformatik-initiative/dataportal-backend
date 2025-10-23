@@ -1,6 +1,7 @@
 package de.numcodex.feasibility_gui_backend.terminology.es;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.aggregations.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.terminology.api.CcSearchResult;
@@ -11,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -19,13 +22,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -83,6 +81,50 @@ public class CodeableConceptService {
     } catch (IndexOutOfBoundsException e) {
       return null;
     }
+  }
+
+  public List<String> availableCodesInValueSets(List<String> codes, List<String> valueSetUrls) {
+    if (codes == null || codes.isEmpty() || valueSetUrls == null || valueSetUrls.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
+    var codesFound = new ArrayList<String>();
+
+    var termsQueryField = new TermsQueryField.Builder()
+        .value(valueSetUrls.stream().map(FieldValue::of).distinct().toList())
+        .build();
+
+    var termsQuery = new TermsQuery.Builder()
+        .field("value_sets")
+        .terms(termsQueryField)
+        .build();
+
+    var termsInclude = new TermsInclude.Builder()
+        .terms(codes)
+        .build();
+
+    var aggregationQuery = NativeQuery.builder()
+        .withQuery(termsQuery._toQuery())
+        .withAggregation("existing_codes",
+            Aggregation.of(a ->
+                a.terms(ta ->
+                    ta.field("termcode.code.keyword")
+                        .include(termsInclude)
+                        .size(1000)
+                )))
+        .withMaxResults(0)
+        .build();
+
+    var searchHits = operations.search(aggregationQuery, CodeableConceptDocument.class);
+    var aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
+    assert aggregations != null;
+    List<StringTermsBucket> buckets = aggregations.aggregationsAsMap().get("existing_codes").aggregation().getAggregate().sterms().buckets().array();
+    buckets.forEach(bucket -> {
+      if (bucket.docCount() > 0 ) {
+        codesFound.add(bucket.key().stringValue());
+      }
+    });
+
+    return codesFound;
   }
 
   private SearchHits<CodeableConceptDocument> findByCodeOrDisplay(String keyword,
