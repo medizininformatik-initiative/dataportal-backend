@@ -76,6 +76,7 @@ public class DataqueryHandlerRestController {
     return new ResponseEntity<>(dataquerySlots, httpHeaders, HttpStatus.CREATED);
   }
 
+  @Deprecated
   @GetMapping(path = "/{dataqueryId}")
   public ResponseEntity<Object> getDataquery(@PathVariable(value = "dataqueryId") Long dataqueryId,
                                                  @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation,
@@ -184,6 +185,7 @@ public class DataqueryHandlerRestController {
                     .isValid(true) // TODO: Add validation for that
                     .build())
                 .expiresAt(dq.expiresAt())
+                .createdBy(dq.createdBy())
                 .build()
         );
       });

@@ -50,9 +50,7 @@ public class Dataquery {
     out.setId(in.id() > 0 ? in.id() : null);
     out.setLabel(in.label());
     out.setComment(in.comment());
-    if (in.lastModified() != null) {
-      out.setLastModified(Timestamp.valueOf(in.lastModified()));
-    }
+    out.setLastModified(in.lastModified());
     out.setCreatedBy(in.createdBy());
     out.setResultSize(in.resultSize());
     out.setCrtdl(jsonUtil.writeValueAsString(in.content()));

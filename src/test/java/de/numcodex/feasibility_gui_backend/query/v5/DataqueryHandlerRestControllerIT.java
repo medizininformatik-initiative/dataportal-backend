@@ -398,7 +398,7 @@ public class DataqueryHandlerRestControllerIT {
                 .content(createCrtdl())
                 .label("TestLabel")
                 .comment("TestComment")
-                .lastModified(new Timestamp(new Date().getTime()).toString())
+                .lastModified(new Timestamp(new Date().getTime()))
                 .createdBy("someone")
                 .ccdl(CrtdlSectionInfo.builder()
                     .isValid(true)

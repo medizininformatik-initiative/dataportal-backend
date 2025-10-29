@@ -52,7 +52,7 @@ result_location=$(echo "$response" | grep -i location | awk '{print $2}')
 sleep 5
 nr_of_pats=$(curl -v \
   --url "${result_location%?}/summary-result" \
-  --header "Authorization: Bearer $access_token" | jq '.totalNumberOfPatients')
+  --header "Authorization: Bearer $access_token" | jq '.resultSize')
 
 echo "nr of pats: $nr_of_pats"
 

@@ -321,7 +321,7 @@ public class RateLimitingInterceptorIT {
 
     return QueryResult.builder()
         .queryId(1L)
-        .totalNumberOfPatients(123L)
+        .resultSize(123L)
         .resultLines(queryResultLines)
         .build();
   }

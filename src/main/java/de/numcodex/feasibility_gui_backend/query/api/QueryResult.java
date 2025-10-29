@@ -6,7 +6,7 @@ import java.util.List;
 
 @Builder
 public record QueryResult(
-    long totalNumberOfPatients,
+    long resultSize,
     Long queryId,
     List<QueryResultLine> resultLines
 ) {

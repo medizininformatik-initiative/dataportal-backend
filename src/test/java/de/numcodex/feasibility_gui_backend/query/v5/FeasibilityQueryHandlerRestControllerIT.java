@@ -310,16 +310,16 @@ public class FeasibilityQueryHandlerRestControllerIT {
         switch (resultDetail) {
             case SUMMARY -> mockMvc.perform(get(requestUri).with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalNumberOfPatients").exists())
+                    .andExpect(jsonPath("$.resultSize").exists())
                     .andExpect(jsonPath("$.resultLines", empty()));
             case DETAILED_OBFUSCATED -> mockMvc.perform(get(requestUri).with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalNumberOfPatients").exists())
+                    .andExpect(jsonPath("$.resultSize").exists())
                     .andExpect(jsonPath("$.resultLines").exists())
                     .andExpect(jsonPath("$.resultLines[0].siteName", startsWith("foobar")));
             case DETAILED -> mockMvc.perform(get(requestUri).with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.totalNumberOfPatients").exists())
+                    .andExpect(jsonPath("$.resultSize").exists())
                     .andExpect(jsonPath("$.resultLines").exists())
                     .andExpect(jsonPath("$.resultLines[0].siteName", not(startsWith("foobar"))));
         }
@@ -523,11 +523,11 @@ public class FeasibilityQueryHandlerRestControllerIT {
     @NotNull
     private static QueryResult createTestQueryResult(QueryHandlerService.ResultDetail resultDetail) {
         List<QueryResultLine> queryResultLines;
-        long totalNumberOfPatients;
+        long resultSize;
 
         if (resultDetail == QueryHandlerService.ResultDetail.SUMMARY) {
-            queryResultLines = List.of();
-            totalNumberOfPatients = 999L;
+          queryResultLines = List.of();
+          resultSize = 999L;
         } else {
             var resultLines = List.of(
                     ResultLine.builder()
@@ -554,12 +554,12 @@ public class FeasibilityQueryHandlerRestControllerIT {
                             .build())
                     .toList();
 
-            totalNumberOfPatients = queryResultLines.stream().map(QueryResultLine::numberOfPatients).reduce(0L, Long::sum);
+          resultSize = queryResultLines.stream().map(QueryResultLine::numberOfPatients).reduce(0L, Long::sum);
         }
 
         return QueryResult.builder()
                 .queryId(1L)
-                .totalNumberOfPatients(totalNumberOfPatients)
+                .resultSize(resultSize)
                 .resultLines(queryResultLines)
                 .build();
     }
@@ -595,7 +595,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
         return QueryResult.builder()
                 .queryId(1L)
-                .totalNumberOfPatients(queryResultLines.stream().map(QueryResultLine::numberOfPatients).reduce(0L, Long::sum))
+                .resultSize(queryResultLines.stream().map(QueryResultLine::numberOfPatients).reduce(0L, Long::sum))
                 .resultLines(queryResultLines)
                 .build();
     }
