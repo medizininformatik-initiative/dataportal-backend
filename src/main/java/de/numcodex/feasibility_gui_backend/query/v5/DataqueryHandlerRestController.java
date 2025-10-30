@@ -9,6 +9,7 @@ import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryException;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryHandler;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryStorageFullException;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import static de.numcodex.feasibility_gui_backend.config.WebSecurityConfig.*;
 /*
 Rest Interface for the UI to send and receive dataqueries from the backend.
 */
+@Tag(name = "Dataquery", description = "Operations for dataqueries")
 @RequestMapping(PATH_API + PATH_QUERY + PATH_DATA)
 @RestController("DataqueryHandlerRestController-v5")
 @Slf4j

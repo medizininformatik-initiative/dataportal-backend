@@ -14,6 +14,7 @@ import de.numcodex.feasibility_gui_backend.query.ratelimiting.InvalidAuthenticat
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingService;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslationException;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Produces;
@@ -45,6 +46,7 @@ import static de.numcodex.feasibility_gui_backend.config.WebSecurityConfig.*;
 /*
 Rest Interface for the UI to send queries from the ui to the ui backend.
 */
+@Tag(name = "Feasibility Query", description = "Operations for feasibility queries")
 @RequestMapping(PATH_API + PATH_QUERY + PATH_FEASIBILITY)
 @RestController("FeasibilityQueryHandlerRestController-v5")
 @Slf4j

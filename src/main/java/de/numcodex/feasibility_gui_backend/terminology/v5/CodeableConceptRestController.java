@@ -3,6 +3,7 @@ package de.numcodex.feasibility_gui_backend.terminology.v5;
 import de.numcodex.feasibility_gui_backend.terminology.api.CcSearchResult;
 import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptEntry;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Codeable Concepts", description = "Operations on codeable concepts")
 @RestController
 @RequestMapping("api/v5/codeable-concept")
 @ConditionalOnExpression("${app.elastic.enabled}")

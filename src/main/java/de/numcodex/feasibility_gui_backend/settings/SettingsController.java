@@ -3,11 +3,13 @@ package de.numcodex.feasibility_gui_backend.settings;
 import java.util.Map;
 
 import de.numcodex.feasibility_gui_backend.config.WebSecurityConfig;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Settings", description = "Information needed by the frontend")
 @RestController
 @CrossOrigin(origins = "${cors.allowedOrigins}", exposedHeaders = "Location")
 public class SettingsController {

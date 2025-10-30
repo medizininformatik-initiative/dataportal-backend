@@ -5,6 +5,7 @@ import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.api.*;
 import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.TermFilter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
@@ -17,7 +18,7 @@ import java.util.List;
  terminology information from the ui terminology service
  */
 
-
+@Tag(name = "Terminology", description = "Operations to work with the ontology")
 @RequestMapping("api/v5/terminology")
 @RestController
 @CrossOrigin
