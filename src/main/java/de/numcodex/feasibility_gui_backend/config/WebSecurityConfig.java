@@ -51,6 +51,7 @@ public class WebSecurityConfig {
   public static final String PATH_CODEABLE_CONCEPT = "/codeable-concept";
   public static final String PATH_SWAGGER_UI = "/swagger-ui/**";
   public static final String PATH_SWAGGER_CONFIG = "/v3/api-docs/**";
+  public static final String PATH_SETTINGS = "/.settings";
   @Value("${app.keycloakAllowedRole}")
   private String keycloakAllowedRole;
 
@@ -97,6 +98,7 @@ public class WebSecurityConfig {
       Converter<Jwt, ? extends AbstractAuthenticationToken> authenticationConverter) throws Exception {
 
     http.authorizeHttpRequests(authorize -> authorize
+            .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_SETTINGS)).permitAll()
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_SWAGGER_CONFIG)).permitAll()
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_ACTUATOR_HEALTH)).permitAll()
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_ACTUATOR_INFO)).permitAll()

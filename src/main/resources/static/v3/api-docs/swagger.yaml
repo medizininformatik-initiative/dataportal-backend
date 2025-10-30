@@ -869,11 +869,25 @@ paths:
       operationId: ''
       responses:
         200:
-          description: Successful health information.
+          description: Successful build information.
           content:
             application/vnd.spring-boot.actuator.v3+json:
               schema:
                 $ref: "#/components/schemas/SystemInfo"
+      tags:
+        - intrinsics
+  /.settings:
+    get:
+      summary: Offers config settings needed by the frontend.
+      description: ''
+      operationId: ''
+      responses:
+        200:
+          description: Successful health information.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsInfo"
       tags:
         - intrinsics
 components:
@@ -1672,6 +1686,54 @@ components:
           $ref: "#/components/schemas/BuildInfo"
         terminology:
           $ref: "#/components/schemas/Terminology"
+    SettingsInfo:
+      type: object
+      properties:
+        uiBackendApiPath:
+          type: string
+          examples:
+            - /api/v5
+        readResultSummaryPollingInterval:
+          type: string
+          format: duration
+          examples:
+            - PT1M
+        readResultDetailedObfuscatedPollingInterval:
+          type: string
+          format: duration
+          examples:
+            - PT10S
+        readResultDetailedObfuscatedAmount:
+          type: number
+          examples:
+            - 3
+        readResultDetailedObfuscatedInterval:
+          type: string
+          format: duration
+          examples:
+            - PT10S
+        passthroughPollingTimeUi:
+          type: string
+          format: duration
+          examples:
+            - PT1M
+        passthroughCcdlVersion:
+          type: string
+          examples:
+            - v1
+        passthroughPortalLink:
+          type: string
+          examples:
+            - https://antrag.forschen-fuer-gesundheit.de
+        passthroughDsePatientProfileUrl:
+          type: string
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert
+        maxSavedQueriesPerUser:
+          type: number
+          examples:
+            - 10
+
   securitySchemes:
     dataportal_auth:
       type: oauth2
