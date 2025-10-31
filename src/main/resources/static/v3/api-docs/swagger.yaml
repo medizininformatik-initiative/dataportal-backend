@@ -731,6 +731,23 @@ paths:
           description: Unauthorized - please login first.
         403:
           description: Forbidden - insufficient access rights.
+  /terminology/ui-profile:
+    get:
+      tags:
+        - terminology
+      summary: Get a List of all UiProfiles
+      operationId: getUiProfiles
+      responses:
+        200:
+          description: Get all UiProfiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UiProfileList"
+        401:
+          description: Unauthorized - please login first.
+        403:
+          description: Forbidden - insufficient access rights.
   /codeable-concept/entry/search:
     get:
       tags:
@@ -1412,7 +1429,9 @@ components:
           items:
             $ref: "#/components/schemas/TermCode"
         uiProfile:
-          $ref: "#/components/schemas/UiProfileEntry"
+          type: string
+          examples:
+            - Bioprobe
     UiProfileEntry:
       type: object
       properties:
@@ -1430,6 +1449,20 @@ components:
             - false
         valueDefinition:
           type: string
+    UiProfileListEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - Bioprobe
+            - Patient1
+        uiProfile:
+          $ref: "#/components/schemas/UiProfileEntry"
+    UiProfileList:
+      type: array
+      items:
+        $ref: "#/components/schemas/UiProfileListEntry"
     AttributeDefinition:
       type: object
       properties:

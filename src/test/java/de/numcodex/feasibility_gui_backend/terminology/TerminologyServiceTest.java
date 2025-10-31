@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.DisplayEntry;
 import de.numcodex.feasibility_gui_backend.terminology.api.CriteriaProfileData;
 import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.UiProfileEntry;
 import de.numcodex.feasibility_gui_backend.terminology.persistence.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -117,9 +118,9 @@ class TerminologyServiceTest {
         boolean excludeTermcodes = Boolean.parseBoolean(noTermcodes);
 
         if (excludeUiProfile) {
-            doReturn(Optional.empty()).when(uiProfileRepository).findByContextualizedTermcodeHash(any(String.class));
+            doReturn(Optional.empty()).when(uiProfileRepository).getUiProfileNameByContextualizedTermcodeHash(any(String.class));
         } else {
-            doReturn(Optional.of(createUiProfile())).when(uiProfileRepository).findByContextualizedTermcodeHash(any(String.class));
+            doReturn(Optional.of("Patient")).when(uiProfileRepository).getUiProfileNameByContextualizedTermcodeHash(any(String.class));
         }
         if (excludeContext) {
             doReturn(Optional.empty()).when(termCodeRepository).findContextByContextualizedTermcodeHash(any(String.class));
@@ -141,8 +142,27 @@ class TerminologyServiceTest {
             assertThat(cpd.id()).isEqualTo(ids.get(i));
             assertThat(cpd.context() == null).isEqualTo(excludeContext);
             assertThat(cpd.termCodes().isEmpty()).isEqualTo(excludeTermcodes);
-            assertThat(cpd.uiProfile() == null).isEqualTo(excludeUiProfile);
+            assertThat(cpd.uiProfile().equalsIgnoreCase("undefined")).isEqualTo(excludeUiProfile);
         }
+    }
+
+    @Test
+    void getUiProfiles_succeeds() throws IOException {
+      var terminologyService = createTerminologyService();
+      doReturn(List.of(createUiProfile())).when(uiProfileRepository).findAll();
+
+      var result = assertDoesNotThrow(terminologyService::getUiProfiles);
+
+      assertThat(result.size()).isEqualTo(1);
+      assertThat(result.get(0)).isInstanceOf(UiProfileEntry.class);
+    }
+
+    @Test
+    void getUiProfiles_throwsOnInvalidProfile() throws IOException {
+      var terminologyService = createTerminologyService();
+      doReturn(List.of(createBogousUiProfile())).when(uiProfileRepository).findAll();
+
+      assertThrows(RuntimeException.class, () -> terminologyService.getUiProfiles());
     }
 
     @Test
@@ -177,7 +197,7 @@ class TerminologyServiceTest {
                 .version("version")
                 .build())
             .termCodes(List.of(tc))
-            .uiProfile(de.numcodex.feasibility_gui_backend.terminology.api.UiProfile.builder().build())
+            .uiProfile("Patient")
             .build();
 
         EsSearchResultEntry esSearchResultEntry = EsSearchResultEntry.builder()
@@ -216,7 +236,15 @@ class TerminologyServiceTest {
         return uiProfile;
     }
 
-    private TermCode createTermCode() {
+    private UiProfile createBogousUiProfile() throws JsonProcessingException {
+      var uiProfile = new UiProfile();
+      uiProfile.setId(1L);
+      uiProfile.setName("example");
+      uiProfile.setUiProfile("this is not a valid profile entry");
+      return uiProfile;
+    }
+
+  private TermCode createTermCode() {
         TermCode termCode = new TermCode();
         termCode.setId(1L);
         termCode.setCode("LL2191-6");

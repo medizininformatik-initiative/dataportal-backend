@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.terminology.api.*;
+import de.numcodex.feasibility_gui_backend.terminology.api.UiProfile;
 import de.numcodex.feasibility_gui_backend.terminology.persistence.*;
-import de.numcodex.feasibility_gui_backend.terminology.persistence.UiProfile;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,6 @@ public class TerminologyService {
 
   private final TermCodeRepository termCodeRepository;
 
-
   @Getter
   private final List<TerminologySystemEntry> terminologySystems;
 
@@ -42,14 +41,9 @@ public class TerminologyService {
     this.terminologySystems = jsonUtil.readValue(new URL("file:" + terminologySystemsFilename), new TypeReference<>() {});
   }
 
-  public String getUiProfile(String contextualizedTermCodeHash)
-          throws UiProfileNotFoundException {
-    Optional<UiProfile> uiProfile = uiProfileRepository.findByContextualizedTermcodeHash(contextualizedTermCodeHash);
-    if (uiProfile.isPresent()) {
-      return uiProfile.get().getUiProfile();
-    } else {
-      throw new UiProfileNotFoundException();
-    }
+  public String getUiProfileName(String contextualizedTermCodeHash) {
+    Optional<String> uiProfileName = uiProfileRepository.getUiProfileNameByContextualizedTermcodeHash(contextualizedTermCodeHash);
+    return uiProfileName.orElse("undefined");
   }
 
   public boolean isExistingTermCode(String system, String code) {
@@ -67,15 +61,9 @@ public class TerminologyService {
     for (String id : criteriaIds) {
       TermCode tc = termCodeRepository.findTermCodeByContextualizedTermcodeHash(id).orElse(null);
       Context c = termCodeRepository.findContextByContextualizedTermcodeHash(id).orElse(null);
-      de.numcodex.feasibility_gui_backend.terminology.api.UiProfile uiProfile;
       de.numcodex.feasibility_gui_backend.common.api.TermCode context;
       List<de.numcodex.feasibility_gui_backend.common.api.TermCode> termCodes = new ArrayList<>();
-      try {
-        uiProfile = jsonUtil.readValue(getUiProfile(id), de.numcodex.feasibility_gui_backend.terminology.api.UiProfile.class);
-      } catch (UiProfileNotFoundException | JsonProcessingException e) {
-        log.debug("Error trying to read ui profile", e);
-        uiProfile = null;
-      }
+
       if (c != null) {
         context = de.numcodex.feasibility_gui_backend.common.api.TermCode.builder()
             .code(c.getCode())
@@ -99,7 +87,7 @@ public class TerminologyService {
       results.add(
           CriteriaProfileData.builder()
               .id(id)
-              .uiProfile(uiProfile)
+              .uiProfile(getUiProfileName(id))
               .context(context)
               .termCodes(termCodes)
               .build()
@@ -120,5 +108,22 @@ public class TerminologyService {
       }
     }
     return result;
+  }
+
+  public List<UiProfileEntry> getUiProfiles() {
+    var uiProfiles = uiProfileRepository.findAll();
+    var convertedUiProfiles = uiProfiles.stream()
+        .map(uip ->{
+          try {
+            return jsonUtil.readValue(uip.getUiProfile(), UiProfile.class);
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to parse uiProfile: " + uip.getUiProfile(), e);
+          }
+        })
+        .toList();
+
+    return convertedUiProfiles.stream()
+        .map(UiProfileEntry::of)
+        .toList();
   }
 }

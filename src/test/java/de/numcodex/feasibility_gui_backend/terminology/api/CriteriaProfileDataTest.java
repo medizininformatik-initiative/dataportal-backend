@@ -44,7 +44,7 @@ class CriteriaProfileDataTest {
             .version("version")
             .build())
         .termCodes(List.of(tc1))
-        .uiProfile(UiProfile.builder().build())
+        .uiProfile("Patient")
         .build();
 
     assertEquals(a, b);
@@ -136,7 +136,7 @@ class CriteriaProfileDataTest {
             .version("version")
             .build())
         .termCodes(List.of(tc))
-        .uiProfile(UiProfile.builder().build())
+        .uiProfile("Patient")
         .build();
 
     assertNull(cpd.display());

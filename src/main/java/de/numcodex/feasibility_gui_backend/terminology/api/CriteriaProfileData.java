@@ -17,7 +17,7 @@ public record CriteriaProfileData(
     @JsonProperty("display") DisplayEntry display,
     @JsonProperty("context") TermCode context,
     @JsonProperty("termCodes") List<TermCode> termCodes,
-    @JsonProperty("uiProfile") UiProfile uiProfile
+    @JsonProperty("uiProfile") String uiProfile
 ) {
     public CriteriaProfileData {
         termCodes = termCodes == null ? List.of() : termCodes;
