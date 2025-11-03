@@ -705,7 +705,7 @@ paths:
     get:
       tags:
         - terminology
-      summary: Get the profile data for criteria, containing uiProfile context and termCodes
+      summary: Get the profile data for criteria, containing uiProfileId context and termCodes
       description: This should return all the information needed to build criteria in the frontend.
       operationId: getEntriesByIdsWithDetail
       parameters:
@@ -727,6 +727,23 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CriteriaProfileData"
+        401:
+          description: Unauthorized - please login first.
+        403:
+          description: Forbidden - insufficient access rights.
+  /terminology/ui-profile:
+    get:
+      tags:
+        - terminology
+      summary: Get a List of all UiProfiles
+      operationId: getUiProfiles
+      responses:
+        200:
+          description: Get all UiProfiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UiProfileList"
         401:
           description: Unauthorized - please login first.
         403:
@@ -1411,8 +1428,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TermCode"
-        uiProfile:
-          $ref: "#/components/schemas/UiProfileEntry"
+        uiProfileId:
+          type: string
+          examples:
+            - Bioprobe
     UiProfileEntry:
       type: object
       properties:
@@ -1430,6 +1449,20 @@ components:
             - false
         valueDefinition:
           type: string
+    UiProfileListEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - Bioprobe
+            - Patient1
+        uiProfile:
+          $ref: "#/components/schemas/UiProfileEntry"
+    UiProfileList:
+      type: array
+      items:
+        $ref: "#/components/schemas/UiProfileListEntry"
     AttributeDefinition:
       type: object
       properties:

@@ -41,6 +41,11 @@ public class TerminologyRestController {
         return terminologyService.addDisplayDataToCriteriaProfileData(criteriaProfileData, displayData);
     }
 
+    @GetMapping("ui-profile")
+    public List<UiProfileEntry> getUiProfiles() {
+      return terminologyService.getUiProfiles();
+    }
+
     @GetMapping(value = "systems", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<TerminologySystemEntry> getTerminologySystems() {
         return terminologyService.getTerminologySystems();
