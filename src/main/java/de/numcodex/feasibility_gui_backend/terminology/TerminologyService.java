@@ -87,7 +87,7 @@ public class TerminologyService {
       results.add(
           CriteriaProfileData.builder()
               .id(id)
-              .uiProfile(getUiProfileName(id))
+              .uiProfileId(getUiProfileName(id))
               .context(context)
               .termCodes(termCodes)
               .build()
@@ -117,7 +117,7 @@ public class TerminologyService {
           try {
             return jsonUtil.readValue(uip.getUiProfile(), UiProfile.class);
           } catch (Exception e) {
-            throw new RuntimeException("Failed to parse uiProfile: " + uip.getUiProfile(), e);
+            throw new RuntimeException("Failed to parse uiProfileId: " + uip.getUiProfile(), e);
           }
         })
         .toList();

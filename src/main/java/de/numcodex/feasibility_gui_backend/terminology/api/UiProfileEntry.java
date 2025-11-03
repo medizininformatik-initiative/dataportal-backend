@@ -9,7 +9,7 @@ import lombok.Builder;
 @JsonInclude(Include.ALWAYS)
 public record UiProfileEntry(
     @JsonProperty("id") String id,
-    @JsonProperty("uiProfile") UiProfile uiProfile
+    @JsonProperty("uiProfileId") UiProfile uiProfile
 ) {
   public static UiProfileEntry of(UiProfile uiProfile) {
     return UiProfileEntry.builder()

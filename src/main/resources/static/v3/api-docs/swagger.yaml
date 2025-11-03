@@ -705,7 +705,7 @@ paths:
     get:
       tags:
         - terminology
-      summary: Get the profile data for criteria, containing uiProfile context and termCodes
+      summary: Get the profile data for criteria, containing uiProfileId context and termCodes
       description: This should return all the information needed to build criteria in the frontend.
       operationId: getEntriesByIdsWithDetail
       parameters:
@@ -1428,7 +1428,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TermCode"
-        uiProfile:
+        uiProfileId:
           type: string
           examples:
             - Bioprobe

@@ -142,7 +142,7 @@ class TerminologyServiceTest {
             assertThat(cpd.id()).isEqualTo(ids.get(i));
             assertThat(cpd.context() == null).isEqualTo(excludeContext);
             assertThat(cpd.termCodes().isEmpty()).isEqualTo(excludeTermcodes);
-            assertThat(cpd.uiProfile().equalsIgnoreCase("undefined")).isEqualTo(excludeUiProfile);
+            assertThat(cpd.uiProfileId().equalsIgnoreCase("undefined")).isEqualTo(excludeUiProfile);
         }
     }
 
@@ -197,7 +197,7 @@ class TerminologyServiceTest {
                 .version("version")
                 .build())
             .termCodes(List.of(tc))
-            .uiProfile("Patient")
+            .uiProfileId("Patient")
             .build();
 
         EsSearchResultEntry esSearchResultEntry = EsSearchResultEntry.builder()

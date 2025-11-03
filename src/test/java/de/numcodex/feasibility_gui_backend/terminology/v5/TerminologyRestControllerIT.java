@@ -271,7 +271,7 @@ public class TerminologyRestControllerIT {
                     .id(uuid.toString())
                     .context(createTermCode())
                     .termCodes(List.of(createTermCode()))
-                    .uiProfile("Patient")
+                    .uiProfileId("Patient")
                     .build()
             );
         }
