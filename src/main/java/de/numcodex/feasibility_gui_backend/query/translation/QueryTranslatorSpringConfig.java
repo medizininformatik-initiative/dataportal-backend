@@ -120,7 +120,8 @@ public class QueryTranslatorSpringConfig {
                         entry("http://fhir.de/CodeSystem/Kontaktebene", "kontaktebene"),
                         entry("http://www.orpha.net", "orphanet"),
                         entry("fdpg.consent.combined", "fdpgcombinedconsent"),
-                        entry("http://hl7.org/fhir/consent-provision-type", "provisiontype"))));
+                        entry("http://hl7.org/fhir/consent-provision-type", "provisiontype"),
+                        entry("http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation", "v3ObsInterpretation"))));
     }
 
 
