@@ -6,7 +6,6 @@ import com.github.erosb.jsonsKema.Schema;
 import com.github.erosb.jsonsKema.SchemaLoader;
 import de.numcodex.feasibility_gui_backend.dse.DseService;
 import de.numcodex.feasibility_gui_backend.query.api.DataExtraction;
-import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
 import jakarta.validation.ConstraintValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +28,10 @@ public class DataExtractionValidatorSpringConfig {
   @Bean
   public ConstraintValidator<DataExtractionValidation, DataExtraction> createDataExtractionValidator(
       @Qualifier("dataExtraction") Schema schema,
-      TerminologyService terminologyService,
       CodeableConceptService codeableConceptService,
       DseService dseService) {
     return enabled
-        ? new DataExtractionValidator(schema, terminologyService, codeableConceptService, dseService, new ObjectMapper())
+        ? new DataExtractionValidator(schema, codeableConceptService, dseService, new ObjectMapper())
         : new DataExtractionPassValidator();
   }
 
