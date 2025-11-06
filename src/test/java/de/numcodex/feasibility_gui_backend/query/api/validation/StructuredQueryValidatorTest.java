@@ -10,11 +10,10 @@ import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
 import de.numcodex.feasibility_gui_backend.query.api.TimeRestriction;
 import de.numcodex.feasibility_gui_backend.query.api.ValueFilter;
 import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
-import de.numcodex.feasibility_gui_backend.terminology.UiProfileNotFoundException;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
 import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import jakarta.validation.ConstraintValidatorContext;
-import org.junit.jupiter.api.BeforeAll;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -33,17 +32,22 @@ import static de.numcodex.feasibility_gui_backend.query.api.ValueFilterType.QUAN
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @Tag("query")
 @Tag("api")
 @Tag("validation")
 @ExtendWith(MockitoExtension.class)
 public class StructuredQueryValidatorTest {
+
   public static StructuredQueryValidator validator;
 
   @Mock
   private ConstraintValidatorContext constraintValidatorContext;
+
+  @Mock
+  private ConstraintValidatorContext.ConstraintViolationBuilder violationBuilder;
 
   @Mock
   private TerminologyService terminologyService;
@@ -61,13 +65,19 @@ public class StructuredQueryValidatorTest {
         "/de/numcodex/feasibility_gui_backend/query/api/validation/query-schema.json");
     var jsonSchema = new JsonParser(inputStream).parse();
     var schema = new SchemaLoader(jsonSchema).load();
+
+    lenient().when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString()))
+        .thenReturn(violationBuilder);
+    lenient().when(violationBuilder.addConstraintViolation())
+        .thenReturn(constraintValidatorContext);
     validator = new StructuredQueryValidator(schema, terminologyService, terminologyEsService, codeableConceptService, jsonUtil);
   }
 
   @Test
   public void testValidate_validQueryOk() {
     var structuredQuery = buildValidQuery();
-    doThrow(UiProfileNotFoundException.class).when(terminologyService).getUiProfile(any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
     assertTrue(validator.isValid(structuredQuery, constraintValidatorContext));
   }
 
@@ -366,6 +376,42 @@ public class StructuredQueryValidatorTest {
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
         .exclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
         .build();
+  }
+
+  @NotNull
+  private String createValidUiProfileString() {
+    return """
+          {
+              "attributeDefinitions": [],
+              "name": "Patient1",
+              "timeRestrictionAllowed": false,
+              "valueDefinition": {
+                  "allowedUnits": [],
+                  "display": {
+                      "original": "Geschlecht",
+                      "translations": [
+                          {
+                              "language": "en-US",
+                              "value": "Gender"
+                          },
+                          {
+                              "language": "de-DE",
+                              "value": "Geschlecht"
+                          }
+                      ]
+                  },
+                  "max": null,
+                  "min": null,
+                  "optional": false,
+                  "precision": 1,
+                  "referencedCriteriaSet": [],
+                  "referencedValueSet": [
+                      "http://hl7.org/fhir/ValueSet/administrative-gender"
+                  ],
+                  "type": "concept"
+              }
+          }
+          """;
   }
 
 }

@@ -19,6 +19,9 @@ import de.numcodex.feasibility_gui_backend.query.api.validation.StructuredQueryV
 import de.numcodex.feasibility_gui_backend.query.persistence.UserBlacklistRepository;
 import de.numcodex.feasibility_gui_backend.query.result.ResultLine;
 import de.numcodex.feasibility_gui_backend.query.v5.FeasibilityQueryHandlerRestController;
+import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
+import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
+import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
 
 import java.net.URI;
@@ -72,6 +75,15 @@ public class RateLimitingInterceptorIT {
 
   @MockitoBean
   private UserBlacklistRepository userBlacklistRepository;
+
+  @MockitoBean
+  private TerminologyEsService terminologyEsService;
+
+  @MockitoBean
+  private TerminologyService terminologyService;
+
+  @MockitoBean
+  private CodeableConceptService codeableConceptService;
 
   @BeforeEach
   void setupMockBehaviour() throws InvalidAuthenticationException {

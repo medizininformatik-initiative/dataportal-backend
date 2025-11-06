@@ -22,6 +22,9 @@ import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingInterc
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingServiceSpringConfig;
 import de.numcodex.feasibility_gui_backend.query.result.ResultLine;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslationException;
+import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
+import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
+import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
 
 import java.sql.Timestamp;
@@ -70,7 +73,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(
         controllers = FeasibilityQueryHandlerRestController.class,
         properties = {
-                "app.enableQueryValidation=true"
+                "app.enableQueryValidation=false"
         }
 )
 @SuppressWarnings("NewClassNamingConvention")
@@ -101,6 +104,15 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
     @MockitoBean
     private AuthenticationHelper authenticationHelper;
+
+    @MockitoBean
+    private TerminologyEsService terminologyEsService;
+
+    @MockitoBean
+    private TerminologyService terminologyService;
+
+    @MockitoBean
+    private CodeableConceptService codeableConceptService;
 
     @Value("${app.privacy.quota.soft.create.amount}")
     private int quotaSoftCreateAmount;
@@ -138,10 +150,6 @@ public class FeasibilityQueryHandlerRestControllerIT {
         var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(jsonUtil.writeValueAsString(testQuery)))
-            .andExpect(request().asyncStarted())
-            .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
             .andExpect(status().isBadRequest());
     }
 
@@ -153,19 +161,17 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
         doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
         doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
         doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-        var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+        mockMvc.perform(post(URI.create(PATH)).with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(jsonUtil.writeValueAsString(testQuery)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("location"))
-                .andExpect(header().string("location", PATH + "/1"));
+                        .andExpect(status().isCreated())
+                        .andExpect(header().exists("location"))
+                        .andExpect(header().string("location", PATH + "/1"));
     }
 
     @Test
@@ -178,17 +184,15 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
         doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
         doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
         doReturn(Mono.error(dispatchError)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-        var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
-                        .contentType(APPLICATION_JSON)
-                        .content(jsonUtil.writeValueAsString(testQuery)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().is(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+       mockMvc.perform(post(URI.create(PATH)).with(csrf())
+        .contentType(APPLICATION_JSON)
+        .content(jsonUtil.writeValueAsString(testQuery)))
+        .andExpect(status().is(HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 
     @Test
@@ -197,17 +201,15 @@ public class FeasibilityQueryHandlerRestControllerIT {
         StructuredQuery testQuery = createValidStructuredQuery();
         var annotatedQuery = createValidAnnotatedStructuredQuery(false);
 
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
         doReturn((long)quotaSoftCreateAmount + 1).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), any(String.class));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-        var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
-                        .contentType(APPLICATION_JSON)
-                        .content(jsonUtil.writeValueAsString(testQuery)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()));
+        mockMvc.perform(post(URI.create(PATH)).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(testQuery)))
+            .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()));
     }
 
     @Test
@@ -216,6 +218,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
         StructuredQuery testQuery = createValidStructuredQuery();
         var annotatedQuery = createValidAnnotatedStructuredQuery(false);
 
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
 
         doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
         doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
@@ -237,6 +241,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
         doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(queryHandlerService).validateCcdl(any(JsonNode.class));
         doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
         mockMvc.perform(post(URI.create(PATH + "/validate")).with(csrf())
@@ -255,18 +261,17 @@ public class FeasibilityQueryHandlerRestControllerIT {
         userBlacklistEntry.setUserId("test");
         userBlacklistEntry.setBlacklistedAt(new Timestamp(System.currentTimeMillis()));
         Optional<UserBlacklist> userBlacklistOptional = Optional.of(userBlacklistEntry);
+
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
         doReturn(userBlacklistOptional).when(userBlacklistRepository).findByUserId(any(String.class));
         doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-        var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+        mockMvc.perform(post(URI.create(PATH)).with(csrf())
                 .contentType(APPLICATION_JSON)
                 .content(jsonUtil.writeValueAsString(testQuery)))
-            .andExpect(request().asyncStarted())
-            .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-            .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -275,18 +280,16 @@ public class FeasibilityQueryHandlerRestControllerIT {
         StructuredQuery testQuery = createValidStructuredQuery();
         var annotatedQuery = createValidAnnotatedStructuredQuery(false);
 
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
         doReturn((long)quotaHardCreateAmount).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaHardCreateInterval));
         doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-        var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+        mockMvc.perform(post(URI.create(PATH)).with(csrf())
                 .contentType(APPLICATION_JSON)
                 .content(jsonUtil.writeValueAsString(testQuery)))
-            .andExpect(request().asyncStarted())
-            .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-            .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -296,6 +299,9 @@ public class FeasibilityQueryHandlerRestControllerIT {
         var annotatedQuery = createValidAnnotatedStructuredQuery(false);
 
 
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+
         doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
         doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(true).when(authenticationHelper).hasAuthority(any(Authentication.class), eq("ROLE_DATAPORTAL_TEST_POWER"));
@@ -304,16 +310,12 @@ public class FeasibilityQueryHandlerRestControllerIT {
         doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-        var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+        mockMvc.perform(post(URI.create(PATH)).with(csrf())
                 .contentType(APPLICATION_JSON)
                 .content(jsonUtil.writeValueAsString(testQuery)))
-            .andExpect(request().asyncStarted())
-            .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-            .andExpect(status().isCreated())
-            .andExpect(header().exists("location"))
-            .andExpect(header().string("location", PATH + "/1"));
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("location"))
+                .andExpect(header().string("location", PATH + "/1"));
     }
 
     @ParameterizedTest
@@ -408,6 +410,9 @@ public class FeasibilityQueryHandlerRestControllerIT {
         doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(createDummyCql()).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
 
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+
         mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(createValidStructuredQuery())))
@@ -434,6 +439,9 @@ public class FeasibilityQueryHandlerRestControllerIT {
         doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
         doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
+
+        doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+        doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
 
         mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
                 .contentType(APPLICATION_JSON)
@@ -677,5 +685,41 @@ public class FeasibilityQueryHandlerRestControllerIT {
               Criterion
             
             """;
+    }
+
+    @NotNull
+    private String createValidUiProfileString() {
+      return """
+          {
+              "attributeDefinitions": [],
+              "name": "Patient1",
+              "timeRestrictionAllowed": false,
+              "valueDefinition": {
+                  "allowedUnits": [],
+                  "display": {
+                      "original": "Geschlecht",
+                      "translations": [
+                          {
+                              "language": "en-US",
+                              "value": "Gender"
+                          },
+                          {
+                              "language": "de-DE",
+                              "value": "Geschlecht"
+                          }
+                      ]
+                  },
+                  "max": null,
+                  "min": null,
+                  "optional": false,
+                  "precision": 1,
+                  "referencedCriteriaSet": [],
+                  "referencedValueSet": [
+                      "http://hl7.org/fhir/ValueSet/administrative-gender"
+                  ],
+                  "type": "concept"
+              }
+          }
+          """;
     }
 }

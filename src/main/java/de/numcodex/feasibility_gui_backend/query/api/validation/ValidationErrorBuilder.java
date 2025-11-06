@@ -85,12 +85,8 @@ public class ValidationErrorBuilder {
           "path", jsonPointer,
           "value", mergedValue
       );
-
       String jsonMessage = jsonUtil.writeValueAsString(error);
-
-      context.buildConstraintViolationWithTemplate(jsonMessage)
-          .addConstraintViolation();
-
+      context.buildConstraintViolationWithTemplate(jsonMessage).addConstraintViolation();
     } catch (Exception e) {
       throw new RuntimeException("Failed to build validation error", e);
     }
