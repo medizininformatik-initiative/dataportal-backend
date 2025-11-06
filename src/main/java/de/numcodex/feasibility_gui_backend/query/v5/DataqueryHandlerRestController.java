@@ -10,6 +10,7 @@ import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryHandler;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryStorageFullException;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -146,7 +147,7 @@ public class DataqueryHandlerRestController {
       String headerValue = "attachment; filename=" + dataquery.label().toUpperCase() +  "_dataquery.zip";
       headers.add(HttpHeaders.CONTENT_DISPOSITION, headerValue);
       headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
-      return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), HttpStatus.OK);
+      return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
     } catch (IOException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
@@ -156,7 +157,31 @@ public class DataqueryHandlerRestController {
     }
   }
 
-
+  @PostMapping(path = "/convert" + PATH_CRTDL)
+  public ResponseEntity<Object> convertCrtdlToCsv(@Valid @RequestBody Crtdl crtdl,
+                                                     Authentication authentication) {
+    // the csv converter currently works on a dataquery object but just uses the crtdl part of it. So just create a dummy for that
+    var dataquery = Dataquery.builder()
+        .createdBy(authentication.getName())
+        .id(-1L)
+        .content(crtdl)
+        .label("")
+        .build();
+    try {
+      var zipByteArrayOutputStream = dataqueryHandler.createCsvExportZipfile(dataquery);
+      HttpHeaders headers = new HttpHeaders();
+      String headerValue = "attachment; filename=untitled.zip";
+      headers.add(HttpHeaders.CONTENT_DISPOSITION, headerValue);
+      headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
+      return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
+    } catch (IOException e) {
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    } catch (DataqueryException e) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    } catch (DataqueryCsvExportException e) {
+      return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+  }
 
   @GetMapping(path = "")
   public ResponseEntity<Object> getDataqueries(

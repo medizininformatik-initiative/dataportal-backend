@@ -112,22 +112,22 @@ paths:
             schema:
               $ref: "#/components/schemas/Dataquery"
         required: true
-    responses:
-      201:
-        description: Dataquery successfully stored
-        headers:
-          Location:
-            description: Path to the result of your newly created dataquery
-            schema:
-              type: string
-              format: url
-      401:
-        description: Unauthorized - please login first
-      403:
-        description: Storage exceeded
-    security:
-      - dataportal_auth:
-          - admin
+      responses:
+        201:
+          description: Dataquery successfully stored
+          headers:
+            Location:
+              description: Path to the result of your newly created dataquery
+              schema:
+                type: string
+                format: url
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Storage exceeded
+      security:
+        - dataportal_auth:
+            - admin
     get:
       tags:
         - dataquery
@@ -310,6 +310,43 @@ paths:
       security:
         - dataportal_auth:
             - admin
+            - user
+  /query/data/convert/crtdl:
+    post:
+      tags:
+        - dataquery
+      summary: Convert a CRTDL to an zip file with csv contents.
+      description: Nothing will be stored, only a zip file will be generated
+      operationId: convertCrtdlToCsv
+      requestBody:
+        description: CRTDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CRTDL"
+        required: true
+      responses:
+        200:
+          description: CRTDL successfully converted
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                examples:
+                  - attachment; filename=untitled.zip
+            Content-Type:
+              schema:
+                type: string
+                examples:
+                  application/zip
+        400:
+          description: Bad request - validation of the CRTDL failed
+        401:
+          description: Unauthorized - please login first
+        422:
+          description: Invalid input
+      security:
+        - dataportal_auth:
             - user
   /query/feasibility:
     post:
