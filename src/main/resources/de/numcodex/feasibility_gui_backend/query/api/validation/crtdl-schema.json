@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/to-be-done/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "http://example.com/schema/data-extraction-schema.json",
   "type": "object",
   "properties": {
@@ -13,7 +13,7 @@
       "description": "A display string."
     },
     "cohortDefinition": {
-      "$ref": "ccdl-schema.json#/definitions/cohortDefinition",
+      "$ref": "https://medizininformatik-initiative.de/fdpg/ClinicalCohortDefinitionLanguage/v1/schema",
       "description": "Reference to a cohort definition in CCDL schemas."
     },
     "dataExtraction": {

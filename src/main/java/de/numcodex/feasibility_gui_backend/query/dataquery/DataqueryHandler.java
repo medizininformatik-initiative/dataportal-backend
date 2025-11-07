@@ -1,9 +1,12 @@
 package de.numcodex.feasibility_gui_backend.query.dataquery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.query.api.*;
+import de.numcodex.feasibility_gui_backend.query.api.status.IssueWrapper;
 import de.numcodex.feasibility_gui_backend.query.api.status.SavedQuerySlots;
+import de.numcodex.feasibility_gui_backend.query.api.validation.JsonSchemaValidator;
 import de.numcodex.feasibility_gui_backend.query.persistence.DataqueryRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
@@ -32,6 +35,9 @@ public class DataqueryHandler {
 
   @NonNull
   private final DataqueryCsvExportService csvExportHandler;
+
+  @NonNull
+  final JsonSchemaValidator jsonSchemaValidator;
 
   @NonNull
   private Integer maxDataqueriesPerUser;
@@ -191,6 +197,36 @@ public class DataqueryHandler {
     zipOutputStream.close();
     byteArrayOutputStream.close();
     return byteArrayOutputStream;
+  }
+
+  public List<IssueWrapper> validateCrtdl(JsonNode crtdlNode) {
+    List<IssueWrapper> issues = new ArrayList<>();
+    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CRTDL, crtdlNode);
+    if (!validationErrors.isEmpty()) {
+      issues = validationErrors.stream()
+          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .toList();
+    }
+    return issues;
+  }
+
+  public Crtdl crtdlFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, Crtdl.class);
+  }
+
+  public List<IssueWrapper> validateDataExtraction(JsonNode dataExtractionNode) {
+    List<IssueWrapper> issues = new ArrayList<>();
+    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAEXTRACTION, dataExtractionNode);
+    if (!validationErrors.isEmpty()) {
+      issues = validationErrors.stream()
+          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .toList();
+    }
+    return issues;
+  }
+
+  public DataExtraction dataExtractionFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, DataExtraction.class);
   }
 
   private boolean hasAccess(de.numcodex.feasibility_gui_backend.query.persistence.Dataquery dataquery, Authentication authentication) {

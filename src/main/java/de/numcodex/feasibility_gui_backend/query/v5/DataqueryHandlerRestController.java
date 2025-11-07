@@ -1,6 +1,7 @@
 package de.numcodex.feasibility_gui_backend.query.v5;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import de.numcodex.feasibility_gui_backend.query.api.Crtdl;
 import de.numcodex.feasibility_gui_backend.query.api.CrtdlSectionInfo;
 import de.numcodex.feasibility_gui_backend.query.api.Dataquery;
@@ -10,7 +11,6 @@ import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryHandler;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryStorageFullException;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -158,8 +158,14 @@ public class DataqueryHandlerRestController {
   }
 
   @PostMapping(path = "/convert" + PATH_CRTDL)
-  public ResponseEntity<Object> convertCrtdlToCsv(@Valid @RequestBody Crtdl crtdl,
+  public ResponseEntity<Object> convertCrtdlToCsv(@RequestBody JsonNode crtdlNode,
                                                      Authentication authentication) {
+    var validationErrors = dataqueryHandler.validateCrtdl(crtdlNode);
+    if (!validationErrors.isEmpty()) {
+      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+    }
+
+    var crtdl = dataqueryHandler.crtdlFromJsonNode(crtdlNode);
     // the csv converter currently works on a dataquery object but just uses the crtdl part of it. So just create a dummy for that
     var dataquery = Dataquery.builder()
         .createdBy(authentication.getName())

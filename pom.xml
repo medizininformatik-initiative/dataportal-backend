@@ -7,7 +7,7 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>3.5.7</version>
-    <relativePath /> <!-- lookup parent from repository -->
+    <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <groupId>de.medizininformatik-initiative</groupId>
@@ -136,19 +136,15 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.erosb</groupId>
-      <artifactId>everit-json-schema</artifactId>
-      <version>1.14.6</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.json</groupId>
-          <artifactId>json</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>commons-collections</groupId>
-          <artifactId>commons-collections</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>2.0.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.14.0</version>
     </dependency>
 
     <dependency>
@@ -457,7 +453,8 @@
         <configuration>
           <failOnNoGitDirectory>false</failOnNoGitDirectory>
           <generateGitPropertiesFile>true</generateGitPropertiesFile>
-          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
+          </generateGitPropertiesFilename>
           <includeOnlyProperties>
             <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
             <includeOnlyProperty>^git.commit.time.(abbrev|full)$</includeOnlyProperty>
@@ -522,7 +519,9 @@
                   <goal>download-single</goal>
                 </goals>
                 <configuration>
-                  <url>https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}</url>
+                  <url>
+                    https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}
+                  </url>
                   <fromFile>backend.zip</fromFile>
                   <toDir>${ontoDirectory.download}</toDir>
                 </configuration>
@@ -534,7 +533,9 @@
                   <goal>download-single</goal>
                 </goals>
                 <configuration>
-                  <url>https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}</url>
+                  <url>
+                    https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}
+                  </url>
                   <fromFile>mapping.zip</fromFile>
                   <toDir>${ontoDirectory.download}</toDir>
                 </configuration>
@@ -590,36 +591,58 @@
                 <configuration>
                   <fileSets>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/cql/mapping_cql.json</sourceFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/cql/mapping_cql.json
+                      </sourceFile>
                       <destinationFile>${ontoDirectory.target}/mapping_cql.json</destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/fhir/mapping_fhir.json</sourceFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/fhir/mapping_fhir.json
+                      </sourceFile>
                       <destinationFile>${ontoDirectory.target}/mapping_fhir.json</destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/mapping_tree.json</sourceFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/mapping_tree.json
+                      </sourceFile>
                       <destinationFile>${ontoDirectory.target}/mapping_tree.json</destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/dse_mapping_tree.json</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/dse_mapping_tree.json</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/dse_mapping_tree.json
+                      </sourceFile>
+                      <destinationFile>${ontoDirectory.target}/dse_mapping_tree.json
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/R__Load_latest_ui_profile.sql</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/migration/R__Load_latest_ui_profile.sql</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/backend_unzipped/R__Load_latest_ui_profile.sql
+                      </sourceFile>
+                      <destinationFile>
+                        ${ontoDirectory.target}/migration/R__Load_latest_ui_profile.sql
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/R__load_latest_dse_profiles.sql</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/migration/R__load_latest_dse_profiles.sql</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/backend_unzipped/R__load_latest_dse_profiles.sql
+                      </sourceFile>
+                      <destinationFile>
+                        ${ontoDirectory.target}/migration/R__load_latest_dse_profiles.sql
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/profile_tree.json</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/dse/profile_tree.json</destinationFile>
+                      <sourceFile>${ontoDirectory.download}/backend_unzipped/profile_tree.json
+                      </sourceFile>
+                      <destinationFile>${ontoDirectory.target}/dse/profile_tree.json
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/terminology_systems.json</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/terminology_systems.json</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/backend_unzipped/terminology_systems.json
+                      </sourceFile>
+                      <destinationFile>${ontoDirectory.target}/terminology_systems.json
+                      </destinationFile>
                     </fileSet>
                   </fileSets>
                 </configuration>
@@ -639,8 +662,8 @@
                 <configuration>
                   <target>
                     <delete
-                            dir="${ontoDirectory.download}"
-                            includeemptydirs="true"/>
+                        dir="${ontoDirectory.download}"
+                        includeemptydirs="true"/>
                   </target>
                 </configuration>
               </execution>

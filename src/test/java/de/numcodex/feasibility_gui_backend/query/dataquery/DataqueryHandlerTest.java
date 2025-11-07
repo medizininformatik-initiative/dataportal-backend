@@ -1,16 +1,20 @@
 package de.numcodex.feasibility_gui_backend.query.dataquery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.networknt.schema.Error;
+import com.networknt.schema.path.NodePath;
+import com.networknt.schema.path.PathType;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.query.api.*;
 import de.numcodex.feasibility_gui_backend.query.api.Dataquery;
+import de.numcodex.feasibility_gui_backend.query.api.validation.JsonSchemaValidator;
 import de.numcodex.feasibility_gui_backend.query.persistence.*;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -25,15 +29,16 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.C;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -52,6 +57,8 @@ class DataqueryHandlerTest {
     private static final String KEYCLOAK_ADMIN_ROLE = "ROLE_DATAPORTAL_TEST_ADMIN";
     public static final String DURATION = "PT10M";
 
+    private DataqueryHandler dataqueryHandler;
+
     @Spy
     private ObjectMapper jsonUtil = new ObjectMapper();
 
@@ -61,9 +68,8 @@ class DataqueryHandlerTest {
     @Mock
     private DataqueryCsvExportService csvExportService;
 
-    private DataqueryHandler createDataqueryHandler() {
-        return new DataqueryHandler(jsonUtil, dataqueryRepository, csvExportService, MAX_QUERIES_PER_USER, KEYCLOAK_ADMIN_ROLE);
-    }
+    @Mock
+    private JsonSchemaValidator jsonSchemaValidator;
 
     void setMockAuth(String userName, List<String> roles) {
         Authentication mockAuth = Mockito.mock(Authentication.class);
@@ -76,6 +82,13 @@ class DataqueryHandlerTest {
         SecurityContextHolder.getContext().setAuthentication(mockAuth);
     }
 
+    @BeforeEach
+    void setUp() {
+      jsonUtil.registerModule(new JavaTimeModule());
+      jsonUtil.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+      dataqueryHandler = new DataqueryHandler(jsonUtil, dataqueryRepository, csvExportService, jsonSchemaValidator, MAX_QUERIES_PER_USER, KEYCLOAK_ADMIN_ROLE);
+    }
+
     @AfterEach
     void clearContext() {
         SecurityContextHolder.clearContext();
@@ -84,7 +97,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("storeDataquery() -> trying to store a valid object with a user does not throw")
     void storeDataquery_succeeds() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any());
 
         assertDoesNotThrow(() -> dataqueryHandler.storeDataquery(createDataquery(), CREATOR));
@@ -93,21 +105,18 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("storeDataquery() -> trying to store a null object with a null user throws an exception")
     void storeDataquery_throwsOnEmptyQueryAndEmptyUser() {
-        var dataqueryHandler = createDataqueryHandler();
         assertThrows(NullPointerException.class, () -> dataqueryHandler.storeDataquery(null, null));
     }
 
     @Test
     @DisplayName("storeDataquery() -> trying to store a null object with a user throws an exception")
     void storeDataquery_throwsOnEmptyQueryAndNonEmptyUser() {
-        var dataqueryHandler = createDataqueryHandler();
         assertThrows(NullPointerException.class, () -> dataqueryHandler.storeDataquery(null, CREATOR));
     }
 
     @Test
     @DisplayName("storeDataquery() -> trying to store an object with a null user throws an exception")
     void storeDataquery_throwsOnNonEmptyQueryAndEmptyUser() {
-        var dataqueryHandler = createDataqueryHandler();
         assertThrows(NullPointerException.class, () -> dataqueryHandler.storeDataquery(createDataquery(), null));
     }
 
@@ -115,7 +124,6 @@ class DataqueryHandlerTest {
     @CsvSource({"true", "false"})
     @DisplayName("storeDataquery() -> trying to store a dataquery when no slots are free throws")
     void storeDataquery_throwsOnNoFreeSlots(boolean withResult) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         lenient().doReturn(MAX_QUERIES_PER_USER + 1L).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
         lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.numcodex.feasibility_gui_backend.query.persistence.Dataquery.class));
 
@@ -130,7 +138,6 @@ class DataqueryHandlerTest {
     @CsvSource({"true,-1", "true,0", "true,1", "false,-1", "false,0", "false,1"})
     @DisplayName("storeDataquery() -> checking around the query limit")
     void storeDataquery_testFreeSlotOnEdgeCases(boolean withResult, long offset) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         lenient().doReturn(MAX_QUERIES_PER_USER + offset).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
         lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.numcodex.feasibility_gui_backend.query.persistence.Dataquery.class));
 
@@ -149,7 +156,6 @@ class DataqueryHandlerTest {
     @DisplayName("storeDataquery() -> error in json serialization throws an exception")
     void storeDataquery_throwsOnJsonSerializationError() throws JsonProcessingException {
         var dataquery = createDataquery();
-        var dataqueryHandler = createDataqueryHandler();
 
         try (MockedStatic<de.numcodex.feasibility_gui_backend.query.persistence.Dataquery> mockedStaticDataquery
                  = mockStatic(de.numcodex.feasibility_gui_backend.query.persistence.Dataquery.class)) {
@@ -162,7 +168,6 @@ class DataqueryHandlerTest {
     @DisplayName("getDataqueryById() -> retrieving a single dataquery by its id succeeds")
     void getDataqueryById_succeeds() throws JsonProcessingException {
         setMockAuth(CREATOR, List.of("DATAPORTAL_USER"));
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryEntity = createDataqueryEntity();
         var auth = SecurityContextHolder.getContext().getAuthentication();
         doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -176,7 +181,6 @@ class DataqueryHandlerTest {
     @DisplayName("getDataqueryById() -> Throw exception if the user is not the author")
     void getDataqueryById_throwsOnWrongUser() throws JsonProcessingException {
         setMockAuth("NOT_THE"+ CREATOR, List.of("DATAPORTAL_USER"));
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryEntity = createDataqueryEntity();
         var auth = SecurityContextHolder.getContext().getAuthentication();
         doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -188,7 +192,6 @@ class DataqueryHandlerTest {
     @DisplayName("getDataqueryById() -> Succeeds for admin user")
     void getDataqueryById_succeedsForAdmin() throws JsonProcessingException {
         setMockAuth("NOT_THE"+ CREATOR, List.of("ROLE_DATAPORTAL_TEST_ADMIN"));
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryEntity = createDataqueryEntity();
         var auth = SecurityContextHolder.getContext().getAuthentication();
         doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -202,7 +205,6 @@ class DataqueryHandlerTest {
     @DisplayName("getDataqueryById() -> Throw exception if the query does not exist")
     @WithMockUser(username = "NOT THE " + CREATOR, roles = {"DATAPORTAL_USER"})
     void getDataqueryById_throwsOnNotFound() {
-        var dataqueryHandler = createDataqueryHandler();
         var auth = SecurityContextHolder.getContext().getAuthentication();
         doReturn(Optional.empty()).when(dataqueryRepository).findById(any(Long.class));
 
@@ -212,7 +214,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("updateDataquery() -> trying to update a dataquery succeeds")
     void updateDataquery_succeeds() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataquery = createDataquery();
         var dataqueryEntity = createDataqueryEntity();
 
@@ -224,7 +225,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("updateDataquery() -> throws exception when actor is not the original creator")
     void updateDataquery_throwsOnWrongUser() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataquery = createDataquery();
         var dataqueryEntity = createDataqueryEntity();
         doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -235,7 +235,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("updateDataquery() -> throws exception when query is not found")
     void updateDataquery_throwsOnNotFound() {
-        var dataqueryHandler = createDataqueryHandler();
         doReturn(Optional.empty()).when(dataqueryRepository).findById(any(Long.class));
 
         assertThrows(DataqueryException.class, () -> dataqueryHandler.updateDataquery(1L, createDataquery(), CREATOR));
@@ -245,7 +244,6 @@ class DataqueryHandlerTest {
     @CsvSource({"true,true", "true,false", "false,true", "false,false"})
     @DisplayName("updateDataquery() -> check if storage full exceptions are thrown correctly")
     void updateDataquery_throwsOnNoFreeSlots(boolean withResultNew, boolean withResultOld) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataquery = createDataquery(withResultNew);
         var dataqueryEntity = createDataqueryEntity(withResultOld);
 
@@ -269,7 +267,6 @@ class DataqueryHandlerTest {
     })
     @DisplayName("updateDataquery() -> checking around the query limit")
     void updateDataquery_testFreeSlotOnEdgeCases(long offset, boolean withResultNew, boolean withResultOld) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataquery = createDataquery(withResultNew);
         var dataqueryEntity = createDataqueryEntity(withResultOld);
 
@@ -290,7 +287,6 @@ class DataqueryHandlerTest {
     @DisplayName("getDataqueriesByAuthor() -> succeeds")
     @ValueSource(strings = { "true", "false" })
     void getDataqueriesByAuthor_succeedsWithEntry(boolean includeTemporary) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryEntity = createDataqueryEntity();
 
         doReturn(List.of(dataqueryEntity)).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
@@ -306,7 +302,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("getDataqueriesByAuthor() -> succeeds with empty list")
     void getDataqueriesByAuthor_succeedsWithEmptyList() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
 
         doReturn(List.of()).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
 
@@ -320,7 +315,6 @@ class DataqueryHandlerTest {
     @ValueSource(strings = { "true", "false" })
     @DisplayName("getDataqueriesByAuthor() -> throws on json error")
     void getDataqueriesByAuthor_throwsOnJsonException(boolean includeTemporary) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryEntity = createDataqueryEntity();
 
         try (MockedStatic<Dataquery> mockedStaticDataquery = mockStatic(Dataquery.class)) {
@@ -334,7 +328,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("deleteDataquery() -> succeeds")
     void deleteDataquery_succeeds() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryEntity = createDataqueryEntity();
 
         doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -345,7 +338,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("deleteDataquery() -> throws on wrong user")
     void deleteDataquery_throwsOnWrongUser() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryEntity = createDataqueryEntity();
 
         doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -356,7 +348,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("getDataquerySlotsJson() -> succeeds")
     void getDataquerySlotsJson_succeeds() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         var usedSlots = 7L;
 
         doReturn(usedSlots).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
@@ -415,7 +406,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("storeExpiringDataquery() -> trying to store a valid object with a user does not throw")
     void storeExpiringDataquery_succeeds() throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         doReturn(createDataqueryEntity(false, true)).when(dataqueryRepository).save(any());
 
         assertDoesNotThrow(() -> dataqueryHandler.storeExpiringDataquery(createDataquery(), CREATOR, DURATION));
@@ -426,7 +416,6 @@ class DataqueryHandlerTest {
         "false,true,true", "false,true,false", "false,false,true"})
     @DisplayName("storeExpiringDataquery() -> trying to store a null object with a null user throws an exception")
     void storeExpiringDataquery_throwsOnEmptyValue(boolean emptyQuery, boolean emptyUser, boolean emptyTtl) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         assertThrows(NullPointerException.class, () -> dataqueryHandler.storeExpiringDataquery(
             emptyQuery ? null : createDataquery(),
             emptyUser ? null : CREATOR,
@@ -438,7 +427,6 @@ class DataqueryHandlerTest {
     @CsvSource({"true", "false"})
     @DisplayName("storeExpiringDataquery() -> trying to store an expiring dataquery when no slots are free does not throw")
     void storeExpiringDataquery_ignoresFreeSlots(boolean withResult) throws JsonProcessingException {
-        var dataqueryHandler = createDataqueryHandler();
         lenient().doReturn(MAX_QUERIES_PER_USER + 1L).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
         lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.numcodex.feasibility_gui_backend.query.persistence.Dataquery.class));
 
@@ -451,7 +439,6 @@ class DataqueryHandlerTest {
         "false,true,false", "false,false,true", "false,false,false"})
     @DisplayName("createCsvExportZipfile() -> creating a csv export succeeds")
     void createCsvExportZipfile(String withInclusionCriteria, String withExclusionCriteria, String withDataextraction) {
-        var dataqueryHandler = createDataqueryHandler();
         var dataquery = createDataquery(Boolean.parseBoolean(withInclusionCriteria),
             Boolean.parseBoolean(withExclusionCriteria),
             Boolean.parseBoolean(withDataextraction));
@@ -464,7 +451,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("createCsvExportZipfile() -> creating a csv export fails if no content is set")
     void createCsvExportZipfile_throwsOnNullContent() {
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryWithoutContent = Dataquery.builder()
             .id(1L)
             .label(LABEL)
@@ -479,7 +465,6 @@ class DataqueryHandlerTest {
     @Test
     @DisplayName("createCsvExportZipfile() -> creating a csv export fails if no cohort definition is set")
     void createCsvExportZipfile_throwsOnNullCohortDefinition() {
-        var dataqueryHandler = createDataqueryHandler();
         var dataqueryWithoutCohortDefinition = Dataquery.builder()
             .id(1L)
             .content(Crtdl.builder()
@@ -492,6 +477,86 @@ class DataqueryHandlerTest {
             .build();
 
         assertThrows(DataqueryException.class, () -> dataqueryHandler.createCsvExportZipfile(dataqueryWithoutCohortDefinition));
+    }
+
+    @Test
+    public void testValidateCrtdl_noErrors() throws JsonProcessingException {
+      JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
+      doReturn(List.of()).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
+
+      var errors = dataqueryHandler.validateCrtdl(jsonNode);
+
+      assertThat(errors).isEmpty();
+    }
+
+    @Test
+    public void testValidateCrtdl_errors() throws JsonProcessingException {
+      JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
+      doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
+
+      var errors = dataqueryHandler.validateCrtdl(jsonNode);
+
+      assertThat(errors).isNotEmpty();
+      assertThat(errors.size()).isEqualTo(1);
+    }
+    @Test
+    public void testValidateDataExtraction_noErrors() throws JsonProcessingException {
+      JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
+      doReturn(List.of()).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
+
+      var errors = dataqueryHandler.validateDataExtraction(jsonNode);
+
+      assertThat(errors).isEmpty();
+    }
+
+    @Test
+    public void testValidateDataExtraction_errors() throws JsonProcessingException {
+      JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
+      doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
+
+      var errors = dataqueryHandler.validateDataExtraction(jsonNode);
+
+      assertThat(errors).isNotEmpty();
+      assertThat(errors.size()).isEqualTo(1);
+    }
+
+    @Test
+    public void testCrtdlFromJsonNode_succeeds() throws Exception {
+      JsonNode jsonNode = loadJson("/de/numcodex/feasibility_gui_backend/query/api/validation/crtdl-valid.json");
+
+      var result = assertDoesNotThrow(() -> dataqueryHandler.crtdlFromJsonNode(jsonNode));
+      assertThat(result).isInstanceOf(Crtdl.class);
+    }
+
+    @Test
+    public void testCrtdlFromJsonNode_throwsOnInvalidJson() throws Exception {
+      JsonNode jsonNode = loadJson("/de/numcodex/feasibility_gui_backend/query/api/validation/crtdl-invalid.json");
+
+      Assertions.assertThrows(IllegalArgumentException.class, () -> dataqueryHandler.crtdlFromJsonNode(jsonNode));
+    }
+
+    @Test
+    public void testDataExtractionFromJsonNode_succeeds() throws Exception {
+      JsonNode jsonNode = loadJson("/de/numcodex/feasibility_gui_backend/query/api/validation/dataExtraction-valid.json");
+
+      var result = assertDoesNotThrow(() -> dataqueryHandler.dataExtractionFromJsonNode(jsonNode));
+      assertThat(result).isInstanceOf(DataExtraction.class);
+    }
+
+    @Test
+    public void testDataExtractionFromJsonNode_throwsOnInvalidJson() throws Exception {
+      JsonNode jsonNode = loadJson("/de/numcodex/feasibility_gui_backend/query/api/validation/dataExtraction-invalid.json");
+
+      Assertions.assertThrows(IllegalArgumentException.class, () -> dataqueryHandler.dataExtractionFromJsonNode(jsonNode));
+    }
+
+    private JsonNode loadJson(String resourcePath) throws Exception {
+      try (InputStream is = DataqueryHandlerTest.class.getResourceAsStream(resourcePath)) {
+        if (is == null) {
+          throw new IllegalArgumentException("Resource not found: " + resourcePath);
+        }
+        return jsonUtil.readTree(is);
+      }
     }
 
     private Dataquery createDataquery(boolean withInclusion, boolean withExclusion, boolean withExtraction) {
