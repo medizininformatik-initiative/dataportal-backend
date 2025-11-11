@@ -1,11 +1,13 @@
 package de.numcodex.feasibility_gui_backend.query.v5;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import de.numcodex.feasibility_gui_backend.query.api.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
+import de.numcodex.feasibility_gui_backend.query.api.status.IssueWrapper;
 import de.numcodex.feasibility_gui_backend.query.api.status.SavedQuerySlots;
 import de.numcodex.feasibility_gui_backend.query.api.status.ValidationIssue;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryCsvExportException;
@@ -299,18 +301,36 @@ public class DataqueryHandlerRestControllerIT {
           .andExpect(status().isInternalServerError());
     }
 
-  @Test
-  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
-  public void testConvertCrtdlToCsv_failsOnDataqueryCsvExportException() throws Exception {
-    long dataqueryId = 1L;
+    @Test
+    @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+    public void testConvertCrtdlToCsv_failsOnDataqueryCsvExportException() throws Exception {
+      long dataqueryId = 1L;
 
-    doThrow(DataqueryCsvExportException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+      doThrow(DataqueryCsvExportException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
 
-    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
-        .andExpect(status().isUnprocessableEntity());
-  }
+      mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+              .contentType(APPLICATION_JSON)
+              .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+          .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+    public void testConvertCrtdlToCsv_failsOnValidationErrors() throws Exception {
+      long dataqueryId = 1L;
+
+      doReturn(List.of(
+          IssueWrapper.builder()
+              .path("/foo")
+              .value("bar")
+              .build()
+      )).when(dataqueryHandler).validateCrtdl(any(JsonNode.class));
+
+      mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+              .contentType(APPLICATION_JSON)
+              .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+          .andExpect(status().isBadRequest());
+    }
 
     @ParameterizedTest
     @CsvSource({"true","false"})

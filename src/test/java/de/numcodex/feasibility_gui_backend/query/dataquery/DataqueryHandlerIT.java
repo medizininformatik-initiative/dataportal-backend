@@ -9,6 +9,7 @@ import de.numcodex.feasibility_gui_backend.query.api.Crtdl;
 import de.numcodex.feasibility_gui_backend.query.api.Dataquery;
 import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
 import de.numcodex.feasibility_gui_backend.query.api.status.SavedQuerySlots;
+import de.numcodex.feasibility_gui_backend.query.api.validation.JsonSchemaValidator;
 import de.numcodex.feasibility_gui_backend.query.broker.BrokerSpringConfig;
 import de.numcodex.feasibility_gui_backend.query.collect.QueryCollectSpringConfig;
 import de.numcodex.feasibility_gui_backend.query.dispatch.QueryDispatchSpringConfig;
@@ -78,6 +79,9 @@ public class DataqueryHandlerIT {
 
   @MockitoBean
   private StructuredQueryValidation structuredQueryValidation;
+
+  @MockitoBean
+  private JsonSchemaValidator jsonSchemaValidator;
 
   @Autowired
   @Qualifier("translation")

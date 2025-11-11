@@ -1,0 +1,107 @@
+{
+  "version": "http://to_be_decided.com/draft-1/schema#",
+  "display": "Ausgewählte Merkmale",
+  "inclusionCriteria": [
+    [
+      {
+        "termCodes": [
+          {
+            "code": "263495000",
+            "display": "Geschlecht",
+            "system": "http://snomed.info/sct",
+            "version": ""
+          }
+        ],
+        "context": {
+          "code": "Patient",
+          "display": "Patient",
+          "system": "fdpg.mii.cds",
+          "version": "1.0.0"
+        },
+        "valueFilter": {
+          "selectedConcepts": [
+            {
+              "code": "female",
+              "display": "Female",
+              "system": "http://hl7.org/fhir/administrative-gender",
+              "version": "2099"
+            },
+            {
+              "code": "other",
+              "display": "Other",
+              "system": "http://hl7.org/fhir/administrative-gender",
+              "version": "2099"
+            }
+          ],
+          "type": "concept"
+        }
+      }
+    ],
+    [
+      {
+        "attributeFilters": [
+          {
+            "type": "reference",
+            "criteria": [
+              {
+                "termCodes": [
+                  {
+                    "code": "E10-E14",
+                    "display": "Diabetes mellitus",
+                    "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+                    "version": "2025"
+                  }
+                ],
+                "context": {
+                  "code": "Diagnose",
+                  "display": "Diagnose",
+                  "system": "fdpg.mii.cds",
+                  "version": "1.0.0"
+                }
+              }
+            ],
+            "attributeCode": {
+              "code": "festgestellteDiagnose",
+              "display": "Festgestellte Diagnose",
+              "system": "http://hl7.org/fhir/StructureDefinition"
+            }
+          }
+        ],
+        "termCodes": [
+          {
+            "code": "119297000",
+            "display": "Blood specimen",
+            "system": "http://snomed.info/sct",
+            "version": "http://snomed.info/sct/900000000000207008/version/20250701"
+          }
+        ],
+        "context": {
+          "code": "Specimen",
+          "display": "Bioprobe",
+          "system": "fdpg.mii.cds",
+          "version": "1.0.0"
+        },
+        "timeRestriction": {
+          "afterDate": "2025-10-14",
+          "beforeDate": "2025-10-18"
+        }
+      },
+      {
+        "termCodes": [
+          {
+            "code": "718-7",
+            "display": "Hemoglobin [Mass/volume] in Blood",
+            "system": "http://loinc.org",
+            "version": "2.80"
+          }
+        ],
+        "context": {
+          "code": "Laboruntersuchung",
+          "display": "Laboruntersuchung",
+          "system": "fdpg.mii.cds",
+          "version": "1.0.0"
+        }
+      }
+    ]
+  ]
+}

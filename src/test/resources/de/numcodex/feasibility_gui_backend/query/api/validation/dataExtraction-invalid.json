@@ -1,0 +1,217 @@
+{
+  "attributeGroupssss": [
+    {
+      "attributes": [
+        {
+          "attributeRef": "Patient.active"
+        },
+        {
+          "attributeRef": "Patient.deceased[x]"
+        },
+        {
+          "attributeRef": "Patient.address:Strassenanschrift.country",
+          "mustHave": false
+        }
+      ],
+      "id": "87dc6b3b-0737-409c-acd2-75c6d10ebbce",
+      "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert",
+      "name": "MII PR Person Patient (Pseudonymisiert)"
+    },
+    {
+      "attributes": [
+        {
+          "attributeRef": "Observation.code"
+        },
+        {
+          "attributeRef": "Observation.status",
+          "mustHave": true
+        },
+        {
+          "attributeRef": "Observation.category",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Observation.identifier",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Observation.effective[x]",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Observation.value[x]",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Observation.encounter",
+          "mustHave": false,
+          "linkedGroups": [
+            "8b6d49a1-c960-4804-a6d0-8e97703980a1"
+          ]
+        }
+      ],
+      "id": "2c3f3ef7-2408-41a3-8d47-77723c1c82c1",
+      "filter": [
+        {
+          "type": "date",
+          "name": "date",
+          "start": "2025-10-14",
+          "end": "2025-10-24"
+        },
+        {
+          "type": "token",
+          "name": "code",
+          "codes": [
+            {
+              "code": "718-7",
+              "display": "Hemoglobin [Mass/volume] in Blood",
+              "system": "http://loinc.org",
+              "version": "2099"
+            }
+          ]
+        }
+      ],
+      "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "name": "MII PR Labor Laboruntersuchung"
+    },
+    {
+      "attributes": [
+        {
+          "attributeRef": "MedicationAdministration.status",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "MedicationAdministration.effective[x]",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "MedicationAdministration.medication[x]",
+          "mustHave": false,
+          "linkedGroups": [
+            "f1d09ccf-d192-4a83-a67b-364807572835"
+          ]
+        }
+      ],
+      "id": "b8226574-2fdc-412f-8ab8-245c0ed2eb28",
+      "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration",
+      "name": "MII PR Medikation MedicationAdministration"
+    },
+    {
+      "attributes": [
+        {
+          "attributeRef": "Encounter.class",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Encounter.status",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Encounter.diagnosis.condition",
+          "mustHave": false,
+          "linkedGroups": [
+            "829d8925-089a-425a-89cd-3e49e398eee0"
+          ]
+        }
+      ],
+      "id": "8b6d49a1-c960-4804-a6d0-8e97703980a1",
+      "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung",
+      "name": "MII PR Fall Kontakt mit einer Gesundheitseinrichtung"
+    },
+    {
+      "attributes": [
+        {
+          "attributeRef": "Condition.code",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Condition.recordedDate",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Condition.clinicalStatus",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Condition.verificationStatus",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Condition.encounter",
+          "mustHave": false,
+          "linkedGroups": [
+            "8b6d49a1-c960-4804-a6d0-8e97703980a1"
+          ]
+        }
+      ],
+      "id": "4256dad8-5648-4140-8749-5ef8c580df2e",
+      "filter": [
+        {
+          "type": "token",
+          "name": "code",
+          "codes": [
+            {
+              "code": "E10-E14",
+              "display": "Diabetes mellitus",
+              "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+              "version": "2099"
+            },
+            {
+              "code": "73211009",
+              "display": "Diabetes mellitus",
+              "system": "http://snomed.info/sct",
+              "version": "2099"
+            },
+            {
+              "code": "I23436",
+              "display": "Diabetes mellitus",
+              "system": "http://fhir.de/CodeSystem/bfarm/alpha-id",
+              "version": "2099"
+            }
+          ]
+        }
+      ],
+      "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "name": "MII PR Diagnose Condition"
+    },
+    {
+      "attributes": [
+        {
+          "attributeRef": "Medication.status",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Medication.ingredient",
+          "mustHave": false
+        }
+      ],
+      "id": "f1d09ccf-d192-4a83-a67b-364807572835",
+      "includeReferenceOnly": true,
+      "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "name": "MII PR Medikation Medication"
+    },
+    {
+      "attributes": [
+        {
+          "attributeRef": "Condition.code"
+        },
+        {
+          "attributeRef": "Condition.recordedDate",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Condition.clinicalStatus",
+          "mustHave": false
+        },
+        {
+          "attributeRef": "Condition.verificationStatus",
+          "mustHave": false
+        }
+      ],
+      "id": "829d8925-089a-425a-89cd-3e49e398eee0",
+      "includeReferenceOnly": true,
+      "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "name": "Other diagnoses"
+    }
+  ]
+}

@@ -1,11 +1,15 @@
 package de.numcodex.feasibility_gui_backend.query;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.Error;
 import de.numcodex.feasibility_gui_backend.query.api.Query;
 import de.numcodex.feasibility_gui_backend.query.api.*;
+import de.numcodex.feasibility_gui_backend.query.api.status.IssueWrapper;
 import de.numcodex.feasibility_gui_backend.query.api.status.QueryQuota;
 import de.numcodex.feasibility_gui_backend.query.api.status.QueryQuotaEntry;
+import de.numcodex.feasibility_gui_backend.query.api.validation.JsonSchemaValidator;
 import de.numcodex.feasibility_gui_backend.query.dispatch.QueryDispatchException;
 import de.numcodex.feasibility_gui_backend.query.dispatch.QueryDispatcher;
 import de.numcodex.feasibility_gui_backend.query.persistence.*;
@@ -40,6 +44,7 @@ public class QueryHandlerService {
                                @NonNull ResultService resultService,
                                @NonNull StructuredQueryValidation structuredQueryValidation,
                                @NonNull @Qualifier("cql") QueryTranslator queryTranslator,
+                               @NonNull JsonSchemaValidator jsonSchemaValidator,
                                @NonNull ObjectMapper jsonUtil) {
         this.queryDispatcher = queryDispatcher;
         this.queryRepository = queryRepository;
@@ -47,6 +52,7 @@ public class QueryHandlerService {
         this.resultService = resultService;
         this.structuredQueryValidation = structuredQueryValidation;
         this.queryTranslator = queryTranslator;
+        this.jsonSchemaValidator = jsonSchemaValidator;
         this.jsonUtil = jsonUtil;
     }
 
@@ -61,6 +67,8 @@ public class QueryHandlerService {
     private final StructuredQueryValidation structuredQueryValidation;
 
     private QueryTranslator queryTranslator;
+
+    private final JsonSchemaValidator jsonSchemaValidator;
 
     private ObjectMapper jsonUtil;
 
@@ -162,5 +170,20 @@ public class QueryHandlerService {
 
   public String translateQueryToCql(StructuredQuery structuredQuery) throws QueryTranslationException {
         return queryTranslator.translate(structuredQuery);
+  }
+
+  public List<IssueWrapper> validateCcdl(JsonNode ccdlNode) {
+    List<IssueWrapper> issues = new ArrayList<>();
+    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CCDL, ccdlNode);
+    if (!validationErrors.isEmpty()) {
+      issues = validationErrors.stream()
+          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .toList();
+    }
+    return issues;
+  }
+
+  public StructuredQuery ccdlFromJsonNode(JsonNode jsonNode) {
+      return jsonUtil.convertValue(jsonNode, StructuredQuery.class);
   }
 }
