@@ -2,7 +2,7 @@ package de.numcodex.feasibility_gui_backend.query.dispatch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.broker.BrokerClient;
 import de.numcodex.feasibility_gui_backend.query.broker.BrokerSpringConfig;
 import de.numcodex.feasibility_gui_backend.query.collect.QueryCollectSpringConfig;
@@ -81,7 +81,7 @@ public class QueryDispatcherIT {
 
     @Test
     public void testEnqueueNewQuery_QueryContentGetsCreatedIfNotAlreadyPresent() throws JsonProcessingException {
-        var otherQuery = StructuredQuery.builder()
+        var otherQuery = Ccdl.builder()
                 .version(URI.create("https://to_be_decided.com/draft-2/schema#"))
                 .build();
         var serializedOtherQuery = jsonUtil.writeValueAsString(otherQuery);
@@ -92,7 +92,7 @@ public class QueryDispatcherIT {
         queryContentRepository.save(otherQueryContent);
 
 
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         var serializedTestQuery = jsonUtil.writeValueAsString(testQuery);
         var serializedTestQueryHash = queryHashCalculator.calculateSerializedQueryBodyHash(serializedTestQuery);
 
@@ -106,7 +106,7 @@ public class QueryDispatcherIT {
 
     @Test
     public void testEnqueueNewQuery_QueryContentGetsReusedIfAlreadyPresent() throws JsonProcessingException {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         var serializedTestQuery = jsonUtil.writeValueAsString(testQuery);
         var serializedTestQueryHash = queryHashCalculator.calculateSerializedQueryBodyHash(serializedTestQuery);
 
@@ -120,7 +120,7 @@ public class QueryDispatcherIT {
 
     @Test
     public void testEnqueueNewQuery() throws JsonProcessingException {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         var serializedTestQuery = jsonUtil.writeValueAsString(testQuery);
         var serializedTestQueryHash = queryHashCalculator.calculateSerializedQueryBodyHash(serializedTestQuery);
 
@@ -145,7 +145,7 @@ public class QueryDispatcherIT {
 
     @Test
     public void testDispatchEnqueuedQuery() {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
 
         var queryId = assertDoesNotThrow(() -> queryDispatcher.enqueueNewQuery(testQuery, "test"));
 

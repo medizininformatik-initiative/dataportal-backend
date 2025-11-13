@@ -361,7 +361,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StructuredQuery"
+              $ref: "#/components/schemas/CCDL"
         required: true
       responses:
         201:
@@ -522,7 +522,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StructuredQuery"
+              $ref: "#/components/schemas/CCDL"
         required: true
       responses:
         200:
@@ -973,7 +973,7 @@ components:
             - Example CRTDL
         cohortDefinition:
           type: object
-          $ref: "#/components/schemas/StructuredQuery"
+          $ref: "#/components/schemas/CCDL"
         dataExtraction:
           type: object
           $ref: "#/components/schemas/DataExtractionQuery"
@@ -1032,7 +1032,7 @@ components:
           type: integer
           format: int64
         content:
-          $ref: "#/components/schemas/StructuredQuery"
+          $ref: "#/components/schemas/CCDL"
         label:
           type: string
         results:
@@ -1105,7 +1105,7 @@ components:
         remaining:
           type: number
           format: int64
-    StructuredQuery:
+    CCDL:
       type: object
       required:
         - version

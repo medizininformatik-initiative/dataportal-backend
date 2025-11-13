@@ -3,7 +3,7 @@ package de.numcodex.feasibility_gui_backend.query.translation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,8 +35,8 @@ public class FhirQueryTranslatorTest {
     private ArgumentCaptor<HttpEntity<String>> requestCaptor;
 
     @Test
-    public void testTranslate_EncodingStructuredQueryForRequestFails() throws JsonProcessingException {
-        var testQuery = StructuredQuery.builder().build();
+    public void testTranslate_EncodingCcdlForRequestFails() throws JsonProcessingException {
+        var testQuery = Ccdl.builder().build();
         doThrow(JsonProcessingException.class).when(jsonUtil).writeValueAsString(testQuery);
 
         assertThrows(QueryTranslationException.class, () -> fhirQueryTranslator.translate(testQuery));
@@ -46,7 +46,7 @@ public class FhirQueryTranslatorTest {
 
     @Test
     public void testTranslate_RequestToExternalTranslationServiceFails() throws JsonProcessingException {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         doReturn("foo").when(jsonUtil).writeValueAsString(testQuery);
         doThrow(RestClientException.class).when(client)
                 .postForObject(anyString(), any(), eq(String.class));
@@ -58,7 +58,7 @@ public class FhirQueryTranslatorTest {
 
     @Test
     public void testTranslate_EverythingSucceeds() throws JsonProcessingException, QueryTranslationException {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         doReturn("foo").when(jsonUtil).writeValueAsString(testQuery);
         when(client.postForObject(eq("/query/translate"), requestCaptor.capture(), eq(String.class)))
                 .thenReturn("bar");

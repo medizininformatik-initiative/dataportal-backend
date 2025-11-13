@@ -3,7 +3,7 @@ package de.numcodex.feasibility_gui_backend.query.dispatch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.query.QueryMediaType;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.broker.BrokerClient;
 import de.numcodex.feasibility_gui_backend.query.broker.QueryDefinitionNotFoundException;
 import de.numcodex.feasibility_gui_backend.query.broker.QueryNotFoundException;
@@ -75,16 +75,16 @@ public class QueryDispatcherTest {
     }
 
     @Test
-    public void testDispatchEnqueuedQuery_FailsWhenStructuredQueryNotFetchable() throws JsonProcessingException {
+    public void testDispatchEnqueuedQuery_FailsWhenCcdlNotFetchable() throws JsonProcessingException {
         var testQueryId = 99999L;
         var testQuery = new Query();
         testQuery.setId(testQueryId);
-        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(StructuredQuery.builder().build()));
+        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
         testQuery.setQueryContent(testQueryContent);
 
         doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
         doThrow(JsonProcessingException.class).when(jsonUtil).readValue(testQueryContent.getQueryContent(),
-                StructuredQuery.class);
+                Ccdl.class);
 
         var queryDispatcher = createQueryDispatcher(List.of());
         StepVerifier.create(queryDispatcher.dispatchEnqueuedQuery(testQueryId))
@@ -98,13 +98,13 @@ public class QueryDispatcherTest {
         var testQueryId = 99999L;
         var testQuery = new Query();
         testQuery.setId(testQueryId);
-        var structuredQuery = StructuredQuery.builder().build();
-        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(structuredQuery));
+        var ccdl = Ccdl.builder().build();
+        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(ccdl));
         testQuery.setQueryContent(testQueryContent);
 
         doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
-        doReturn(structuredQuery).when(jsonUtil).readValue(testQueryContent.getQueryContent(), StructuredQuery.class);
-        doThrow(QueryTranslationException.class).when(queryTranslationComponent).translate(structuredQuery);
+        doReturn(ccdl).when(jsonUtil).readValue(testQueryContent.getQueryContent(), Ccdl.class);
+        doThrow(QueryTranslationException.class).when(queryTranslationComponent).translate(ccdl);
 
 
         var queryDispatcher = createQueryDispatcher(List.of());
@@ -119,15 +119,15 @@ public class QueryDispatcherTest {
         var testQueryId = 99999L;
         var testQuery = new Query();
         testQuery.setId(testQueryId);
-        var structuredQuery = StructuredQuery.builder().build();
-        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(structuredQuery));
+        var ccdl = Ccdl.builder().build();
+        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(ccdl));
         testQuery.setQueryContent(testQueryContent);
 
         var failingBrokerClient = mock(BrokerClient.class);
 
         doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
-        doReturn(structuredQuery).when(jsonUtil).readValue(testQueryContent.getQueryContent(), StructuredQuery.class);
-        doReturn(Map.of()).when(queryTranslationComponent).translate(structuredQuery);
+        doReturn(ccdl).when(jsonUtil).readValue(testQueryContent.getQueryContent(), Ccdl.class);
+        doReturn(Map.of()).when(queryTranslationComponent).translate(ccdl);
         doThrow(IOException.class).when(failingBrokerClient).createQuery(testQueryId);
 
         var queryDispatcher = createQueryDispatcher(List.of(failingBrokerClient));
@@ -143,20 +143,20 @@ public class QueryDispatcherTest {
         var testQueryId = 99999L;
         var testQuery = new Query();
         testQuery.setId(testQueryId);
-        var structuredQuery = StructuredQuery.builder()
+        var ccdl = Ccdl.builder()
                 .version(URI.create("https://to.be.decided/schema"))
                 .display("Test")
                 .build();
 
-        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(structuredQuery));
+        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(ccdl));
         testQuery.setQueryContent(testQueryContent);
         var translationResult = Map.of(QueryMediaType.STRUCTURED_QUERY, testQueryContent.getQueryContent());
 
         var failingBrokerClient = mock(BrokerClient.class);
 
         doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
-        doReturn(structuredQuery).when(jsonUtil).readValue(testQueryContent.getQueryContent(), StructuredQuery.class);
-        doReturn(translationResult).when(queryTranslationComponent).translate(structuredQuery);
+        doReturn(ccdl).when(jsonUtil).readValue(testQueryContent.getQueryContent(), Ccdl.class);
+        doReturn(translationResult).when(queryTranslationComponent).translate(ccdl);
         doReturn("1").when(failingBrokerClient).createQuery(testQueryId);
         doThrow(IOException.class).when(failingBrokerClient).publishQuery("1");
 
@@ -176,7 +176,7 @@ public class QueryDispatcherTest {
         var testQueryId = 99999L;
         var testQuery = new Query();
         testQuery.setId(testQueryId);
-        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(StructuredQuery.builder().build()));
+        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
         testQuery.setQueryContent(testQueryContent);
 
         doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
@@ -203,7 +203,7 @@ public class QueryDispatcherTest {
         var testQueryId = 99999L;
         var testQuery = new Query();
         testQuery.setId(testQueryId);
-        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(StructuredQuery.builder().build()));
+        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
         testQuery.setQueryContent(testQueryContent);
 
         doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
@@ -230,7 +230,7 @@ public class QueryDispatcherTest {
         var testQueryId = 99999L;
         var testQuery = new Query();
         testQuery.setId(testQueryId);
-        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(StructuredQuery.builder().build()));
+        var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
         testQuery.setQueryContent(testQueryContent);
 
         doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);

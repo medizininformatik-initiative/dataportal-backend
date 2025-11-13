@@ -39,13 +39,13 @@ public class DirectBrokerClientFlare extends DirectBrokerClient {
   @Override
   public void publishQuery(String brokerQueryId) throws QueryNotFoundException, QueryDefinitionNotFoundException, IOException {
     var query = findQuery(brokerQueryId);
-    var structuredQueryContent = query.getQueryDefinition(STRUCTURED_QUERY);
+    var ccdlContent = query.getQueryDefinition(STRUCTURED_QUERY);
 
     try {
       webClient.post()
           .uri(FLARE_QUERY_ENDPOINT_URL)
           .header(HttpHeaders.CONTENT_TYPE, STRUCTURED_QUERY.getRepresentation())
-          .bodyValue(structuredQueryContent)
+          .bodyValue(ccdlContent)
           .retrieve()
           .bodyToMono(String.class)
           .map(Integer::valueOf)

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.api.TimeRestriction;
 import de.numcodex.feasibility_gui_backend.query.api.ValueFilterType;
 import de.numcodex.feasibility_gui_backend.query.api.status.ValidationIssue;
@@ -32,11 +32,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Validator for {@link StructuredQuery} that does an actual check based on a JSON schema.
+ * Validator for {@link Ccdl} that does an actual check based on a JSON schema.
  */
 @Slf4j
 @Component
-public class StructuredQueryValidator implements ConstraintValidator<StructuredQueryValidation, StructuredQuery> {
+public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> {
 
   private final static String IGNORED_CONSENT_SYSTEM = "fdpg.consent.combined";
 
@@ -55,10 +55,10 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
    * Lombok annotation had to be removed since it could not take the necessary Schema Qualifier
    */
   @Autowired
-  public StructuredQueryValidator(TerminologyService terminologyService,
-                                  TerminologyEsService terminologyEsService,
-                                  CodeableConceptService codeableConceptService,
-                                  ObjectMapper jsonUtil) {
+  public CcdlValidator(TerminologyService terminologyService,
+                       TerminologyEsService terminologyEsService,
+                       CodeableConceptService codeableConceptService,
+                       ObjectMapper jsonUtil) {
     this.terminologyService = terminologyService;
     this.terminologyEsService = terminologyEsService;
     this.codeableConceptService = codeableConceptService;
@@ -66,21 +66,21 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
   }
 
   /**
-   * Validate the submitted {@link StructuredQuery} against the json query schema.
+   * Validate the submitted {@link Ccdl} against the json query schema.
    *
-   * @param structuredQuery the {@link StructuredQuery} to validate
+   * @param ccdl the {@link Ccdl} to validate
    */
   @Override
-  public boolean isValid(StructuredQuery structuredQuery,
+  public boolean isValid(Ccdl ccdl,
                          ConstraintValidatorContext ctx) {
 
     ctx.disableDefaultConstraintViolation();
-    return !containsInvalidCriteria(ctx, structuredQuery);
+    return !containsInvalidCriteria(ctx, ccdl);
   }
 
-  private boolean containsInvalidCriteria(ConstraintValidatorContext ctx, StructuredQuery structuredQuery) {
-    var hasErrors = containsInvalidCriteria(ctx, "/inclusionCriteria", structuredQuery.inclusionCriteria());
-    return containsInvalidCriteria(ctx, "/exclusionCriteria", structuredQuery.exclusionCriteria())
+  private boolean containsInvalidCriteria(ConstraintValidatorContext ctx, Ccdl ccdl) {
+    var hasErrors = containsInvalidCriteria(ctx, "/inclusionCriteria", ccdl.inclusionCriteria());
+    return containsInvalidCriteria(ctx, "/exclusionCriteria", ccdl.exclusionCriteria())
         || hasErrors;
   }
 

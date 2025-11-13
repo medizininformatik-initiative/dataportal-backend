@@ -7,7 +7,7 @@ import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.query.QueryHandlerService;
 import de.numcodex.feasibility_gui_backend.query.api.Crtdl;
 import de.numcodex.feasibility_gui_backend.query.api.Dataquery;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.api.status.SavedQuerySlots;
 import de.numcodex.feasibility_gui_backend.query.api.validation.JsonSchemaValidator;
 import de.numcodex.feasibility_gui_backend.query.broker.BrokerSpringConfig;
@@ -16,7 +16,7 @@ import de.numcodex.feasibility_gui_backend.query.dispatch.QueryDispatchSpringCon
 import de.numcodex.feasibility_gui_backend.query.persistence.DataqueryRepository;
 import de.numcodex.feasibility_gui_backend.query.result.ResultServiceSpringConfig;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslatorSpringConfig;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +78,7 @@ public class DataqueryHandlerIT {
   private DataqueryCsvExportService dataqueryCsvExportService;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private JsonSchemaValidator jsonSchemaValidator;
@@ -191,12 +191,12 @@ public class DataqueryHandlerIT {
 
   private Crtdl createCrtdl() {
     return Crtdl.builder()
-        .cohortDefinition(createValidStructuredQuery())
+        .cohortDefinition(createValidCcdl())
         .display("foo")
         .build();
   }
 
-  private StructuredQuery createValidStructuredQuery() {
+  private Ccdl createValidCcdl() {
     var termCode = TermCode.builder()
         .code("LL2191-6")
         .system("http://loinc.org")
@@ -206,7 +206,7 @@ public class DataqueryHandlerIT {
         .termCodes(List.of(termCode))
         .attributeFilters(List.of())
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(inclusionCriterion)))
         .exclusionCriteria(null)

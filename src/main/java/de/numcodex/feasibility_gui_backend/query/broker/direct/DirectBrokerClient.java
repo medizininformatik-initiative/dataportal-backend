@@ -163,8 +163,8 @@ public abstract class DirectBrokerClient implements BrokerClient {
     }
 
     /**
-     * Adds a query definition. A query definition is a query in a specific format (i.e. structured
-     * query / CQL). The specified mime type defines the format of the query itself. When invoked
+     * Adds a query definition. A query definition is a query in a specific format (i.e. CCDL/CQL).
+     * The specified mime type defines the format of the query itself. When invoked
      * multiple times for a single mime type, any already existing query content associated with
      * this mime type gets overwritten.
      *

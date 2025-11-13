@@ -5,7 +5,7 @@ import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.common.api.Unit;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.query.api.AttributeFilter;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.api.TimeRestriction;
 import de.numcodex.feasibility_gui_backend.query.api.ValueFilter;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,7 +107,7 @@ public class FhirQueryTranslatorIT {
                 .termCodes(List.of(bodyWeightTermCode))
                 .valueFilter(bodyWeightValueFilter)
                 .build();
-        var testQuery = StructuredQuery.builder()
+        var testQuery = Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
                 .build();
@@ -137,7 +137,7 @@ public class FhirQueryTranslatorIT {
                 .termCodes(List.of(psychologicalDysfunctionTermCode))
                 .timeRestriction(timeRestriction)
                 .build();
-        var testQuery = StructuredQuery.builder()
+        var testQuery = Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(hasDementia, hasPsychologicalDysfunction)))
                 .build();
@@ -192,7 +192,7 @@ public class FhirQueryTranslatorIT {
                 .termCodes(List.of(bodyTemperatureTermCode))
                 .attributeFilters(List.of(axillaryMeasured))
                 .build();
-        var testQuery = StructuredQuery.builder()
+        var testQuery = Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(olderThanEighteen)))
                 .exclusionCriteria(List.of(List.of(bodyTemperatureAxillaryMeasured)))

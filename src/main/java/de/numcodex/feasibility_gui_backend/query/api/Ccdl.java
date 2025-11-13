@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.MutableCriterion;
-import de.numcodex.feasibility_gui_backend.query.api.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.query.api.validation.CcdlValidation;
 import lombok.Builder;
 
 import java.net.URI;
@@ -13,17 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonInclude(Include.NON_EMPTY)
-@StructuredQueryValidation
+@CcdlValidation
 @Builder
-public record StructuredQuery(
+public record Ccdl(
     @JsonProperty URI version,
     @JsonProperty("inclusionCriteria") List<List<Criterion>> inclusionCriteria,
     @JsonProperty("exclusionCriteria") List<List<Criterion>> exclusionCriteria,
     @JsonProperty("display") String display
 ) {
-  public static StructuredQuery createImmutableStructuredQuery(MutableStructuredQuery mutableStructuredQuery) {
+  public static Ccdl createImmutableCcdl(MutableCcdl mutableCcdl) {
     List<List<Criterion>> inclusionCriteria = new ArrayList<>();
-    for (List<MutableCriterion> outerList : mutableStructuredQuery.getInclusionCriteria()) {
+    for (List<MutableCriterion> outerList : mutableCcdl.getInclusionCriteria()) {
       List<Criterion> innerList = new ArrayList<>();
       for (MutableCriterion criterion : outerList) {
         innerList.add(Criterion.createImmutableCriterion(criterion));
@@ -32,7 +32,7 @@ public record StructuredQuery(
     }
 
     List<List<Criterion>> exclusionCriteria = new ArrayList<>();
-    for (List<MutableCriterion> outerList : mutableStructuredQuery.getExclusionCriteria()) {
+    for (List<MutableCriterion> outerList : mutableCcdl.getExclusionCriteria()) {
       List<Criterion> innerList = new ArrayList<>();
       for (MutableCriterion criterion : outerList) {
         innerList.add(Criterion.createImmutableCriterion(criterion));
@@ -40,9 +40,9 @@ public record StructuredQuery(
       exclusionCriteria.add(innerList);
     }
 
-    return StructuredQuery.builder()
-        .version(mutableStructuredQuery.getVersion())
-        .display(mutableStructuredQuery.getDisplay())
+    return Ccdl.builder()
+        .version(mutableCcdl.getVersion())
+        .display(mutableCcdl.getDisplay())
         .inclusionCriteria(inclusionCriteria)
         .exclusionCriteria(exclusionCriteria)
         .build();

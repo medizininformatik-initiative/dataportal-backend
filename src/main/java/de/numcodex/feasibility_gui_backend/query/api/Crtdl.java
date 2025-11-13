@@ -10,7 +10,7 @@ import lombok.Builder;
 public record Crtdl(
     @JsonProperty String version,
     @JsonProperty String display,
-    @Valid @JsonProperty StructuredQuery cohortDefinition,
+    @Valid @JsonProperty Ccdl cohortDefinition,
     @Valid @JsonProperty DataExtraction dataExtraction
 ) {
 }

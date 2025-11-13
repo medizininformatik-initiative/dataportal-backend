@@ -14,7 +14,7 @@ import de.numcodex.feasibility_gui_backend.query.ratelimiting.AuthenticationHelp
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.InvalidAuthenticationException;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingService;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslationException;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +56,7 @@ public class FeasibilityQueryHandlerRestController {
 
   public static final String HEADER_X_DETAILED_OBFUSCATED_RESULT_WAS_EMPTY = "X-Detailed-Obfuscated-Result-Was-Empty";
   private final QueryHandlerService queryHandlerService;
-  private final StructuredQueryValidation structuredQueryValidation;
+  private final CcdlValidation ccdlValidation;
   private final RateLimitingService rateLimitingService;
   private final UserBlacklistRepository userBlacklistRepository;
   private final AuthenticationHelper authenticationHelper;
@@ -91,14 +91,14 @@ public class FeasibilityQueryHandlerRestController {
 
   public FeasibilityQueryHandlerRestController(QueryHandlerService queryHandlerService,
                                                RateLimitingService rateLimitingService,
-                                               StructuredQueryValidation structuredQueryValidation,
+                                               CcdlValidation ccdlValidation,
                                                UserBlacklistRepository userBlacklistRepository,
                                                AuthenticationHelper authenticationHelper,
                                                SmartValidator validator,
                                                @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.queryHandlerService = queryHandlerService;
     this.rateLimitingService = rateLimitingService;
-    this.structuredQueryValidation = structuredQueryValidation;
+    this.ccdlValidation = ccdlValidation;
     this.userBlacklistRepository = userBlacklistRepository;
     this.authenticationHelper = authenticationHelper;
     this.validator = validator;
@@ -283,7 +283,7 @@ public class FeasibilityQueryHandlerRestController {
   }
 
   @PostMapping("/validate")
-  public ResponseEntity<?> validateStructuredQuery(
+  public ResponseEntity<?> validateCcdl(
       @RequestBody JsonNode queryNode) {
     var validationErrors = queryHandlerService.validateCcdl(queryNode);
     if (!validationErrors.isEmpty()) {
@@ -291,7 +291,7 @@ public class FeasibilityQueryHandlerRestController {
     }
 
     var query = queryHandlerService.ccdlFromJsonNode(queryNode);
-    return new ResponseEntity<>(structuredQueryValidation.annotateStructuredQuery(query, false), HttpStatus.OK);
+    return new ResponseEntity<>(ccdlValidation.annotateCcdl(query, false), HttpStatus.OK);
   }
 
   @PostMapping(value = "/cql")

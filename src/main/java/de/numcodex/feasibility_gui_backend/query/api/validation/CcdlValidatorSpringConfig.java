@@ -1,7 +1,7 @@
 package de.numcodex.feasibility_gui_backend.query.api.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
 import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
@@ -14,18 +14,18 @@ import jakarta.validation.ConstraintValidator;
 
 @Configuration
 @Slf4j
-public class StructuredQueryValidatorSpringConfig {
+public class CcdlValidatorSpringConfig {
 
   @Value("${app.enableQueryValidation}")
   private boolean enabled;
 
   @Bean
-  public ConstraintValidator<StructuredQueryValidation, StructuredQuery> createQueryValidator(
+  public ConstraintValidator<CcdlValidation, Ccdl> createQueryValidator(
       TerminologyService terminologyService,
       TerminologyEsService terminologyEsService,
       CodeableConceptService codeableConceptService) {
     return enabled
-        ? new StructuredQueryValidator(terminologyService, terminologyEsService, codeableConceptService, new ObjectMapper())
-        : new StructuredQueryPassValidator();
+        ? new CcdlValidator(terminologyService, terminologyEsService, codeableConceptService, new ObjectMapper())
+        : new CcdlPassValidator();
   }
 }

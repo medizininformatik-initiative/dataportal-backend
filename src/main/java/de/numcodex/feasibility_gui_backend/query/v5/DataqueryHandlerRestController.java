@@ -9,9 +9,8 @@ import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryCsvExportExc
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryException;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryHandler;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryStorageFullException;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Validation;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +29,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.List;
 
 import static de.numcodex.feasibility_gui_backend.config.WebSecurityConfig.*;
 
@@ -44,16 +42,16 @@ Rest Interface for the UI to send and receive dataqueries from the backend.
 public class DataqueryHandlerRestController {
   private final static String API_VERSION = "v5";
   private final DataqueryHandler dataqueryHandler;
-  private final StructuredQueryValidation structuredQueryValidation;
+  private final CcdlValidation ccdlValidation;
   private final SmartValidator validator;
   private final String apiBaseUrl;
 
   public DataqueryHandlerRestController(DataqueryHandler dataqueryHandler,
-                                        StructuredQueryValidation structuredQueryValidation,
+                                        CcdlValidation ccdlValidation,
                                         SmartValidator validator,
                                         @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.dataqueryHandler = dataqueryHandler;
-    this.structuredQueryValidation = structuredQueryValidation;
+    this.ccdlValidation = ccdlValidation;
     this.validator = validator;
     this.apiBaseUrl = apiBaseUrl;
   }
@@ -101,7 +99,7 @@ public class DataqueryHandlerRestController {
                       .display(dataquery.content().display())
                       .version(dataquery.content().version())
                       .dataExtraction(dataquery.content().dataExtraction())
-                      .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : structuredQueryValidation.annotateStructuredQuery(dataquery.content().cohortDefinition(), skipValidation))
+                      .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : ccdlValidation.annotateCcdl(dataquery.content().cohortDefinition(), skipValidation))
                       .build()
               )
               .label(dataquery.label())
@@ -111,7 +109,7 @@ public class DataqueryHandlerRestController {
               .resultSize(dataquery.resultSize())
               .ccdl(CrtdlSectionInfo.builder()
                   .exists(dataquery.content().cohortDefinition() != null)
-                  .isValid(skipValidation || (dataquery.content().cohortDefinition() != null && structuredQueryValidation.isValid(dataquery.content().cohortDefinition())))
+                  .isValid(skipValidation || (dataquery.content().cohortDefinition() != null && ccdlValidation.isValid(dataquery.content().cohortDefinition())))
                   .build())
               .dataExtraction(CrtdlSectionInfo.builder()
                   .exists(dataquery.content().dataExtraction() != null)
@@ -137,7 +135,7 @@ public class DataqueryHandlerRestController {
           .display(dataquery.content().display())
           .version(dataquery.content().version())
           .dataExtraction(dataquery.content().dataExtraction())
-          .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : structuredQueryValidation.annotateStructuredQuery(dataquery.content().cohortDefinition(), skipValidation))
+          .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : ccdlValidation.annotateCcdl(dataquery.content().cohortDefinition(), skipValidation))
           .build();
       return new ResponseEntity<>(crtdlWithInvalidCritiera, HttpStatus.OK);
     } catch (JsonProcessingException e) {
@@ -218,7 +216,7 @@ public class DataqueryHandlerRestController {
                 .resultSize(dq.resultSize())
                 .ccdl(CrtdlSectionInfo.builder()
                     .exists(dq.content().cohortDefinition() != null)
-                    .isValid(skipValidation || (dq.content().cohortDefinition() != null && structuredQueryValidation.isValid(dq.content().cohortDefinition())))
+                    .isValid(skipValidation || (dq.content().cohortDefinition() != null && ccdlValidation.isValid(dq.content().cohortDefinition())))
                     .build())
                 .dataExtraction(CrtdlSectionInfo.builder()
                     .exists(dq.content().dataExtraction() != null)
@@ -253,7 +251,7 @@ public class DataqueryHandlerRestController {
                 .resultSize(dq.resultSize())
                 .ccdl(CrtdlSectionInfo.builder()
                     .exists(dq.content().cohortDefinition() != null)
-                    .isValid(skipValidation || structuredQueryValidation.isValid(dq.content().cohortDefinition()))
+                    .isValid(skipValidation || ccdlValidation.isValid(dq.content().cohortDefinition()))
                     .build())
                 .dataExtraction(CrtdlSectionInfo.builder()
                     .exists(dq.content().dataExtraction() != null)
@@ -332,7 +330,7 @@ public class DataqueryHandlerRestController {
   }
 
   @PostMapping("/validate")
-  public ResponseEntity<Object> validateStructuredQuery(
+  public ResponseEntity<Object> validateCcdl(
       @RequestBody JsonNode dataqueryJsonNode) throws MethodArgumentNotValidException, NoSuchMethodException {
 
     // Validate Schema
@@ -346,7 +344,7 @@ public class DataqueryHandlerRestController {
     var bindingResult = new BeanPropertyBindingResult(dataquery, "dataquery");
     validator.validate(dataquery, bindingResult);
     if (bindingResult.hasErrors()) {
-      var methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("validateStructuredQuery", JsonNode.class), 0);
+      var methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("validateCcdl", JsonNode.class), 0);
       throw new MethodArgumentNotValidException(methodParameter, bindingResult);
     }
 

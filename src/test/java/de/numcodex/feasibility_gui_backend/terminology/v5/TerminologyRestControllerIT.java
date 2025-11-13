@@ -11,7 +11,7 @@ import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.api.*;
 import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.*;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +54,7 @@ public class TerminologyRestControllerIT {
     private ObjectMapper jsonUtil;
 
     @MockitoBean
-    private StructuredQueryValidation structuredQueryValidation;
+    private CcdlValidation ccdlValidation;
 
     @MockitoBean
     private TerminologyService terminologyService;

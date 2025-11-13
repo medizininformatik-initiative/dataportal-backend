@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.Error;
 import com.networknt.schema.path.NodePath;
 import com.networknt.schema.path.PathType;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.api.validation.JsonSchemaValidator;
 import de.numcodex.feasibility_gui_backend.query.dispatch.QueryDispatchException;
 import de.numcodex.feasibility_gui_backend.query.dispatch.QueryDispatcher;
@@ -14,7 +14,7 @@ import de.numcodex.feasibility_gui_backend.query.persistence.QueryContentReposit
 import de.numcodex.feasibility_gui_backend.query.persistence.QueryRepository;
 import de.numcodex.feasibility_gui_backend.query.result.ResultService;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslator;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +54,7 @@ class QueryHandlerServiceTest {
   private ResultService resultService;
 
   @Mock
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @Mock
   private JsonSchemaValidator jsonSchemaValidator;
@@ -66,7 +66,7 @@ class QueryHandlerServiceTest {
 
   private QueryHandlerService createQueryHandlerService() {
     return new QueryHandlerService(queryDispatcher, queryRepository, queryContentRepository,
-        resultService, structuredQueryValidation, queryTranslator, jsonSchemaValidator,jsonUtil);
+        resultService, ccdlValidation, queryTranslator, jsonSchemaValidator,jsonUtil);
   }
 
   @BeforeEach
@@ -78,14 +78,14 @@ class QueryHandlerServiceTest {
 
   @Test
   public void testRunQuery_failsWithMonoErrorOnQueryDispatchException() throws QueryDispatchException {
-    var testStructuredQuery = StructuredQuery.builder()
+    var testCcdl = Ccdl.builder()
         .inclusionCriteria(List.of(List.of()))
         .exclusionCriteria(List.of(List.of()))
         .build();
     var queryHandlerService = createQueryHandlerService();
-    doThrow(QueryDispatchException.class).when(queryDispatcher).enqueueNewQuery(any(StructuredQuery.class), any(String.class));
+    doThrow(QueryDispatchException.class).when(queryDispatcher).enqueueNewQuery(any(Ccdl.class), any(String.class));
 
-    StepVerifier.create(queryHandlerService.runQuery(testStructuredQuery, "uerid"))
+    StepVerifier.create(queryHandlerService.runQuery(testCcdl, "uerid"))
         .expectError(QueryDispatchException.class)
         .verify();
   }
@@ -116,7 +116,7 @@ class QueryHandlerServiceTest {
     JsonNode jsonNode = loadJson("api/validation/ccdl-valid.json");
 
     var result = assertDoesNotThrow(() -> queryHandlerService.ccdlFromJsonNode(jsonNode));
-    assertThat(result).isInstanceOf(StructuredQuery.class);
+    assertThat(result).isInstanceOf(Ccdl.class);
   }
 
   @Test

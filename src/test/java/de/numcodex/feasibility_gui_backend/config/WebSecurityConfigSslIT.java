@@ -7,7 +7,7 @@ import de.numcodex.feasibility_gui_backend.query.v5.DataqueryHandlerRestControll
 import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import de.numcodex.feasibility_gui_backend.terminology.v5.TerminologyRestController;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +20,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.net.URI;
 
@@ -59,7 +58,7 @@ class WebSecurityConfigSslIT {
   private DataqueryHandler dataqueryHandler;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private TerminologyService terminologyService;
