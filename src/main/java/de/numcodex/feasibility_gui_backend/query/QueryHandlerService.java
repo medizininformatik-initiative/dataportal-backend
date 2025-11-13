@@ -3,7 +3,6 @@ package de.numcodex.feasibility_gui_backend.query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.Error;
 import de.numcodex.feasibility_gui_backend.query.api.Query;
 import de.numcodex.feasibility_gui_backend.query.api.*;
 import de.numcodex.feasibility_gui_backend.query.api.status.IssueWrapper;

@@ -1,8 +1,6 @@
 package de.numcodex.feasibility_gui_backend.query.api.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.erosb.jsonsKema.JsonParser;
-import com.github.erosb.jsonsKema.SchemaLoader;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.common.api.Unit;
@@ -23,7 +21,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
@@ -61,16 +58,11 @@ public class StructuredQueryValidatorTest {
   @BeforeEach
   public void setUp() throws IOException {
     var jsonUtil = new ObjectMapper();
-    InputStream inputStream = StructuredQueryValidator.class.getResourceAsStream(
-        "/de/numcodex/feasibility_gui_backend/query/api/validation/query-schema.json");
-    var jsonSchema = new JsonParser(inputStream).parse();
-    var schema = new SchemaLoader(jsonSchema).load();
-
     lenient().when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString()))
         .thenReturn(violationBuilder);
     lenient().when(violationBuilder.addConstraintViolation())
         .thenReturn(constraintValidatorContext);
-    validator = new StructuredQueryValidator(schema, terminologyService, terminologyEsService, codeableConceptService, jsonUtil);
+    validator = new StructuredQueryValidator(terminologyService, terminologyEsService, codeableConceptService, jsonUtil);
   }
 
   @Test

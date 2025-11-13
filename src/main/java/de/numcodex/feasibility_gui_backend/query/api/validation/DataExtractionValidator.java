@@ -1,8 +1,6 @@
 package de.numcodex.feasibility_gui_backend.query.api.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.erosb.jsonsKema.*;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.dse.DseService;
 import de.numcodex.feasibility_gui_backend.dse.api.DseProfile;
@@ -16,8 +14,6 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.net.URI;
 import java.text.MessageFormat;
@@ -33,8 +29,6 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
 
   private final DseService dseService;
 
-  private final Validator validator;
-
 
   @NonNull
   private final ObjectMapper jsonUtil;
@@ -44,14 +38,12 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
    * <p>
    * Lombok annotation had to be removed since it could not take the necessary Schema Qualifier
    */
-  public DataExtractionValidator(@Qualifier(value = "dataExtraction") Schema jsonSchema,
-                                 CodeableConceptService codeableConceptService,
+  public DataExtractionValidator(CodeableConceptService codeableConceptService,
                                  DseService dseService,
-                                 @NotNull ObjectMapper jsonUtil) {
+                                 @NonNull ObjectMapper jsonUtil) {
     this.codeableConceptService = codeableConceptService;
     this.dseService = dseService;
     this.jsonUtil = jsonUtil;
-    this.validator = Validator.create(jsonSchema, new ValidatorConfig(FormatValidationPolicy.ALWAYS));
   }
 
   /**
@@ -62,35 +54,8 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
   @Override
   public boolean isValid(DataExtraction dataExtraction,
                          ConstraintValidatorContext ctx) {
-    boolean valid = true;
     ctx.disableDefaultConstraintViolation();
-
-    try {
-      var jsonSubject = new JsonParser(jsonUtil.writeValueAsString(dataExtraction)).parse();
-      var validationFailure = validator.validate(jsonSubject);
-      if (validationFailure != null) {
-        ValidationErrorBuilder.addError(
-            ctx,
-            "",
-            "VALIDATION-0000000",
-            "Check the error message stream for what to include and how"
-        );
-        log.error("DataExtraction is invalid: {}", validationFailure.getMessage());
-        valid = false;
-      }
-    } catch (JsonProcessingException jpe) {
-      ValidationErrorBuilder.addError(
-          ctx,
-          "/",
-          ValidationIssue.JSON_ERROR
-      );
-      log.debug("Could not process JSON", jpe);
-      valid = false;
-    }
-
-    valid = valid && !containsInvalidEntries(ctx, dataExtraction);
-
-    return valid;
+    return !containsInvalidEntries(ctx, dataExtraction);
   }
 
   private boolean containsInvalidEntries(ConstraintValidatorContext ctx, DataExtraction dataExtraction) {

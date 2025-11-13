@@ -2,7 +2,6 @@ package de.numcodex.feasibility_gui_backend.query.api.validation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.erosb.jsonsKema.*;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
@@ -21,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -48,15 +46,12 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
   @NonNull
   private final ObjectMapper jsonUtil;
 
-  private final Validator validator;
-
   /**
    * Required args constructor.
    * <p>
    * Lombok annotation had to be removed since it could not take the necessary Schema Qualifier
    */
-  public StructuredQueryValidator(@Qualifier(value = "ccdl") Schema jsonSchema,
-                                  TerminologyService terminologyService,
+  public StructuredQueryValidator(TerminologyService terminologyService,
                                   TerminologyEsService terminologyEsService,
                                   CodeableConceptService codeableConceptService,
                                   ObjectMapper jsonUtil) {
@@ -64,7 +59,6 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
     this.terminologyEsService = terminologyEsService;
     this.codeableConceptService = codeableConceptService;
     this.jsonUtil = jsonUtil;
-    this.validator = Validator.create(jsonSchema, new ValidatorConfig(FormatValidationPolicy.ALWAYS));
   }
 
   /**
@@ -75,34 +69,9 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
   @Override
   public boolean isValid(StructuredQuery structuredQuery,
                          ConstraintValidatorContext ctx) {
-    boolean valid = true;
+
     ctx.disableDefaultConstraintViolation();
-
-    try {
-      var jsonSubject = new JsonParser(jsonUtil.writeValueAsString(structuredQuery)).parse();
-      var validationFailure = validator.validate(jsonSubject);
-      if (validationFailure != null) {
-        ValidationErrorBuilder.addError(
-            ctx,
-            "",
-            "VALIDATION-0000000",
-            "Check the error message stream for what to include and how"
-        );
-        log.error("Structured query is invalid: {}", validationFailure.getMessage());
-        valid = false;
-      }
-    } catch (JsonProcessingException jpe) {
-      ValidationErrorBuilder.addError(
-          ctx,
-          "/",
-          ValidationIssue.JSON_ERROR
-      );
-      log.debug("Could not process JSON", jpe);
-      valid = false;
-    }
-
-    valid = valid && !containsInvalidCriteria(ctx, structuredQuery);
-    return valid ;
+    return !containsInvalidCriteria(ctx, structuredQuery);
   }
 
   private boolean containsInvalidCriteria(ConstraintValidatorContext ctx, StructuredQuery structuredQuery) {

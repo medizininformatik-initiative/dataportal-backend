@@ -1,48 +1,31 @@
 package de.numcodex.feasibility_gui_backend.query.api.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.erosb.jsonsKema.JsonParser;
-import com.github.erosb.jsonsKema.Schema;
-import com.github.erosb.jsonsKema.SchemaLoader;
 import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
 import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
 import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import jakarta.validation.ConstraintValidator;
 
-import java.io.InputStream;
-
 @Configuration
 @Slf4j
 public class StructuredQueryValidatorSpringConfig {
-
-  private static final String JSON_SCHEMA = "/de/numcodex/feasibility_gui_backend/query/api/validation/query-schema.json";
 
   @Value("${app.enableQueryValidation}")
   private boolean enabled;
 
   @Bean
   public ConstraintValidator<StructuredQueryValidation, StructuredQuery> createQueryValidator(
-      @Qualifier("ccdl") Schema schema,
       TerminologyService terminologyService,
       TerminologyEsService terminologyEsService,
       CodeableConceptService codeableConceptService) {
     return enabled
-        ? new StructuredQueryValidator(schema, terminologyService, terminologyEsService, codeableConceptService, new ObjectMapper())
+        ? new StructuredQueryValidator(terminologyService, terminologyEsService, codeableConceptService, new ObjectMapper())
         : new StructuredQueryPassValidator();
-  }
-
-  @Qualifier("ccdl")
-  @Bean
-  public Schema createQueryValidatorJsonSchema() {
-    InputStream inputStream = StructuredQueryValidator.class.getResourceAsStream(JSON_SCHEMA);
-    var jsonSchema = new JsonParser(inputStream).parse();
-    return new SchemaLoader(jsonSchema).load();
   }
 }
