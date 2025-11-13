@@ -324,7 +324,11 @@ public class DataqueryHandlerRestController {
 
   @PostMapping("/validate")
   public ResponseEntity<Object> validateStructuredQuery(
-      @Valid @RequestBody Dataquery dataquery) {
+      @RequestBody JsonNode dataqueryJsonNode) {
+    var validationErrors = dataqueryHandler.validateDataquery(dataqueryJsonNode);
+    if (!validationErrors.isEmpty()) {
+      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+    }
     return new ResponseEntity<>(HttpStatus.OK);
   }
 }
