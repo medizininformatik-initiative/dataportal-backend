@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
  * Validator for {@link StructuredQuery} that does an actual check based on a JSON schema.
  */
 @Slf4j
+@Component
 public class StructuredQueryValidator implements ConstraintValidator<StructuredQueryValidation, StructuredQuery> {
 
   private final static String IGNORED_CONSENT_SYSTEM = "fdpg.consent.combined";
@@ -51,6 +54,7 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
    * <p>
    * Lombok annotation had to be removed since it could not take the necessary Schema Qualifier
    */
+  @Autowired
   public StructuredQueryValidator(TerminologyService terminologyService,
                                   TerminologyEsService terminologyEsService,
                                   CodeableConceptService codeableConceptService,

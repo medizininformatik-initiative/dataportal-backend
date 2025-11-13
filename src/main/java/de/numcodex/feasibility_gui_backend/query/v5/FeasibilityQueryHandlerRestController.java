@@ -20,11 +20,15 @@ import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.SmartValidator;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -57,6 +61,7 @@ public class FeasibilityQueryHandlerRestController {
   private final UserBlacklistRepository userBlacklistRepository;
   private final AuthenticationHelper authenticationHelper;
   private final String apiBaseUrl;
+  private final SmartValidator validator;
 
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
@@ -89,12 +94,14 @@ public class FeasibilityQueryHandlerRestController {
                                                StructuredQueryValidation structuredQueryValidation,
                                                UserBlacklistRepository userBlacklistRepository,
                                                AuthenticationHelper authenticationHelper,
+                                               SmartValidator validator,
                                                @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.queryHandlerService = queryHandlerService;
     this.rateLimitingService = rateLimitingService;
     this.structuredQueryValidation = structuredQueryValidation;
     this.userBlacklistRepository = userBlacklistRepository;
     this.authenticationHelper = authenticationHelper;
+    this.validator = validator;
     this.apiBaseUrl = apiBaseUrl;
   }
 
@@ -103,14 +110,20 @@ public class FeasibilityQueryHandlerRestController {
       @RequestBody JsonNode queryNode,
       @Context HttpServletRequest request,
       Authentication authentication)
-      throws InvalidAuthenticationException {
+      throws InvalidAuthenticationException, MethodArgumentNotValidException, NoSuchMethodException {
 
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
-    if (!validationErrors.isEmpty()) {
-      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+    var schemaValidationErrors = queryHandlerService.validateCcdl(queryNode);
+    if (!schemaValidationErrors.isEmpty()) {
+      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
     }
 
     var query = queryHandlerService.ccdlFromJsonNode(queryNode);
+    var bindingResult = new BeanPropertyBindingResult(query, "ccdl");
+    validator.validate(query, bindingResult);
+    if (bindingResult.hasErrors()) {
+      var methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("runQuery", JsonNode.class, HttpServletRequest.class, Authentication.class), 0);
+      throw new MethodArgumentNotValidException(methodParameter, bindingResult);
+    }
 
     String userId = authentication.getName();
     Optional<UserBlacklist> userBlacklistEntry = userBlacklistRepository.findByUserId(

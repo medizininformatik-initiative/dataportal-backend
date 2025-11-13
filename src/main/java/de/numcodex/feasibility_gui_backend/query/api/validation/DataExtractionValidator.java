@@ -14,6 +14,8 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.text.MessageFormat;
@@ -23,21 +25,22 @@ import java.util.ArrayList;
  * Validator for {@link DataExtraction} that does an actual check based on a JSON schema.
  */
 @Slf4j
+@Component
 public class DataExtractionValidator implements ConstraintValidator<DataExtractionValidation, DataExtraction> {
 
-  private final CodeableConceptService codeableConceptService;
+  private CodeableConceptService codeableConceptService;
 
-  private final DseService dseService;
-
+  private DseService dseService;
 
   @NonNull
-  private final ObjectMapper jsonUtil;
+  private ObjectMapper jsonUtil;
 
   /**
    * Required args constructor.
    * <p>
    * Lombok annotation had to be removed since it could not take the necessary Schema Qualifier
    */
+  @Autowired
   public DataExtractionValidator(CodeableConceptService codeableConceptService,
                                  DseService dseService,
                                  @NonNull ObjectMapper jsonUtil) {
@@ -82,14 +85,14 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
         hasErrors = true;
       } else {
         dseProfile = dseProfileOptional.get();
+        if (attributeGroup.filter() != null) {
+          hasErrors = hasErrorsInAttributeGroupFilters(ctx, attributeGroup, dseProfile,
+              MessageFormat.format("/attributeGroups/{0}", i)) || hasErrors;
+        }
       }
       if (attributeGroup.attributes() != null) {
         hasErrors = attributesContainErrors(ctx, dataExtraction, attributeGroup, dseProfile,
             MessageFormat.format("/attributeGroups/{0}/attributes", i)) || hasErrors;
-      }
-      if (attributeGroup.filter() != null) {
-        hasErrors = hasErrorsInAttributeGroupFilters(ctx, attributeGroup, dseProfile,
-            MessageFormat.format("/attributeGroups/{0}", i)) || hasErrors;
       }
     }
     return hasErrors;

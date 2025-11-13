@@ -11,13 +11,18 @@ import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryHandler;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryStorageFullException;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Validation;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.SmartValidator;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,6 +30,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.List;
 
 import static de.numcodex.feasibility_gui_backend.config.WebSecurityConfig.*;
 
@@ -39,13 +45,16 @@ public class DataqueryHandlerRestController {
   private final static String API_VERSION = "v5";
   private final DataqueryHandler dataqueryHandler;
   private final StructuredQueryValidation structuredQueryValidation;
+  private final SmartValidator validator;
   private final String apiBaseUrl;
 
   public DataqueryHandlerRestController(DataqueryHandler dataqueryHandler,
                                         StructuredQueryValidation structuredQueryValidation,
+                                        SmartValidator validator,
                                         @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.dataqueryHandler = dataqueryHandler;
     this.structuredQueryValidation = structuredQueryValidation;
+    this.validator = validator;
     this.apiBaseUrl = apiBaseUrl;
   }
 
@@ -324,11 +333,23 @@ public class DataqueryHandlerRestController {
 
   @PostMapping("/validate")
   public ResponseEntity<Object> validateStructuredQuery(
-      @RequestBody JsonNode dataqueryJsonNode) {
-    var validationErrors = dataqueryHandler.validateDataquery(dataqueryJsonNode);
-    if (!validationErrors.isEmpty()) {
-      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+      @RequestBody JsonNode dataqueryJsonNode) throws MethodArgumentNotValidException, NoSuchMethodException {
+
+    // Validate Schema
+    var schemaValidationErrors = dataqueryHandler.validateDataquery(dataqueryJsonNode);
+    if (!schemaValidationErrors.isEmpty()) {
+      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
     }
+
+    // Validate Content
+    var dataquery = dataqueryHandler.dataqueryFromJsonNode(dataqueryJsonNode);
+    var bindingResult = new BeanPropertyBindingResult(dataquery, "dataquery");
+    validator.validate(dataquery, bindingResult);
+    if (bindingResult.hasErrors()) {
+      var methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("validateStructuredQuery", JsonNode.class), 0);
+      throw new MethodArgumentNotValidException(methodParameter, bindingResult);
+    }
+
     return new ResponseEntity<>(HttpStatus.OK);
   }
 }
