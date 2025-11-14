@@ -13,6 +13,7 @@ import java.util.Collection;
 public record OntologyItemDocument(
     @Id String id,
     int availability,
+    boolean selectable,
     TermCode context,
     @Field(name = "termcodes")
     Collection<TermCode> termCodes,
@@ -22,6 +23,8 @@ public record OntologyItemDocument(
     Display display,
     @Field(name = "kds_module")
     String kdsModule,
+    @Field(name = "criteria_sets")
+    Collection<String> criteriaSets,
     @Field(name = "parents")
     Collection<Relative> parents,
     @Field(name = "children")
