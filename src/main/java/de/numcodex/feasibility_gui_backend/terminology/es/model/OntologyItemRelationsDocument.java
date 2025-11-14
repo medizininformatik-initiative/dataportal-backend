@@ -13,6 +13,9 @@ public record OntologyItemRelationsDocument(
     Display display,
     @Field(name = "selectable")
     boolean selectable,
+    String terminology,
+    @Field(name = "term_code")
+    String termcode,
     @Field(name = "parents")
     Collection<Relative> parents,
     @Field(name = "children")

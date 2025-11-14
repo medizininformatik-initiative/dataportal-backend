@@ -71,35 +71,11 @@
             "type": "text",
             "index": false
           },
-          "selectable": {
-            "type": "boolean",
-            "index": false
-          }
-        }
-      },
-      "parents": {
-        "properties": {
-          "contextualized_termcode_hash": {
+          "terminology": {
             "type": "text",
             "index": false
           },
-          "name": {
-            "type": "text",
-            "index": false
-          },
-          "selectable": {
-            "type": "boolean",
-            "index": false
-          }
-        }
-      },
-      "related_terms": {
-        "properties": {
-          "contextualized_termcode_hash": {
-            "type": "text",
-            "index": false
-          },
-          "name": {
+          "term_code": {
             "type": "text",
             "index": false
           },
@@ -150,11 +126,64 @@
           }
         }
       },
+      "parents": {
+        "properties": {
+          "contextualized_termcode_hash": {
+            "type": "text",
+            "index": false
+          },
+          "name": {
+            "type": "text",
+            "index": false
+          },
+          "terminology": {
+            "type": "text",
+            "index": false
+          },
+          "term_code": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
+          }
+        }
+      },
+      "related_terms": {
+        "properties": {
+          "contextualized_termcode_hash": {
+            "type": "text",
+            "index": false
+          },
+          "name": {
+            "type": "text",
+            "index": false
+          },
+          "terminology": {
+            "type": "text",
+            "index": false
+          },
+          "term_code": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
+          }
+        }
+      },
       "selectable": {
         "type": "boolean"
       },
       "termcode": {
         "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        },
         "analyzer": "edge_ngram_analyzer_include_punctuation",
         "search_analyzer": "lowercase_analyzer"
       },
