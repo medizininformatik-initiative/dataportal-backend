@@ -12,7 +12,7 @@
 
   <groupId>de.medizininformatik-initiative</groupId>
   <artifactId>DataportalBackend</artifactId>
-  <version>7.6.0-SNAPSHOT</version>
+  <version>7.6.0</version>
 
   <name>Dataportal Backend</name>
   <description>Backend of the Dataportal</description>
@@ -27,7 +27,7 @@
     <java.version>17</java.version>
     <mockwebserver.version>5.3.0</mockwebserver.version>
     <okhttp3.version>4.10.0</okhttp3.version>
-    <ontology-tag>v3.9.2-preview.1</ontology-tag>
+    <ontology-tag>v3.9.2</ontology-tag>
   </properties>
 
   <dependencies>
