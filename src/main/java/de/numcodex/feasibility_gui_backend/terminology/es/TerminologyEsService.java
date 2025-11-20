@@ -249,6 +249,7 @@ public class TerminologyEsService {
 
     var finalQuery = new NativeQueryBuilder()
         .withQuery(innerQuery)
+        .withMaxResults(500)
         .build();
 
     log.info(finalQuery.getQuery().toString());
