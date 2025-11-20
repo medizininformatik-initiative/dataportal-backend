@@ -149,7 +149,11 @@ app:
           pollingInterval: ${PRIVACY_QUOTA_READ_DETAILED_OBFUSCATED_POLLINGINTERVAL:PT10S}
           amount: ${PRIVACY_QUOTA_READ_DETAILED_OBFUSCATED_AMOUNT:3}
           interval: ${PRIVACY_QUOTA_READ_DETAILED_OBFUSCATED_INTERVAL:PT2H}
-
+passthrough:
+  ccdlVersion: ${PT_CCDL_VERSION:unknown}
+  portalLink: ${PT_PORTAL_LINK:https://antrag.forschen-fuer-gesundheit.de}
+  dsePatientProfileUrl: ${PT_DSE_PATIENT_PROFILE_URL:https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert}
+  pollingTimeUi: ${PT_POLLING_TIME_UI:PT1M}
 logging:
   level:
     org.hibernate: ${LOG_LEVEL_SQL:warn}

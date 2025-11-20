@@ -112,22 +112,22 @@ paths:
             schema:
               $ref: "#/components/schemas/Dataquery"
         required: true
-    responses:
-      201:
-        description: Dataquery successfully stored
-        headers:
-          Location:
-            description: Path to the result of your newly created dataquery
-            schema:
-              type: string
-              format: url
-      401:
-        description: Unauthorized - please login first
-      403:
-        description: Storage exceeded
-    security:
-      - dataportal_auth:
-          - admin
+      responses:
+        201:
+          description: Dataquery successfully stored
+          headers:
+            Location:
+              description: Path to the result of your newly created dataquery
+              schema:
+                type: string
+                format: url
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Storage exceeded
+      security:
+        - dataportal_auth:
+            - admin
     get:
       tags:
         - dataquery
@@ -310,6 +310,43 @@ paths:
       security:
         - dataportal_auth:
             - admin
+            - user
+  /query/data/convert/crtdl:
+    post:
+      tags:
+        - dataquery
+      summary: Convert a CRTDL to an zip file with csv contents.
+      description: Nothing will be stored, only a zip file will be generated
+      operationId: convertCrtdlToCsv
+      requestBody:
+        description: CRTDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CRTDL"
+        required: true
+      responses:
+        200:
+          description: CRTDL successfully converted
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                examples:
+                  - attachment; filename=untitled.zip
+            Content-Type:
+              schema:
+                type: string
+                examples:
+                  application/zip
+        400:
+          description: Bad request - validation of the CRTDL failed
+        401:
+          description: Unauthorized - please login first
+        422:
+          description: Invalid input
+      security:
+        - dataportal_auth:
             - user
   /query/feasibility:
     post:
@@ -705,7 +742,7 @@ paths:
     get:
       tags:
         - terminology
-      summary: Get the profile data for criteria, containing uiProfile context and termCodes
+      summary: Get the profile data for criteria, containing uiProfileId context and termCodes
       description: This should return all the information needed to build criteria in the frontend.
       operationId: getEntriesByIdsWithDetail
       parameters:
@@ -727,6 +764,23 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CriteriaProfileData"
+        401:
+          description: Unauthorized - please login first.
+        403:
+          description: Forbidden - insufficient access rights.
+  /terminology/ui-profile:
+    get:
+      tags:
+        - terminology
+      summary: Get a List of all UiProfiles
+      operationId: getUiProfiles
+      responses:
+        200:
+          description: Get all UiProfiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UiProfileList"
         401:
           description: Unauthorized - please login first.
         403:
@@ -869,11 +923,25 @@ paths:
       operationId: ''
       responses:
         200:
-          description: Successful health information.
+          description: Successful build information.
           content:
             application/vnd.spring-boot.actuator.v3+json:
               schema:
                 $ref: "#/components/schemas/SystemInfo"
+      tags:
+        - intrinsics
+  /.settings:
+    get:
+      summary: Offers config settings needed by the frontend.
+      description: ''
+      operationId: ''
+      responses:
+        200:
+          description: Successful health information.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsInfo"
       tags:
         - intrinsics
 components:
@@ -1397,8 +1465,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TermCode"
-        uiProfile:
-          $ref: "#/components/schemas/UiProfileEntry"
+        uiProfileId:
+          type: string
+          examples:
+            - Bioprobe
     UiProfileEntry:
       type: object
       properties:
@@ -1416,6 +1486,20 @@ components:
             - false
         valueDefinition:
           type: string
+    UiProfileListEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - Bioprobe
+            - Patient1
+        uiProfile:
+          $ref: "#/components/schemas/UiProfileEntry"
+    UiProfileList:
+      type: array
+      items:
+        $ref: "#/components/schemas/UiProfileListEntry"
     AttributeDefinition:
       type: object
       properties:
@@ -1672,6 +1756,54 @@ components:
           $ref: "#/components/schemas/BuildInfo"
         terminology:
           $ref: "#/components/schemas/Terminology"
+    SettingsInfo:
+      type: object
+      properties:
+        uiBackendApiPath:
+          type: string
+          examples:
+            - /api/v5
+        readResultSummaryPollingInterval:
+          type: string
+          format: duration
+          examples:
+            - PT1M
+        readResultDetailedObfuscatedPollingInterval:
+          type: string
+          format: duration
+          examples:
+            - PT10S
+        readResultDetailedObfuscatedAmount:
+          type: number
+          examples:
+            - 3
+        readResultDetailedObfuscatedInterval:
+          type: string
+          format: duration
+          examples:
+            - PT10S
+        passthroughPollingTimeUi:
+          type: string
+          format: duration
+          examples:
+            - PT1M
+        passthroughCcdlVersion:
+          type: string
+          examples:
+            - v1
+        passthroughPortalLink:
+          type: string
+          examples:
+            - https://antrag.forschen-fuer-gesundheit.de
+        passthroughDsePatientProfileUrl:
+          type: string
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert
+        maxSavedQueriesPerUser:
+          type: number
+          examples:
+            - 10
+
   securitySchemes:
     dataportal_auth:
       type: oauth2

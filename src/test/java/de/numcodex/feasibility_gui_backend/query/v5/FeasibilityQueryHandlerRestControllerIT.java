@@ -1,4 +1,8 @@
 package de.numcodex.feasibility_gui_backend.query.v5;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.networknt.schema.Error;
+import com.networknt.schema.path.NodePath;
+import com.networknt.schema.path.PathType;
 import de.numcodex.feasibility_gui_backend.common.api.Unit;
 import de.numcodex.feasibility_gui_backend.config.WebSecurityConfig;
 import de.numcodex.feasibility_gui_backend.query.api.*;
@@ -7,10 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.query.QueryHandlerService;
-import de.numcodex.feasibility_gui_backend.query.api.status.FeasibilityIssue;
-import de.numcodex.feasibility_gui_backend.query.api.status.QueryQuota;
-import de.numcodex.feasibility_gui_backend.query.api.status.QueryQuotaEntry;
-import de.numcodex.feasibility_gui_backend.query.api.status.ValidationIssue;
+import de.numcodex.feasibility_gui_backend.query.api.status.*;
+import de.numcodex.feasibility_gui_backend.query.api.validation.JsonSchemaValidator;
 import de.numcodex.feasibility_gui_backend.query.api.validation.StructuredQueryValidatorSpringConfig;
 import de.numcodex.feasibility_gui_backend.query.dispatch.QueryDispatchException;
 import de.numcodex.feasibility_gui_backend.query.persistence.UserBlacklist;
@@ -89,6 +91,9 @@ public class FeasibilityQueryHandlerRestControllerIT {
     private StructuredQueryValidation structuredQueryValidation;
 
     @MockitoBean
+    private JsonSchemaValidator jsonSchemaValidator;
+
+    @MockitoBean
     private RateLimitingInterceptor rateLimitingInterceptor;
 
     @MockitoBean
@@ -125,10 +130,19 @@ public class FeasibilityQueryHandlerRestControllerIT {
     public void testRunQueryEndpoint_FailsOnInvalidStructuredQueryWith400() throws Exception {
         var testQuery = StructuredQuery.builder().build();
 
-        mockMvc.perform(post(URI.create(PATH)).with(csrf())
+        doReturn(List.of(IssueWrapper.builder()
+                .path("foo")
+                .value("bar").build()))
+            .when(queryHandlerService).validateCcdl(any(JsonNode.class));
+
+        var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(jsonUtil.writeValueAsString(testQuery)))
-                .andExpect(status().isBadRequest());
+            .andExpect(request().asyncStarted())
+            .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -137,6 +151,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
         StructuredQuery testQuery = createValidStructuredQuery();
         var annotatedQuery = createValidAnnotatedStructuredQuery(false);
 
+        doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
@@ -160,6 +176,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
         var dispatchError = new QueryDispatchException("something went wrong");
 
+        doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(Mono.error(dispatchError)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
@@ -198,6 +216,9 @@ public class FeasibilityQueryHandlerRestControllerIT {
         StructuredQuery testQuery = createValidStructuredQuery();
         var annotatedQuery = createValidAnnotatedStructuredQuery(false);
 
+
+        doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
         mockMvc.perform(post(URI.create(PATH + "/validate")).with(csrf())
@@ -210,18 +231,18 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
     @Test
     @WithMockUser(roles = "DATAPORTAL_TEST_USER")
-    public void testValidateQueryEndpoint_SucceedsDespiteInvalidCriteriaWith200() throws Exception {
+    public void testValidateQueryEndpoint_FailsOnInvalidCriteriaWith400() throws Exception {
         StructuredQuery testQuery = createValidStructuredQuery();
         var annotatedQuery = createValidAnnotatedStructuredQuery(true);
 
+        doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
         mockMvc.perform(post(URI.create(PATH + "/validate")).with(csrf())
                 .contentType(APPLICATION_JSON)
                 .content(jsonUtil.writeValueAsString(testQuery)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.inclusionCriteria[0].[0].issues").isArray())
-            .andExpect(jsonPath("$.inclusionCriteria[0].[0].issues").isNotEmpty());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -274,6 +295,9 @@ public class FeasibilityQueryHandlerRestControllerIT {
         StructuredQuery testQuery = createValidStructuredQuery();
         var annotatedQuery = createValidAnnotatedStructuredQuery(false);
 
+
+        doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(true).when(authenticationHelper).hasAuthority(any(Authentication.class), eq("ROLE_DATAPORTAL_TEST_POWER"));
         doReturn((long)quotaHardCreateAmount).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaHardCreateInterval));
         doReturn((long)(quotaSoftCreateAmount - 1)).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaSoftCreateInterval));
@@ -380,6 +404,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
     @Test
     @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
     public void testSq2Cql_succeeds() throws Exception  {
+        doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doReturn(createDummyCql()).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
 
         mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
@@ -391,7 +417,22 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
     @Test
     @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
+    public void testSq2Cql_failsWith400() throws Exception  {
+      doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+      doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+      doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
+
+      mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
+              .contentType(APPLICATION_JSON)
+              .content(jsonUtil.writeValueAsString(createValidStructuredQuery())))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
     public void testSq2Cql_failsWith422() throws Exception  {
+        doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
         doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
 
         mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())

@@ -94,6 +94,17 @@ public class TerminologyRestControllerIT {
 
     @Test
     @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+    public void testGetUiProfiles_succeedsWith200() throws Exception {
+      doReturn(List.of(createUiProfileEntry())).when(terminologyService).getUiProfiles();
+
+      mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/ui-profile")).with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.*", hasSize(1)));
+    }
+
+    @Test
+    @WithMockUser(roles = "DATAPORTAL_TEST_USER")
     public void testGetTerminologySystems_succeedsWith200() throws Exception {
         MockHttpServletRequestBuilder requestBuilder;
         doReturn(List.of(TerminologySystemEntry.builder().url("http://foo.bar").name("Foobar").build())).when(terminologyService).getTerminologySystems();
@@ -229,6 +240,13 @@ public class TerminologyRestControllerIT {
             .build();
     }
 
+    private UiProfileEntry createUiProfileEntry() {
+      return UiProfileEntry.builder()
+          .id("test-ui-profile")
+          .uiProfile(createUiProfile())
+          .build();
+    }
+
     private AttributeDefinition createAttributeDefinition() {
         return AttributeDefinition.builder()
             .min(1.0)
@@ -253,7 +271,7 @@ public class TerminologyRestControllerIT {
                     .id(uuid.toString())
                     .context(createTermCode())
                     .termCodes(List.of(createTermCode()))
-                    .uiProfile(createUiProfile())
+                    .uiProfileId("Patient")
                     .build()
             );
         }

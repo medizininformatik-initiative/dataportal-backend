@@ -1,5 +1,6 @@
 package de.numcodex.feasibility_gui_backend.query.v5;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import de.numcodex.feasibility_gui_backend.config.WebSecurityConfig;
 import de.numcodex.feasibility_gui_backend.query.QueryHandlerService;
 import de.numcodex.feasibility_gui_backend.query.QueryHandlerService.ResultDetail;
@@ -15,8 +16,6 @@ import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingServic
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslationException;
 import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
@@ -101,10 +100,18 @@ public class FeasibilityQueryHandlerRestController {
 
   @PostMapping
   public Mono<ResponseEntity<Object>> runQuery(
-      @Valid @RequestBody StructuredQuery query,
+      @RequestBody JsonNode queryNode,
       @Context HttpServletRequest request,
       Authentication authentication)
       throws InvalidAuthenticationException {
+
+    var validationErrors = queryHandlerService.validateCcdl(queryNode);
+    if (!validationErrors.isEmpty()) {
+      return Mono.just(new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST));
+    }
+
+    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
+
     String userId = authentication.getName();
     Optional<UserBlacklist> userBlacklistEntry = userBlacklistRepository.findByUserId(
         userId);
@@ -268,17 +275,31 @@ public class FeasibilityQueryHandlerRestController {
   }
 
   @PostMapping("/validate")
-  public ResponseEntity<StructuredQuery> validateStructuredQuery(
-      @Valid @RequestBody StructuredQuery query) {
+  public ResponseEntity<?> validateStructuredQuery(
+      @RequestBody JsonNode queryNode) {
+    var validationErrors = queryHandlerService.validateCcdl(queryNode);
+    if (!validationErrors.isEmpty()) {
+      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+    }
+
+    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
     return new ResponseEntity<>(structuredQueryValidation.annotateStructuredQuery(query, false), HttpStatus.OK);
   }
 
-  @PostMapping(value = "/cql", produces = "text/cql")
-  public ResponseEntity<String> sq2Cql(@Valid @RequestBody StructuredQuery query) {
+  @PostMapping(value = "/cql")
+  public ResponseEntity<?> sq2Cql(@RequestBody JsonNode queryNode) {
+    var validationErrors = queryHandlerService.validateCcdl(queryNode);
+    if (!validationErrors.isEmpty()) {
+      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+    }
+
+    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
     try {
       var cql = queryHandlerService.translateQueryToCql(query);
       var sanitizedCql = StringEscapeUtils.escapeHtml4(cql);
-      return new ResponseEntity<>(sanitizedCql, HttpStatus.OK);
+      var headers = new HttpHeaders();
+      headers.add(HttpHeaders.CONTENT_TYPE, "text/cql;charset=UTF-8");
+      return new ResponseEntity<>(sanitizedCql, headers, HttpStatus.OK);
     } catch (QueryTranslationException e) {
       return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
     }

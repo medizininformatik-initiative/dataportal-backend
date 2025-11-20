@@ -1,6 +1,7 @@
 package de.numcodex.feasibility_gui_backend.query.v5;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import de.numcodex.feasibility_gui_backend.query.api.Crtdl;
 import de.numcodex.feasibility_gui_backend.query.api.CrtdlSectionInfo;
 import de.numcodex.feasibility_gui_backend.query.api.Dataquery;
@@ -146,7 +147,7 @@ public class DataqueryHandlerRestController {
       String headerValue = "attachment; filename=" + dataquery.label().toUpperCase() +  "_dataquery.zip";
       headers.add(HttpHeaders.CONTENT_DISPOSITION, headerValue);
       headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
-      return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), HttpStatus.OK);
+      return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
     } catch (IOException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
@@ -156,7 +157,37 @@ public class DataqueryHandlerRestController {
     }
   }
 
+  @PostMapping(path = "/convert" + PATH_CRTDL)
+  public ResponseEntity<Object> convertCrtdlToCsv(@RequestBody JsonNode crtdlNode,
+                                                     Authentication authentication) {
+    var validationErrors = dataqueryHandler.validateCrtdl(crtdlNode);
+    if (!validationErrors.isEmpty()) {
+      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+    }
 
+    var crtdl = dataqueryHandler.crtdlFromJsonNode(crtdlNode);
+    // the csv converter currently works on a dataquery object but just uses the crtdl part of it. So just create a dummy for that
+    var dataquery = Dataquery.builder()
+        .createdBy(authentication.getName())
+        .id(-1L)
+        .content(crtdl)
+        .label("")
+        .build();
+    try {
+      var zipByteArrayOutputStream = dataqueryHandler.createCsvExportZipfile(dataquery);
+      HttpHeaders headers = new HttpHeaders();
+      String headerValue = "attachment; filename=untitled.zip";
+      headers.add(HttpHeaders.CONTENT_DISPOSITION, headerValue);
+      headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
+      return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
+    } catch (IOException e) {
+      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    } catch (DataqueryException e) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    } catch (DataqueryCsvExportException e) {
+      return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+  }
 
   @GetMapping(path = "")
   public ResponseEntity<Object> getDataqueries(

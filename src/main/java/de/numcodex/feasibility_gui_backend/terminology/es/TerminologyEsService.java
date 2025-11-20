@@ -219,6 +219,8 @@ public class TerminologyEsService {
     var ontologyItem = ontologyItemEsRepository.findById(hash).orElseThrow(OntologyItemNotFoundException::new);
     var ontologyItemRelationsDocument = OntologyItemRelationsDocument.builder()
         .display(ontologyItem.display())
+        .terminology(ontologyItem.terminology())
+        .termcode(ontologyItem.termcode())
         .parents(ontologyItem.parents())
         .children(ontologyItem.children())
         .relatedTerms(ontologyItem.relatedTerms())

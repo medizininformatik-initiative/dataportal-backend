@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.6</version>
-    <relativePath /> <!-- lookup parent from repository -->
+    <version>3.5.7</version>
+    <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <groupId>de.medizininformatik-initiative</groupId>
   <artifactId>DataportalBackend</artifactId>
-  <version>7.5.1</version>
+  <version>7.6.0</version>
 
   <name>Dataportal Backend</name>
   <description>Backend of the Dataportal</description>
@@ -25,9 +25,9 @@
 
   <properties>
     <java.version>17</java.version>
-    <mockwebserver.version>5.1.0</mockwebserver.version>
+    <mockwebserver.version>5.3.0</mockwebserver.version>
     <okhttp3.version>4.10.0</okhttp3.version>
-    <ontology-tag>v3.9.1</ontology-tag>
+    <ontology-tag>v3.9.2</ontology-tag>
   </properties>
 
   <dependencies>
@@ -51,17 +51,17 @@
     <dependency>
       <groupId>io.undertow</groupId>
       <artifactId>undertow-core</artifactId>
-      <version>2.3.19.Final</version>
+      <version>2.3.20.Final</version>
     </dependency>
     <dependency>
       <groupId>io.undertow</groupId>
       <artifactId>undertow-servlet</artifactId>
-      <version>2.3.19.Final</version>
+      <version>2.3.20.Final</version>
     </dependency>
     <dependency>
       <groupId>io.undertow</groupId>
       <artifactId>undertow-websockets-jsr</artifactId>
-      <version>2.3.19.Final</version>
+      <version>2.3.20.Final</version>
     </dependency>
     <!-- Until here -->
 
@@ -103,7 +103,7 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>oauth2-oidc-sdk</artifactId>
-      <version>11.29.1</version>
+      <version>11.30.1</version>
     </dependency>
 
     <dependency>
@@ -132,23 +132,19 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>2.8.13</version>
+      <version>2.8.14</version>
     </dependency>
 
     <dependency>
-      <groupId>com.github.erosb</groupId>
-      <artifactId>everit-json-schema</artifactId>
-      <version>1.14.6</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.json</groupId>
-          <artifactId>json</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>commons-collections</groupId>
-          <artifactId>commons-collections</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>2.0.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.14.0</version>
     </dependency>
 
     <dependency>
@@ -184,7 +180,7 @@
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>org.hl7.fhir.utilities</artifactId>
-      <version>6.6.7</version>
+      <version>6.7.7</version>
     </dependency>
 
     <dependency>
@@ -250,7 +246,7 @@
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3</version>
     </dependency>
 
     <dependency>
@@ -311,7 +307,7 @@
     <dependency>
       <groupId>com.github.dasniko</groupId>
       <artifactId>testcontainers-keycloak</artifactId>
-      <version>3.8.0</version>
+      <version>3.9.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -350,7 +346,7 @@
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-test</artifactId>
-      <version>3.8.0-M7</version>
+      <version>3.8.0-RC1</version>
       <scope>test</scope>
     </dependency>
 
@@ -424,7 +420,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.13</version>
+        <version>0.8.14</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -457,7 +453,8 @@
         <configuration>
           <failOnNoGitDirectory>false</failOnNoGitDirectory>
           <generateGitPropertiesFile>true</generateGitPropertiesFile>
-          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
+          </generateGitPropertiesFilename>
           <includeOnlyProperties>
             <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
             <includeOnlyProperty>^git.commit.time.(abbrev|full)$</includeOnlyProperty>
@@ -522,7 +519,9 @@
                   <goal>download-single</goal>
                 </goals>
                 <configuration>
-                  <url>https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}</url>
+                  <url>
+                    https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}
+                  </url>
                   <fromFile>backend.zip</fromFile>
                   <toDir>${ontoDirectory.download}</toDir>
                 </configuration>
@@ -534,7 +533,9 @@
                   <goal>download-single</goal>
                 </goals>
                 <configuration>
-                  <url>https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}</url>
+                  <url>
+                    https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/${ontology-tag}
+                  </url>
                   <fromFile>mapping.zip</fromFile>
                   <toDir>${ontoDirectory.download}</toDir>
                 </configuration>
@@ -590,36 +591,58 @@
                 <configuration>
                   <fileSets>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/cql/mapping_cql.json</sourceFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/cql/mapping_cql.json
+                      </sourceFile>
                       <destinationFile>${ontoDirectory.target}/mapping_cql.json</destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/fhir/mapping_fhir.json</sourceFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/fhir/mapping_fhir.json
+                      </sourceFile>
                       <destinationFile>${ontoDirectory.target}/mapping_fhir.json</destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/mapping_tree.json</sourceFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/mapping_tree.json
+                      </sourceFile>
                       <destinationFile>${ontoDirectory.target}/mapping_tree.json</destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/mapping_unzipped/mapping/dse_mapping_tree.json</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/dse_mapping_tree.json</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/mapping_unzipped/mapping/dse_mapping_tree.json
+                      </sourceFile>
+                      <destinationFile>${ontoDirectory.target}/dse_mapping_tree.json
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/R__Load_latest_ui_profile.sql</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/migration/R__Load_latest_ui_profile.sql</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/backend_unzipped/R__Load_latest_ui_profile.sql
+                      </sourceFile>
+                      <destinationFile>
+                        ${ontoDirectory.target}/migration/R__Load_latest_ui_profile.sql
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/R__load_latest_dse_profiles.sql</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/migration/R__load_latest_dse_profiles.sql</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/backend_unzipped/R__load_latest_dse_profiles.sql
+                      </sourceFile>
+                      <destinationFile>
+                        ${ontoDirectory.target}/migration/R__load_latest_dse_profiles.sql
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/profile_tree.json</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/dse/profile_tree.json</destinationFile>
+                      <sourceFile>${ontoDirectory.download}/backend_unzipped/profile_tree.json
+                      </sourceFile>
+                      <destinationFile>${ontoDirectory.target}/dse/profile_tree.json
+                      </destinationFile>
                     </fileSet>
                     <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/terminology_systems.json</sourceFile>
-                      <destinationFile>${ontoDirectory.target}/terminology_systems.json</destinationFile>
+                      <sourceFile>
+                        ${ontoDirectory.download}/backend_unzipped/terminology_systems.json
+                      </sourceFile>
+                      <destinationFile>${ontoDirectory.target}/terminology_systems.json
+                      </destinationFile>
                     </fileSet>
                   </fileSets>
                 </configuration>
@@ -629,7 +652,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>3.1.0</version>
+            <version>3.2.0</version>
             <executions>
               <execution>
                 <phase>compile</phase>
@@ -639,8 +662,8 @@
                 <configuration>
                   <target>
                     <delete
-                            dir="${ontoDirectory.download}"
-                            includeemptydirs="true"/>
+                        dir="${ontoDirectory.download}"
+                        includeemptydirs="true"/>
                   </target>
                 </configuration>
               </execution>

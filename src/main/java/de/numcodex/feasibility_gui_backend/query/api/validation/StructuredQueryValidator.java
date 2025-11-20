@@ -1,17 +1,12 @@
 package de.numcodex.feasibility_gui_backend.query.api.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.everit.json.schema.Schema;
-import org.everit.json.schema.ValidationException;
-import org.json.JSONObject;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.util.stream.Collectors;
 
@@ -22,9 +17,6 @@ import java.util.stream.Collectors;
 public class StructuredQueryValidator implements ConstraintValidator<StructuredQueryValidation, StructuredQuery> {
 
   @NonNull
-  private Schema jsonSchema;
-
-  @NonNull
   private ObjectMapper jsonUtil;
 
   /**
@@ -32,8 +24,7 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
    *
    * Lombok annotation had to be removed since it could not take the necessary Schema Qualifier
    */
-  public StructuredQueryValidator(@Qualifier(value = "validation") Schema jsonSchema, ObjectMapper jsonUtil) {
-    this.jsonSchema = jsonSchema;
+  public StructuredQueryValidator(ObjectMapper jsonUtil) {
     this.jsonUtil = jsonUtil;
   }
 
@@ -45,16 +36,6 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
   @Override
   public boolean isValid(StructuredQuery structuredQuery,
       ConstraintValidatorContext constraintValidatorContext) {
-    try {
-      var jsonSubject = new JSONObject(jsonUtil.writeValueAsString(structuredQuery));
-      jsonSchema.validate(jsonSubject);
-      return true;
-    } catch (ValidationException e) {
-      log.error("Structured query is invalid: {}", e.getCausingExceptions().stream().map(Throwable::getMessage).collect(Collectors.joining(" ## ")));
-      return false;
-    } catch (JsonProcessingException jpe) {
-      log.debug("Could not process JSON", jpe);
-      return false;
-    }
+    return true;
   }
 }

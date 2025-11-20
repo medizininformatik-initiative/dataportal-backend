@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [7.6.0] - 2025-11-14
+
+- Based on ontology **[v3.9.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.2)**
+- Known issue: The api documentation does not reflect the changes from ([#734](https://github.com/medizininformatik-initiative/feasibility-backend/issues/734))
+
+### Added
+- Settings endpoint was added to provide configuration settings to the GUI ([#663](https://github.com/medizininformatik-initiative/feasibility-backend/issues/663))
+- Endpoint to retrieve all ui profiles was added ([#721](https://github.com/medizininformatik-initiative/feasibility-backend/issues/721))
+- An endpoint was added to convert crtdl to a zip file with csv files ([#721](https://github.com/medizininformatik-initiative/feasibility-backend/issues/721))
+- Relationship entries (parents/children/related_items) in terminology search now contain selectable, termcode and terminology attributes ([#664](https://github.com/medizininformatik-initiative/feasibility-backend/issues/664), [#734](https://github.com/medizininformatik-initiative/feasibility-backend/issues/734))
+### Changed
+- Ontology was updated to [v3.9.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.2) ([#734](https://github.com/medizininformatik-initiative/feasibility-backend/issues/734))
+- The endpoint that serves criteria profile data no longer contains full ui profiles but only the ids ([#709](https://github.com/medizininformatik-initiative/feasibility-backend/issues/709))
+- Query schema validation was rewritten to provide better error messages if a submitted content does not fit the json schema [#724](https://github.com/medizininformatik-initiative/feasibility-backend/issues/724)
+### Security
+- Updated dependencies and GitHub actions
+
 ## [7.5.1] - 2025-10-16
 
 - Based on ontology **[v3.9.1](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.1)**

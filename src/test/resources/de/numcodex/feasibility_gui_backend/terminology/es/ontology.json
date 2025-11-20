@@ -5,7 +5,7 @@
         "edge_ngram_tokenizer": {
           "type": "edge_ngram",
           "min_gram": 1,
-          "max_gram": 20,
+          "max_gram": 50,
           "token_chars": [
             "letter",
             "digit"
@@ -14,7 +14,7 @@
         "edge_ngram_tokenizer_include_punctuation": {
           "type": "edge_ngram",
           "min_gram": 1,
-          "max_gram": 20,
+          "max_gram": 50,
           "token_chars": [
             "letter",
             "digit",
@@ -70,6 +70,18 @@
           "name": {
             "type": "text",
             "index": false
+          },
+          "terminology": {
+            "type": "text",
+            "index": false
+          },
+          "term_code": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
           }
         }
       },
@@ -123,6 +135,18 @@
           "name": {
             "type": "text",
             "index": false
+          },
+          "terminology": {
+            "type": "text",
+            "index": false
+          },
+          "term_code": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
           }
         }
       },
@@ -135,6 +159,18 @@
           "name": {
             "type": "text",
             "index": false
+          },
+          "terminology": {
+            "type": "text",
+            "index": false
+          },
+          "term_code": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
           }
         }
       },
@@ -143,6 +179,11 @@
       },
       "termcode": {
         "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        },
         "analyzer": "edge_ngram_analyzer_include_punctuation",
         "search_analyzer": "lowercase_analyzer"
       },
