@@ -109,9 +109,11 @@ app:
       enabled: ${BROKER_CLIENT_DSF_ENABLED:false}
       security:
         certificate: ${DSF_SECURITY_CACERT}
-        keystore:
-          p12file: ${DSF_SECURITY_KEYSTORE_P12FILE}
-          password: ${DSF_SECURITY_KEYSTORE_PASSWORD}
+        client:
+          certificate: ${DSF_SECURITY_CLIENT_CERTIFICATE_FILE}
+          key:
+            file: ${DSF_SECURITY_CLIENT_KEY_FILE}
+            password: ${DSF_SECURITY_CLIENT_KEY_PASSWORD}
       proxy:
         host: ${DSF_PROXY_HOST:}
         username: ${DSF_PROXY_USERNAME:}
