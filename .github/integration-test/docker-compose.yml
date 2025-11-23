@@ -43,8 +43,9 @@ services:
       # ---- DSF  broker
       BROKER_CLIENT_DSF_ENABLED: "false"
       DSF_SECURITY_CACERT: "/opt/dataportal-security/ca.pem"
-      DSF_SECURITY_KEYSTORE_P12FILE: "/opt/dataportal-security/test-user.p12"
-      DSF_SECURITY_KEYSTORE_PASSWORD: "password"
+      DSF_SECURITY_CLIENT_CERTIFICATE_FILE: "/opt/dataportal-security/client.crt"
+      DSF_SECURITY_CLIENT_KEY_FILE: "/opt/dataportal-security/client.key"
+      DSF_SECURITY_CLIENT_KEY_PASSWORD: "password"
       DSF_WEBSERVICE_BASE_URL: "https://dsf-zars-fhir-proxy/fhir"
       DSF_WEBSOCKET_URL: "wss://dsf-zars-fhir-proxy:443/fhir/ws"
       DSF_ORGANIZATION_ID: "Test_ZARS"
