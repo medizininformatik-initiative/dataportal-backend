@@ -340,6 +340,24 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-elasticsearch-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <!-- Explicitly add older jakarta lib to support AKTIN
     note the "." at the end of the groupId for jakarta.xml.bind
     Dependency will be removed once AKTIN updated to new jakarta api version 4.0.0
