@@ -683,6 +683,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ElasticSearchResult"
+  /terminology/entry/bulk-search:
+    post:
+      tags:
+        - terminology
+      summary: Search for exact matches in the configured elastic search service.
+      operationId: bulkSearchEntry
+      requestBody:
+        description: Terminology Bulk Search
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerminologyBulkSearchRequest"
+        required: true
+      responses:
+        200:
+          description: Ok, return the list of results for the search
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElasticSearchBulkResult"
   /terminology/entry/{id}/relations:
     get:
       tags:
@@ -827,6 +847,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CodeableConceptSearchResult"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+  /codeable-concept/entry/bulk-search:
+    post:
+      tags:
+        - codeable concepts
+      summary: Search for codeable concepts by code with exact match
+      operationId: bulkSearchCodeableConcepts
+      requestBody:
+        description: Codeable Concepts Bulk Search
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeableConceptBulkSearchRequest"
+        required: true
+      responses:
+        200:
+          description: Ok, return a list with found codes and a list with codes that were not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeableConceptBulkSearchResult"
         401:
           description: Unauthorized - please login first
         403:
@@ -1312,6 +1356,21 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ElasticSearchResultEntry"
+    ElasticSearchBulkResult:
+      type: object
+      properties:
+        uiProfileId:
+          type: string
+        found:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticSearchResultEntryExtended"
+        notFound:
+          type: array
+          items:
+            type: string
+            examples:
+              - foo
     RelationsEntry:
       type: object
       properties:
@@ -1357,6 +1416,40 @@ components:
           type: string
           examples:
             - E10-E14
+        kdsModule:
+          type: string
+          examples:
+            - Condition
+        selectable:
+          type: boolean
+          examples:
+            - true
+    ElasticSearchResultEntryExtended:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        id:
+          type: string
+          format: uuid
+          examples:
+            - 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8
+        availability:
+          description: Not sure if we want this as numeric value, percentage or just boolean?
+          type: integer
+          minimum: 0
+          examples:
+            - 119578
+        context:
+          $ref: "#/components/schemas/TermCode"
+        termCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TermCode"
+        terminology:
+          type: string
+          examples:
+            - icd-10
         kdsModule:
           type: string
           examples:
@@ -1451,6 +1544,19 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CodeableConceptEntry"
+    CodeableConceptBulkSearchResult:
+      type: object
+      properties:
+        found:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodeableConceptEntry"
+        notFound:
+          type: array
+          items:
+            type: string
+            examples:
+              - foo
     CriteriaProfileData:
       type: object
       properties:
@@ -1803,7 +1909,45 @@ components:
           type: number
           examples:
             - 10
-
+    TerminologyBulkSearchRequest:
+      type: object
+      properties:
+        terminology:
+          type: string
+          required: true
+          examples:
+            - http://fhir.de/CodeSystem/bfarm/icd-10-gm
+        context:
+          type: string
+          required: true
+          examples:
+            - Diagnose
+        searchterms:
+          type: array
+          required: true
+          items:
+            type: string
+            examples:
+              - Z01.81
+              - R84
+              - something invalid
+    CodeableConceptBulkSearchRequest:
+      type: object
+      properties:
+        valueSet:
+          type: string
+          required: true
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/ext/modul-biobank/ValueSet/sct-body-structures
+        searchterms:
+          type: array
+          required: true
+          items:
+            type: string
+            examples:
+              - 763436008
+              - 763434006
+              - something invalid
   securitySchemes:
     dataportal_auth:
       type: oauth2

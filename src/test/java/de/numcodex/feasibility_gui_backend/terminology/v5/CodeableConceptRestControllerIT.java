@@ -7,6 +7,8 @@ import de.numcodex.feasibility_gui_backend.dse.api.LocalizedValue;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingInterceptor;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingServiceSpringConfig;
 import de.numcodex.feasibility_gui_backend.terminology.api.CcSearchResult;
+import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptBulkSearchRequest;
+import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptBulkSearchResult;
 import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptEntry;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
 import org.junit.jupiter.api.Tag;
@@ -32,6 +34,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Tag("terminology")
@@ -76,6 +79,35 @@ class CodeableConceptRestControllerIT {
 
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  void testSearchOntologyItemsBulk_succeedsWith200() throws Exception {
+    var dummyBulkSearchResult = createDummyBulkSearchResult();
+    var dummyBulkSearchRequest = createDummyBulkSearchRequest();
+    doReturn(dummyBulkSearchResult).when(codeableConceptService).performExactSearch(any(CodeableConceptBulkSearchRequest.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_CODEABLE_CONCEPT + "/entry/bulk-search"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(dummyBulkSearchRequest))
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.found.size()").value(dummyBulkSearchResult.found().size()));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  void testSearchOntologyItemsBulk_failsOnInvalidRequest() throws Exception {
+    var dummyBulkSearchResult = createDummyBulkSearchResult();
+    doReturn(dummyBulkSearchResult).when(codeableConceptService).performExactSearch(any(CodeableConceptBulkSearchRequest.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_CODEABLE_CONCEPT + "/entry/bulk-search"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{}")
+            .with(csrf()))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
   void testGetCodeableConceptByCode_succeedsWith200() throws Exception {
     var id = UUID.randomUUID();
     List<CodeableConceptEntry> dummyCodeableConceptEntries = createDummyCodeableConceptEntries(List.of(id));
@@ -88,6 +120,21 @@ class CodeableConceptRestControllerIT {
         .andExpect(jsonPath("$.[0].termCode.system").value(dummyCodeableConceptEntries.get(0).termCode().system()))
         .andExpect(jsonPath("$.[0].termCode.version").value(dummyCodeableConceptEntries.get(0).termCode().version()))
         .andExpect(jsonPath("$.[0].termCode.display").value(dummyCodeableConceptEntries.get(0).termCode().display()));
+  }
+
+  private CodeableConceptBulkSearchRequest createDummyBulkSearchRequest() {
+    return CodeableConceptBulkSearchRequest.builder()
+        .valueSet("someValueSet")
+        .searchterms(List.of("term1", "term2"))
+        .build();
+  }
+
+  private CodeableConceptBulkSearchResult createDummyBulkSearchResult() {
+    var id = UUID.randomUUID();
+    return CodeableConceptBulkSearchResult.builder()
+        .found(createDummyCodeableConceptEntries(List.of(id)))
+        .notFound(List.of())
+        .build();
   }
 
   private CcSearchResult createDummyCcSearchResult() {
