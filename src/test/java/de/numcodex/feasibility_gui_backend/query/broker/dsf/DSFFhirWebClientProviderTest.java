@@ -5,6 +5,7 @@ import dev.dsf.fhir.client.WebsocketClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
@@ -53,6 +55,12 @@ public class DSFFhirWebClientProviderTest {
     private MockWebServer mockWeb;
     private DSFFhirWebClientProvider clientProvider;
 
+    @BeforeAll
+    public static void installJulToSlf4jBridge() {
+        // remove any existing handlers attached to root logger and install bridge
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+    }
     @BeforeEach
     void setUp() throws Exception {
         mockWeb = new MockWebServer();

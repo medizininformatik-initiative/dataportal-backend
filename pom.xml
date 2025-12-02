@@ -358,6 +358,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+      <version>2.0.17</version> <!-- use version that matches your SLF4J version -->
+      <scope>test</scope>
+    </dependency>
+
     <!-- Explicitly add older jakarta lib to support AKTIN
     note the "." at the end of the groupId for jakarta.xml.bind
     Dependency will be removed once AKTIN updated to new jakarta api version 4.0.0
