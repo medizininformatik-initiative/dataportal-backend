@@ -2,7 +2,7 @@ package de.numcodex.feasibility_gui_backend.query.ratelimiting;
 
 import de.numcodex.feasibility_gui_backend.query.api.status.FeasibilityIssue;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
-import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
+import org.springframework.boot.webmvc.error.DefaultErrorAttributes;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.WebRequest;
 

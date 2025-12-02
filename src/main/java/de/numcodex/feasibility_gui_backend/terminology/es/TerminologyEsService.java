@@ -2,6 +2,7 @@ package de.numcodex.feasibility_gui_backend.terminology.es;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Script;
+import co.elastic.clients.elasticsearch._types.ScriptSource;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
@@ -206,7 +207,10 @@ public class TerminologyEsService {
         .build();
 
     var availabilityScoreScript = new Script.Builder()
-        .source("doc['availability'].value == 0 ? _score : _score + 100")
+        .source(
+            new ScriptSource.Builder()
+                .scriptString("doc['availability'].value == 0 ? _score : _score + 100")
+                .build())
         .build();
 
     var function = FunctionScoreBuilders.scriptScore()
