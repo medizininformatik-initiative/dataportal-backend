@@ -16,7 +16,7 @@ import java.util.List;
 @JsonInclude(Include.NON_EMPTY)
 @Builder
 @Data
-public class MutableStructuredQuery {
+public class MutableCcdl {
     @JsonProperty
     URI version;
 
@@ -31,10 +31,10 @@ public class MutableStructuredQuery {
     @JsonProperty("display")
     String display;
 
-    public static MutableStructuredQuery createMutableStructuredQuery(@NonNull StructuredQuery structuredQuery) {
+    public static MutableCcdl createMutableCcdl(@NonNull Ccdl ccdl) {
         List<List<MutableCriterion>> mutableInclusionCriteria = new ArrayList<>();
-        if (structuredQuery.inclusionCriteria() != null) {
-            for (List<Criterion> outerList : structuredQuery.inclusionCriteria()) {
+        if (ccdl.inclusionCriteria() != null) {
+            for (List<Criterion> outerList : ccdl.inclusionCriteria()) {
                 List<MutableCriterion> innerList = new ArrayList<>();
                 for (Criterion criterion : outerList) {
                     innerList.add(MutableCriterion.createMutableCriterion(criterion));
@@ -44,8 +44,8 @@ public class MutableStructuredQuery {
         }
 
         List<List<MutableCriterion>> mutableExclusionCriteria = new ArrayList<>();
-        if (structuredQuery.exclusionCriteria() != null) {
-            for (List<Criterion> outerList : structuredQuery.exclusionCriteria()) {
+        if (ccdl.exclusionCriteria() != null) {
+            for (List<Criterion> outerList : ccdl.exclusionCriteria()) {
                 List<MutableCriterion> innerList = new ArrayList<>();
                 for (Criterion criterion : outerList) {
                     innerList.add(MutableCriterion.createMutableCriterion(criterion));
@@ -53,11 +53,11 @@ public class MutableStructuredQuery {
                 mutableExclusionCriteria.add(innerList);
             }
         }
-        return MutableStructuredQuery.builder()
-            .version(structuredQuery.version())
+        return MutableCcdl.builder()
+            .version(ccdl.version())
             .inclusionCriteria(mutableInclusionCriteria)
             .exclusionCriteria(mutableExclusionCriteria)
-            .display(structuredQuery.display())
+            .display(ccdl.display())
             .build();
     }
 }

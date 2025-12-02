@@ -14,17 +14,21 @@ import de.numcodex.feasibility_gui_backend.query.ratelimiting.AuthenticationHelp
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.InvalidAuthenticationException;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingService;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslationException;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.SmartValidator;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -52,11 +56,12 @@ public class FeasibilityQueryHandlerRestController {
 
   public static final String HEADER_X_DETAILED_OBFUSCATED_RESULT_WAS_EMPTY = "X-Detailed-Obfuscated-Result-Was-Empty";
   private final QueryHandlerService queryHandlerService;
-  private final StructuredQueryValidation structuredQueryValidation;
+  private final CcdlValidation ccdlValidation;
   private final RateLimitingService rateLimitingService;
   private final UserBlacklistRepository userBlacklistRepository;
   private final AuthenticationHelper authenticationHelper;
   private final String apiBaseUrl;
+  private final SmartValidator validator;
 
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
@@ -86,31 +91,39 @@ public class FeasibilityQueryHandlerRestController {
 
   public FeasibilityQueryHandlerRestController(QueryHandlerService queryHandlerService,
                                                RateLimitingService rateLimitingService,
-                                               StructuredQueryValidation structuredQueryValidation,
+                                               CcdlValidation ccdlValidation,
                                                UserBlacklistRepository userBlacklistRepository,
                                                AuthenticationHelper authenticationHelper,
+                                               SmartValidator validator,
                                                @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.queryHandlerService = queryHandlerService;
     this.rateLimitingService = rateLimitingService;
-    this.structuredQueryValidation = structuredQueryValidation;
+    this.ccdlValidation = ccdlValidation;
     this.userBlacklistRepository = userBlacklistRepository;
     this.authenticationHelper = authenticationHelper;
+    this.validator = validator;
     this.apiBaseUrl = apiBaseUrl;
   }
 
   @PostMapping
-  public Mono<ResponseEntity<Object>> runQuery(
+  public ResponseEntity<Object> runQuery(
       @RequestBody JsonNode queryNode,
       @Context HttpServletRequest request,
       Authentication authentication)
-      throws InvalidAuthenticationException {
+      throws InvalidAuthenticationException, MethodArgumentNotValidException, NoSuchMethodException {
 
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
-    if (!validationErrors.isEmpty()) {
-      return Mono.just(new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST));
+    var schemaValidationErrors = queryHandlerService.validateCcdl(queryNode);
+    if (!schemaValidationErrors.isEmpty()) {
+      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
     }
 
     var query = queryHandlerService.ccdlFromJsonNode(queryNode);
+    var bindingResult = new BeanPropertyBindingResult(query, "ccdl");
+    validator.validate(query, bindingResult);
+    if (bindingResult.hasErrors()) {
+      var methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("runQuery", JsonNode.class, HttpServletRequest.class, Authentication.class), 0);
+      throw new MethodArgumentNotValidException(methodParameter, bindingResult);
+    }
 
     String userId = authentication.getName();
     Optional<UserBlacklist> userBlacklistEntry = userBlacklistRepository.findByUserId(
@@ -122,9 +135,8 @@ public class FeasibilityQueryHandlerRestController {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
               .build();
-      return Mono.just(
-          new ResponseEntity<>(issues,
-              HttpStatus.FORBIDDEN));
+      return new ResponseEntity<>(issues,
+              HttpStatus.FORBIDDEN);
     }
 
     Long amountOfQueriesByUserAndHardInterval = queryHandlerService.getAmountOfQueriesByUserAndInterval(
@@ -148,9 +160,8 @@ public class FeasibilityQueryHandlerRestController {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
               .build();
-      return Mono.just(
-          new ResponseEntity<>(issues,
-              HttpStatus.FORBIDDEN));
+      return new ResponseEntity<>(issues,
+              HttpStatus.FORBIDDEN);
     }
     Long amountOfQueriesByUserAndSoftInterval = queryHandlerService.getAmountOfQueriesByUserAndInterval(
         userId, quotaSoftCreateInterval);
@@ -162,13 +173,10 @@ public class FeasibilityQueryHandlerRestController {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.QUOTA_EXCEEDED))
               .build();
-      return Mono.just(
-          new ResponseEntity<>(issues, httpHeaders,
-              HttpStatus.TOO_MANY_REQUESTS));
+      return new ResponseEntity<>(issues, httpHeaders,
+              HttpStatus.TOO_MANY_REQUESTS);
     }
-    // Note: this is using a ResponseEntity instead of a ServerResponse since this is a
-    //       @Controller annotated class. This can be adjusted as soon as we switch to the new
-    //       functional web framework (if ever).
+
     return queryHandlerService.runQuery(query, userId)
         .map(queryId -> buildResultLocationUri(request, queryId))
         .map(resultLocation -> ResponseEntity.created(resultLocation).build())
@@ -176,7 +184,7 @@ public class FeasibilityQueryHandlerRestController {
           log.error("running a query for '%s' failed".formatted(userId), e);
           return Mono.just(ResponseEntity.internalServerError()
               .body(e.getMessage()));
-        });
+        }).block();
   }
 
   private URI buildResultLocationUri(HttpServletRequest httpServletRequest,
@@ -275,7 +283,7 @@ public class FeasibilityQueryHandlerRestController {
   }
 
   @PostMapping("/validate")
-  public ResponseEntity<?> validateStructuredQuery(
+  public ResponseEntity<?> validateCcdl(
       @RequestBody JsonNode queryNode) {
     var validationErrors = queryHandlerService.validateCcdl(queryNode);
     if (!validationErrors.isEmpty()) {
@@ -283,7 +291,7 @@ public class FeasibilityQueryHandlerRestController {
     }
 
     var query = queryHandlerService.ccdlFromJsonNode(queryNode);
-    return new ResponseEntity<>(structuredQueryValidation.annotateStructuredQuery(query, false), HttpStatus.OK);
+    return new ResponseEntity<>(ccdlValidation.annotateCcdl(query, false), HttpStatus.OK);
   }
 
   @PostMapping(value = "/cql")

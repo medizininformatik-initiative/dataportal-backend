@@ -6,14 +6,14 @@ import de.numcodex.feasibility_gui_backend.dse.DseService;
 import de.numcodex.feasibility_gui_backend.query.QueryHandlerService;
 import de.numcodex.feasibility_gui_backend.query.api.Crtdl;
 import de.numcodex.feasibility_gui_backend.query.api.Dataquery;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.persistence.UserBlacklistRepository;
 import de.numcodex.feasibility_gui_backend.query.v5.DataqueryHandlerRestController;
 import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
 import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
 import de.numcodex.feasibility_gui_backend.terminology.v5.TerminologyRestController;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryHandler;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.AuthenticationHelper;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingServiceSpringConfig;
@@ -64,7 +64,7 @@ class WebSecurityConfigIT {
   private DataqueryHandler dataqueryHandler;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private QueryHandlerService queryHandlerService;
@@ -180,12 +180,12 @@ class WebSecurityConfigIT {
 
   private Crtdl createCrtdl() {
     return Crtdl.builder()
-        .cohortDefinition(createValidStructuredQuery())
+        .cohortDefinition(createValidCcdl())
         .display("foo")
         .build();
   }
 
-  private StructuredQuery createValidStructuredQuery() {
+  private Ccdl createValidCcdl() {
     var termCode = TermCode.builder()
         .code("LL2191-6")
         .system("http://loinc.org")
@@ -195,7 +195,7 @@ class WebSecurityConfigIT {
         .termCodes(List.of(termCode))
         .attributeFilters(List.of())
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(inclusionCriterion)))
         .exclusionCriteria(null)

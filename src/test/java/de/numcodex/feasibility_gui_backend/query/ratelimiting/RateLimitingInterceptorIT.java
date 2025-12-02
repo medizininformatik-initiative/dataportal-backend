@@ -15,11 +15,14 @@ import de.numcodex.feasibility_gui_backend.query.QueryHandlerService;
 import de.numcodex.feasibility_gui_backend.query.QueryHandlerService.ResultDetail;
 import de.numcodex.feasibility_gui_backend.query.api.QueryResult;
 import de.numcodex.feasibility_gui_backend.query.api.QueryResultLine;
-import de.numcodex.feasibility_gui_backend.query.api.validation.StructuredQueryValidatorSpringConfig;
+import de.numcodex.feasibility_gui_backend.query.api.validation.CcdlValidatorSpringConfig;
 import de.numcodex.feasibility_gui_backend.query.persistence.UserBlacklistRepository;
 import de.numcodex.feasibility_gui_backend.query.result.ResultLine;
 import de.numcodex.feasibility_gui_backend.query.v5.FeasibilityQueryHandlerRestController;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
+import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
+import de.numcodex.feasibility_gui_backend.terminology.es.TerminologyEsService;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 
 import java.net.URI;
 import java.util.List;
@@ -42,7 +45,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Tag("query")
 @Tag("rate-limiting")
 @ExtendWith(SpringExtension.class)
-@Import({StructuredQueryValidatorSpringConfig.class,
+@Import({CcdlValidatorSpringConfig.class,
     RateLimitingServiceSpringConfig.class
 })
 @WebMvcTest(
@@ -65,13 +68,22 @@ public class RateLimitingInterceptorIT {
   private QueryHandlerService queryHandlerService;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   AuthenticationHelper authenticationHelper;
 
   @MockitoBean
   private UserBlacklistRepository userBlacklistRepository;
+
+  @MockitoBean
+  private TerminologyEsService terminologyEsService;
+
+  @MockitoBean
+  private TerminologyService terminologyService;
+
+  @MockitoBean
+  private CodeableConceptService codeableConceptService;
 
   @BeforeEach
   void setupMockBehaviour() throws InvalidAuthenticationException {

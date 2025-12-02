@@ -3,8 +3,8 @@ package de.numcodex.feasibility_gui_backend.terminology.validation;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.MutableCriterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
-import de.numcodex.feasibility_gui_backend.query.api.MutableStructuredQuery;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.MutableCcdl;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.api.TimeRestriction;
 import de.numcodex.feasibility_gui_backend.query.api.status.ValidationIssue;
 import de.numcodex.feasibility_gui_backend.terminology.TerminologyService;
@@ -17,64 +17,64 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class StructuredQueryValidation {
+public class CcdlValidation {
 
   private final static String IGNORED_CONSENT_SYSTEM = "fdpg.consent.combined";
 
   private final TerminologyService terminologyService;
 
   @Autowired
-  public StructuredQueryValidation(TerminologyService terminologyService) {
+  public CcdlValidation(TerminologyService terminologyService) {
     this.terminologyService = terminologyService;
   }
 
   /**
-   * Check a structured query for invalid/outdated termcodes in criteria and annotate it with the issues.
+   * Check a CCDL for invalid/outdated termcodes in criteria and annotate it with the issues.
    *
    * For now, just check if the term codes still exist in the current ui profiles. Further
    * iterations may contain checking for availability of values and units of the term codes as well.
    *
-   * @param structuredQuery the structured query to check
+   * @param ccdl the ccdl to check
    * @param skipValidation if set to true, the issues list will always be empty
-   * @return the structuredQuery with issue annotation
+   * @return the Ccdl with issue annotation
    */
-  public StructuredQuery annotateStructuredQuery(StructuredQuery structuredQuery, boolean skipValidation) {
-    var mutableStructuredQuery = MutableStructuredQuery.createMutableStructuredQuery(structuredQuery);
+  public Ccdl annotateCcdl(Ccdl ccdl, boolean skipValidation) {
+    var mutableCcdl = MutableCcdl.createMutableCcdl(ccdl);
 
-    for (List<MutableCriterion> inclusionCriteria : mutableStructuredQuery.getInclusionCriteria()) {
+    for (List<MutableCriterion> inclusionCriteria : mutableCcdl.getInclusionCriteria()) {
       annotateCriteria(inclusionCriteria, skipValidation);
     }
 
-    for (List<MutableCriterion> exclusionCriteria : mutableStructuredQuery.getExclusionCriteria()) {
+    for (List<MutableCriterion> exclusionCriteria : mutableCcdl.getExclusionCriteria()) {
       annotateCriteria(exclusionCriteria, skipValidation);
     }
 
-    return StructuredQuery.createImmutableStructuredQuery(mutableStructuredQuery);
+    return Ccdl.createImmutableCcdl(mutableCcdl);
   }
 
   /**
-   * Check a structured query for invalid/outdated termcodes in criteria and annotate it with the issues.
+   * Check a ccdl for invalid/outdated termcodes in criteria and annotate it with the issues.
    *
    * For now, just check if the term codes still exist in the current ui profiles. Further
    * iterations may contain checking for availability of values and units of the term codes as well.
    *
-   * @param structuredQuery the structured query to check
-   * @return the structuredQuery with issue annotation
+   * @param ccdl the ccdl to check
+   * @return the ccdl with issue annotation
    */
-  public boolean isValid(StructuredQuery structuredQuery) {
-    if (structuredQuery == null) {
+  public boolean isValid(Ccdl ccdl) {
+    if (ccdl == null) {
       return false;
     }
-    if (structuredQuery.inclusionCriteria() != null) {
-      for (List<Criterion> inclusionCriteria : structuredQuery.inclusionCriteria()) {
+    if (ccdl.inclusionCriteria() != null) {
+      for (List<Criterion> inclusionCriteria : ccdl.inclusionCriteria()) {
         if (containsInvalidCriteria(inclusionCriteria)) {
           return false;
         }
       }
     }
 
-    if (structuredQuery.exclusionCriteria() != null) {
-      for (List<Criterion> exclusionCriteria : structuredQuery.exclusionCriteria()) {
+    if (ccdl.exclusionCriteria() != null) {
+      for (List<Criterion> exclusionCriteria : ccdl.exclusionCriteria()) {
         if (containsInvalidCriteria(exclusionCriteria)) {
           return false;
         }

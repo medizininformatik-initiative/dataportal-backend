@@ -1,7 +1,7 @@
 package de.numcodex.feasibility_gui_backend.query.translation;
 
 import de.numcodex.feasibility_gui_backend.query.QueryMediaType;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -29,11 +29,11 @@ public class QueryTranslationComponentTest {
     @Mock
     private QueryTranslator secondQueryTranslator;
 
-    private static StructuredQuery testQuery;
+    private static Ccdl testQuery;
 
     @BeforeAll
     public static void setUp() {
-        testQuery = StructuredQuery.builder().build();
+        testQuery = Ccdl.builder().build();
     }
 
     @AfterEach

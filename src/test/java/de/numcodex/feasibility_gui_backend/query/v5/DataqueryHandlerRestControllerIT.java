@@ -16,11 +16,10 @@ import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryHandler;
 import de.numcodex.feasibility_gui_backend.query.dataquery.DataqueryStorageFullException;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.AuthenticationHelper;
 import de.numcodex.feasibility_gui_backend.query.ratelimiting.RateLimitingServiceSpringConfig;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.Principal;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -40,7 +39,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.util.MimeType;
 
 import java.net.URI;
 import java.util.zip.ZipEntry;
@@ -71,7 +69,7 @@ public class DataqueryHandlerRestControllerIT {
     private DataqueryHandler dataqueryHandler;
 
     @MockitoBean
-    private StructuredQueryValidation structuredQueryValidation;
+    private CcdlValidation ccdlValidation;
 
     @MockitoBean
     private AuthenticationHelper authenticationHelper;
@@ -119,10 +117,10 @@ public class DataqueryHandlerRestControllerIT {
     @WithMockUser(roles = "DATAPORTAL_TEST_USER")
     public void testGetDataquery_succeeds() throws Exception {
         long dataqueryId = 1L;
-        var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+        var annotatedQuery = createValidAnnotatedCcdl(false);
 
         doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-        doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+        doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
         mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId)).with(csrf()))
                 .andExpect(status().isOk())
@@ -155,10 +153,10 @@ public class DataqueryHandlerRestControllerIT {
     @WithMockUser(roles = "DATAPORTAL_TEST_USER")
     public void testGetDataqueryCrtdl_succeeds() throws Exception {
         long dataqueryId = 1L;
-        var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+        var annotatedQuery = createValidAnnotatedCcdl(false);
 
         doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-        doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+        doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
         mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl")).with(csrf()))
             .andExpect(status().isOk())
@@ -512,19 +510,19 @@ public class DataqueryHandlerRestControllerIT {
     @NotNull
     private Crtdl createCrtdl() {
         return Crtdl.builder()
-            .cohortDefinition(createValidStructuredQuery())
+            .cohortDefinition(createValidCcdl())
             .display("foo")
             .build();
     }
 
     @NotNull
-    private StructuredQuery createValidStructuredQuery() {
+    private Ccdl createValidCcdl() {
         var inclusionCriterion = Criterion.builder()
                 .termCodes(List.of(createTermCode()))
                 .attributeFilters(List.of())
                 .context(createTermCode())
                 .build();
-        return StructuredQuery.builder()
+        return Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(inclusionCriterion)))
                 .exclusionCriteria(List.of())
@@ -533,7 +531,7 @@ public class DataqueryHandlerRestControllerIT {
     }
 
     @NotNull
-    private StructuredQuery createValidAnnotatedStructuredQuery(boolean withIssues) {
+    private Ccdl createValidAnnotatedCcdl(boolean withIssues) {
         var termCode = TermCode.builder()
             .code("LL2191-6")
             .system("http://loinc.org")
@@ -545,7 +543,7 @@ public class DataqueryHandlerRestControllerIT {
             .context(termCode)
             .validationIssues(withIssues ? List.of(ValidationIssue.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
             .build();
-        return StructuredQuery.builder()
+        return Ccdl.builder()
             .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
             .inclusionCriteria(List.of(List.of(inclusionCriterion)))
             .exclusionCriteria(List.of())

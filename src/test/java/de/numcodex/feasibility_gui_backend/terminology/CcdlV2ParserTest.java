@@ -2,10 +2,10 @@ package de.numcodex.feasibility_gui_backend.terminology;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import org.junit.jupiter.api.Test;
 
-public class StructuredQueryV2ParserTest {
+public class CcdlV2ParserTest {
 
   @Test
   public void queryBuilder() throws JsonProcessingException {
@@ -138,7 +138,7 @@ public class StructuredQueryV2ParserTest {
         }""";
 
     var objectMapper = new ObjectMapper();
-    var test = objectMapper.readValue(testQuery, StructuredQuery.class);
+    var test = objectMapper.readValue(testQuery, Ccdl.class);
     var jsonString = objectMapper.writeValueAsString(test);
     assert (jsonString.contains("attributeCode"));
     assert (jsonString.contains("exclusionCriteria"));

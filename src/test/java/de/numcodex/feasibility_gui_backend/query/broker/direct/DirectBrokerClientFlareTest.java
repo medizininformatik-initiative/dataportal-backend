@@ -35,7 +35,7 @@ class DirectBrokerClientFlareTest {
     }
 
     @Test
-    void testPublishExistingQueryWithoutStructuredQueryDefinition() {
+    void testPublishExistingQueryWithoutCcdlDefinition() {
         var queryId = client.createQuery(TEST_BACKEND_QUERY_ID);
         assertThrows(QueryDefinitionNotFoundException.class, () -> client.publishQuery(queryId));
     }

@@ -14,12 +14,14 @@ public class JsonSchemaValidator {
 
   public static final String SCHEMA_CRTDL = "crtdl";
   public static final String SCHEMA_CCDL = "ccdl";
+  public static final String SCHEMA_DATAQUERY = "dataquery";
   public static final String SCHEMA_DATAEXTRACTION = "dataExtraction";
   private final Map<String, Schema> schemaCache = new ConcurrentHashMap<>();
 
   public JsonSchemaValidator() {
     loadSchema(SCHEMA_CRTDL, JsonSchemaIdResolver.SCHEMA_IRI_CRTDL_SCHEMA);
     loadSchema(SCHEMA_CCDL, JsonSchemaIdResolver.SCHEMA_IRI_CCDL_SCHEMA);
+    loadSchema(SCHEMA_DATAQUERY, JsonSchemaIdResolver.SCHEMA_IRI_DATAQUERY_SCHEMA);
     loadSubSchema(SCHEMA_DATAEXTRACTION, "dataExtraction", JsonSchemaIdResolver.SCHEMA_IRI_CRTDL_SCHEMA);
   }
 

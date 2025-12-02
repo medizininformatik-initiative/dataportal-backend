@@ -2,7 +2,7 @@ package de.numcodex.feasibility_gui_backend.query.api.validation;
 
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,10 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("api")
 @Tag("validation")
 @ExtendWith(MockitoExtension.class)
-public class StructuredQueryPassValidatorTest {
+public class CcdlPassValidatorTest {
 
     @Spy
-    private StructuredQueryPassValidator validator;
+    private CcdlPassValidator validator;
 
     @Mock
     private ConstraintValidatorContext ctx;
@@ -39,7 +39,7 @@ public class StructuredQueryPassValidatorTest {
         var inclusionCriterion = Criterion.builder()
                 .termCodes(List.of(termCode))
                 .build();
-        var testQuery = StructuredQuery.builder()
+        var testQuery = Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(inclusionCriterion)))
                 .exclusionCriteria(List.of())
@@ -52,7 +52,7 @@ public class StructuredQueryPassValidatorTest {
 
     @Test
     public void testIsValid_invalidQueryPasses() {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         var validationResult = assertDoesNotThrow(() -> validator.isValid(testQuery, ctx));
         assertTrue(validationResult);
     }

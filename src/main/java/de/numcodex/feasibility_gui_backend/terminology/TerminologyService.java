@@ -41,6 +41,16 @@ public class TerminologyService {
     this.terminologySystems = jsonUtil.readValue(new URL("file:" + terminologySystemsFilename), new TypeReference<>() {});
   }
 
+  public String getUiProfile(String contextualizedTermCodeHash)
+      throws UiProfileNotFoundException {
+    Optional<de.numcodex.feasibility_gui_backend.terminology.persistence.UiProfile> uiProfile = uiProfileRepository.findByContextualizedTermcodeHash(contextualizedTermCodeHash);
+    if (uiProfile.isPresent()) {
+      return uiProfile.get().getUiProfile();
+    } else {
+      throw new UiProfileNotFoundException();
+    }
+  }
+
   public String getUiProfileName(String contextualizedTermCodeHash) {
     Optional<String> uiProfileName = uiProfileRepository.getUiProfileNameByContextualizedTermcodeHash(contextualizedTermCodeHash);
     return uiProfileName.orElse("undefined");

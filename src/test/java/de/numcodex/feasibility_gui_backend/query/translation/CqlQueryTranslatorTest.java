@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.common.api.Criterion;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.sq2cql.Translator;
 import de.numcodex.sq2cql.model.cql.Container;
 import org.junit.jupiter.api.Disabled;
@@ -38,7 +38,7 @@ public class CqlQueryTranslatorTest {
 
     @Test
     public void testTranslate_ModelConversionFailsDuringEncoding() throws JsonProcessingException {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         doThrow(JsonProcessingException.class).when(jsonUtil).writeValueAsString(testQuery);
 
         assertThrows(QueryTranslationException.class, () -> cqlQueryTranslator.translate(testQuery));
@@ -48,7 +48,7 @@ public class CqlQueryTranslatorTest {
 
     @Test
     public void testTranslate_ModelConversionFailsDuringDecoding() throws JsonProcessingException {
-        var testQuery = StructuredQuery.builder().build();
+        var testQuery = Ccdl.builder().build();
         doReturn("foo").when(jsonUtil).writeValueAsString(testQuery);
         doThrow(JsonProcessingException.class).when(jsonUtil).readValue("foo",
                 de.numcodex.sq2cql.model.structured_query.StructuredQuery.class);
@@ -69,7 +69,7 @@ public class CqlQueryTranslatorTest {
         var inclusionCriterion = Criterion.builder()
                 .termCodes(List.of(termCode))
                 .build();
-        var testQuery = StructuredQuery.builder()
+        var testQuery = Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(inclusionCriterion)))
                 .exclusionCriteria(List.of(List.of()))
@@ -94,7 +94,7 @@ public class CqlQueryTranslatorTest {
         var inclusionCriterion = Criterion.builder()
                 .termCodes(List.of(termCode))
                 .build();
-        var testQuery = StructuredQuery.builder()
+        var testQuery = Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(inclusionCriterion)))
                 .exclusionCriteria(List.of(List.of()))

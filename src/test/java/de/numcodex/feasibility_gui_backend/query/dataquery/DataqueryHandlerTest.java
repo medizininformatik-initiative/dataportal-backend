@@ -588,7 +588,7 @@ class DataqueryHandlerTest {
 
     private Crtdl createCrtdl(boolean withInclusion, boolean withExclusion, boolean withExtraction) {
         return Crtdl.builder()
-            .cohortDefinition(createValidStructuredQuery(withInclusion, withExclusion))
+            .cohortDefinition(createValidCcdl(withInclusion, withExclusion))
             .dataExtraction(withExtraction ? createValidDataExtraction() : null)
             .display("foo")
             .build();
@@ -617,12 +617,12 @@ class DataqueryHandlerTest {
 
     private Crtdl createCrtdl() {
         return Crtdl.builder()
-            .cohortDefinition(createValidStructuredQuery())
+            .cohortDefinition(createValidCcdl())
             .display("foo")
             .build();
     }
 
-    private StructuredQuery createValidStructuredQuery(boolean withInclusion, boolean withExclusion) {
+    private Ccdl createValidCcdl(boolean withInclusion, boolean withExclusion) {
         var termCode = TermCode.builder()
             .code("LL2191-6")
             .system("http://loinc.org")
@@ -632,7 +632,7 @@ class DataqueryHandlerTest {
             .termCodes(List.of(termCode))
             .attributeFilters(List.of())
             .build();
-        return StructuredQuery.builder()
+        return Ccdl.builder()
             .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
             .inclusionCriteria(withInclusion ? List.of(List.of(criterion)) : null)
             .exclusionCriteria(withExclusion ? List.of(List.of(criterion)) : null)
@@ -640,7 +640,7 @@ class DataqueryHandlerTest {
             .build();
     }
 
-    private StructuredQuery createValidStructuredQuery() {
+    private Ccdl createValidCcdl() {
         var termCode = TermCode.builder()
                 .code("LL2191-6")
                 .system("http://loinc.org")
@@ -650,7 +650,7 @@ class DataqueryHandlerTest {
                 .termCodes(List.of(termCode))
                 .attributeFilters(List.of())
                 .build();
-        return StructuredQuery.builder()
+        return Ccdl.builder()
                 .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
                 .inclusionCriteria(List.of(List.of(inclusionCriterion)))
                 .exclusionCriteria(null)

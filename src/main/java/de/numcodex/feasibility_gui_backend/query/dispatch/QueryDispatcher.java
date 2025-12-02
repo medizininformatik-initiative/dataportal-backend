@@ -3,7 +3,7 @@ package de.numcodex.feasibility_gui_backend.query.dispatch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.query.QueryMediaType;
-import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
+import de.numcodex.feasibility_gui_backend.query.api.Ccdl;
 import de.numcodex.feasibility_gui_backend.query.broker.BrokerClient;
 import de.numcodex.feasibility_gui_backend.query.broker.QueryNotFoundException;
 import de.numcodex.feasibility_gui_backend.query.broker.UnsupportedMediaTypeException;
@@ -28,7 +28,7 @@ import java.util.Map.Entry;
 import java.util.function.Predicate;
 
 /**
- * Centralized component to enqueue and dispatch (publish) a {@link StructuredQuery}.
+ * Centralized component to enqueue and dispatch (publish) a {@link Ccdl}.
  */
 @Slf4j
 @Transactional
@@ -57,7 +57,7 @@ public class QueryDispatcher {
     private QueryDispatchRepository queryDispatchRepository;
 
     /**
-     * Enqueues a {@link StructuredQuery}, allowing it to be published afterwards. Enqueued queries are stored within
+     * Enqueues a {@link Ccdl}, allowing it to be published afterwards. Enqueued queries are stored within
      * the database as a side effect.
      *
      * @param query  The query that shall be enqueued.
@@ -65,9 +65,9 @@ public class QueryDispatcher {
      * @return Identifier of the enqueued query. This acts as a reference when trying to publish it.
      * @throws QueryDispatchException If an error occurs while enqueueing the query.
      */
-    public Long enqueueNewQuery(StructuredQuery query, String userId) throws QueryDispatchException {
+    public Long enqueueNewQuery(Ccdl query, String userId) throws QueryDispatchException {
         log.info("try to enqueue new query");
-        var querySerialized = serializedStructuredQuery(query);
+        var querySerialized = serializedCcdl(query);
 
         var queryHash = queryHashCalculator.calculateSerializedQueryBodyHash(querySerialized);
         var queryBody = queryContentRepository.findByHash(queryHash)
@@ -94,7 +94,7 @@ public class QueryDispatcher {
     public Mono<Void> dispatchEnqueuedQuery(Long queryId) {
         try {
             var enqueuedQuery = getEnqueuedQuery(queryId);
-            var deserializedQueryBody = getStructuredQueryFromEnqueuedQuery(enqueuedQuery);
+            var deserializedQueryBody = getCcdlFromEnqueuedQuery(enqueuedQuery);
             var translatedQueryBodyFormats = translateQueryIntoTargetFormats(deserializedQueryBody);
 
             var dispatchable = new Dispatchable(enqueuedQuery, translatedQueryBodyFormats);
@@ -150,7 +150,7 @@ public class QueryDispatcher {
         });
     }
 
-    private String serializedStructuredQuery(StructuredQuery query) throws QueryDispatchException {
+    private String serializedCcdl(Ccdl query) throws QueryDispatchException {
         try {
             return jsonUtil.writeValueAsString(query);
         } catch (JsonProcessingException e) {
@@ -185,15 +185,15 @@ public class QueryDispatcher {
                         new QueryDispatchException("cannot find enqueued query with id '%s'".formatted(queryId)));
     }
 
-    private StructuredQuery getStructuredQueryFromEnqueuedQuery(Query enqueuedQuery) throws QueryDispatchException {
+    private Ccdl getCcdlFromEnqueuedQuery(Query enqueuedQuery) throws QueryDispatchException {
         try {
-            return jsonUtil.readValue(enqueuedQuery.getQueryContent().getQueryContent(), StructuredQuery.class);
+            return jsonUtil.readValue(enqueuedQuery.getQueryContent().getQueryContent(), Ccdl.class);
         } catch (JsonProcessingException e) {
-            throw new QueryDispatchException("cannot deserialize enqueued query body as structured query", e);
+            throw new QueryDispatchException("cannot deserialize enqueued query body as CCDL", e);
         }
     }
 
-    private Map<QueryMediaType, String> translateQueryIntoTargetFormats(StructuredQuery query)
+    private Map<QueryMediaType, String> translateQueryIntoTargetFormats(Ccdl query)
             throws QueryDispatchException {
         try {
             return queryTranslationComponent.translate(query);

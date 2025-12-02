@@ -3,7 +3,6 @@ package de.numcodex.feasibility_gui_backend.query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.Error;
 import de.numcodex.feasibility_gui_backend.query.api.Query;
 import de.numcodex.feasibility_gui_backend.query.api.*;
 import de.numcodex.feasibility_gui_backend.query.api.status.IssueWrapper;
@@ -18,7 +17,7 @@ import de.numcodex.feasibility_gui_backend.query.result.ResultLine;
 import de.numcodex.feasibility_gui_backend.query.result.ResultService;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslationException;
 import de.numcodex.feasibility_gui_backend.query.translation.QueryTranslator;
-import de.numcodex.feasibility_gui_backend.terminology.validation.StructuredQueryValidation;
+import de.numcodex.feasibility_gui_backend.terminology.validation.CcdlValidation;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -42,7 +41,7 @@ public class QueryHandlerService {
                                @NonNull QueryRepository queryRepository,
                                @NonNull QueryContentRepository queryContentRepository,
                                @NonNull ResultService resultService,
-                               @NonNull StructuredQueryValidation structuredQueryValidation,
+                               @NonNull CcdlValidation ccdlValidation,
                                @NonNull @Qualifier("cql") QueryTranslator queryTranslator,
                                @NonNull JsonSchemaValidator jsonSchemaValidator,
                                @NonNull ObjectMapper jsonUtil) {
@@ -50,7 +49,7 @@ public class QueryHandlerService {
         this.queryRepository = queryRepository;
         this.queryContentRepository = queryContentRepository;
         this.resultService = resultService;
-        this.structuredQueryValidation = structuredQueryValidation;
+        this.ccdlValidation = ccdlValidation;
         this.queryTranslator = queryTranslator;
         this.jsonSchemaValidator = jsonSchemaValidator;
         this.jsonUtil = jsonUtil;
@@ -64,7 +63,7 @@ public class QueryHandlerService {
 
     private final ResultService resultService;
 
-    private final StructuredQueryValidation structuredQueryValidation;
+    private final CcdlValidation ccdlValidation;
 
     private QueryTranslator queryTranslator;
 
@@ -72,9 +71,9 @@ public class QueryHandlerService {
 
     private ObjectMapper jsonUtil;
 
-    public Mono<Long> runQuery(StructuredQuery structuredQuery, String userId) {
+    public Mono<Long> runQuery(Ccdl ccdl, String userId) {
         try {
-            var queryId = queryDispatcher.enqueueNewQuery(structuredQuery, userId);
+            var queryId = queryDispatcher.enqueueNewQuery(ccdl, userId);
             return queryDispatcher.dispatchEnqueuedQuery(queryId)
                     .thenReturn(queryId);
         } catch (QueryDispatchException e) {
@@ -115,10 +114,10 @@ public class QueryHandlerService {
         }
     }
 
-    public StructuredQuery getQueryContent(Long queryId) throws JsonProcessingException {
+    public Ccdl getQueryContent(Long queryId) throws JsonProcessingException {
         var queryContent = queryContentRepository.findByQueryId(queryId);
         if (queryContent.isPresent()) {
-            return jsonUtil.readValue(queryContent.get().getQueryContent(), StructuredQuery.class);
+            return jsonUtil.readValue(queryContent.get().getQueryContent(), Ccdl.class);
         } else {
             return null;
         }
@@ -130,7 +129,7 @@ public class QueryHandlerService {
 
         return Query.builder()
                 .id(in.getId())
-                .content(jsonUtil.readValue(in.getQueryContent().getQueryContent(), StructuredQuery.class))
+                .content(jsonUtil.readValue(in.getQueryContent().getQueryContent(), Ccdl.class))
                 .build();
     }
 
@@ -168,8 +167,8 @@ public class QueryHandlerService {
         .build();
   }
 
-  public String translateQueryToCql(StructuredQuery structuredQuery) throws QueryTranslationException {
-        return queryTranslator.translate(structuredQuery);
+  public String translateQueryToCql(Ccdl ccdl) throws QueryTranslationException {
+        return queryTranslator.translate(ccdl);
   }
 
   public List<IssueWrapper> validateCcdl(JsonNode ccdlNode) {
@@ -183,7 +182,7 @@ public class QueryHandlerService {
     return issues;
   }
 
-  public StructuredQuery ccdlFromJsonNode(JsonNode jsonNode) {
-      return jsonUtil.convertValue(jsonNode, StructuredQuery.class);
+  public Ccdl ccdlFromJsonNode(JsonNode jsonNode) {
+      return jsonUtil.convertValue(jsonNode, Ccdl.class);
   }
 }
