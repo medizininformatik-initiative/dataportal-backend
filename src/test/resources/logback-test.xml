@@ -2,7 +2,7 @@
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
     <file>result.log</file>
     <append>true</append>
-    <encoder class="de.numcodex.feasibility_gui_backend.query.result.EncryptingEncoder">
+    <encoder class="de.fdpg.dataportal_backend.query.result.EncryptingEncoder">
       <publicKey>MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA1lWOfXzE/mUEPitNLxsDMtjERJGVhS8gP1WmuHPvjPxUOQyod4EbJcbJlkBqLqpaIs8Buy3gcbJvIPERdG1N1BSZ8NOKOtRubioKf30JwnLdZAae3vJAzRC3h42OPM3fohZCXMxbrju+KM0ZUIrLEXKEDMHQWfevCQCxeixvXVYpfXlkJIBGaWz4cDgEOiiwhU87AMzGZwjAIHvr4oTF/uHg6+C3Mdx0m8WLtygTiEixJegMb/txR+4gNVYrzpm5BwDUU7Qxy3nTUDYZLlTGeP9MBFWW+W87IHzgP+OFr3ZKMEkAPU0R1lqXFZCYcgZHGA5He2W701isnqkKIQT8ePOH43ZOXo3S34Pqw5oQ4Q2kPubp1wgZWw0VtEiZDtlwqUJ+r3CigU7NAFM5JnC/skiIBKetbWoNm1JPEfGOTrgjHD2uo82jSO8tV45LNH1EaR2+5UWSFZyDvTayLZsxsVlRFXJKgQJDI344R6lhGbLXbhqCuPzeQaHr1XGCKAtdAgMBAAE=</publicKey>
       <pattern>%d{"yyyy-MM-dd'T'HH:mm:ss.SSS"};%msg</pattern>
     </encoder>

@@ -159,7 +159,7 @@ passthrough:
 logging:
   level:
     org.hibernate: ${LOG_LEVEL_SQL:warn}
-    de.numcodex: ${LOG_LEVEL:warn}
+    de.fdpg: ${LOG_LEVEL:warn}
     org.springframework.web: ${LOG_LEVEL:warn}
 
 cors:

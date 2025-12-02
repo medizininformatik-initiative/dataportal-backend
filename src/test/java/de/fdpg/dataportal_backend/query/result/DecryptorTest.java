@@ -1,0 +1,56 @@
+package de.fdpg.dataportal_backend.query.result;
+
+import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyFactory;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
+import lombok.NonNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Example Key Pair:
+ * <p>
+ * Private Key:
+ * MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCLuz7uigO8gqQqjilOKwm9SWTRuvN8nYfl9+AtYJjR7sOGx+1lpwgJIzE1N58Haye5ib99C0yYbhJDTGsbkBAd+VlbITsbODdCp+EdWav0wH0UXrn7L4k8lse+KgpEy9nReE73c6kkGqMOLCV9Mh3qzlxYT4EfoGMOUiIzo/RW3vFVVFCjkR3XZa0+L8aO7aD49J0rDgAkLwrmyt2bQ5hdJXs1HKyKsxsfsL+3AF4kofh66pSr0GneNkYKXun4WPRUHUjatPsbO81jl3wM7tfE1lOOePx5MoAXOdHI9ptwz3/mcw7G66vJi1nsZnkNw/QtJbBI2f2v1riwRGiLR+WLAgMBAAECggEAB76uq8kRkPLKx6MOjgsbpJa7VFag5VDT9f6puconXkd2JfPR6Db8XolJUnJNSbt6PbHxX6xvJ+m98GX9b88p3YdzGPZ8ELOqeHLWqupL+iprJGRluZL2b9nJo3QwEoUcAxzAf72068/gJspyn4BWISwj+S8a8JZStzn9NFCLm/71eKzdLxUXitYXST7BT78R2VhfqFX3m1AMd16wO4PdjBxudEcoyaK9JC7G+DQT64LF0hSCZ0m7gtk+1W9eQyIvfl1+DmOA7lb7HrBSVhXybYhYico6jiZtVx9qSpdMVgjreUr6m579FYgyt6TbpI7HC4bpE8EbRjkfxuRLRG6dLQKBgQC/XXIN+RfguT+KVf3qNI47THb0PmRgtBu+JiV0cRhhw777neB/XD1A5JrYMqeKmnj1Aggpz+XKeVkE4SnD1SCHLzCBjV/afwVQtu0bBkd7LUV8txlRp1arW2+Phsx8mBe1cqmjCyEtl6piqEs0n4TqQ+XM6ju9/P3Vb6fzMGs9lQKBgQC67UD0DhIE/VVhkhtXDLe7D2L8I/oA4oQBNY2VRIT+brGwxHjQxKP1cIvnYJzleCPqf82O2crsT8YyRy4xe+Gprbe3axqcVwNBLoUGivNMIzpKhCjHOswLmECyqlr2+DPBaqDemb6sh9aWp/bPw/MGOZgUg6PHcft0pBTagXSOnwKBgQCJKLP/+eK4am51e48D1+l97R9xjmqpuU4NKxA7dngwUnnHpO/suTMaGQA3J49YU8GQcoVhWqZsSi+YxL4Ho/GtkxAkOy1R0SsBICuv6/899UPR0PavxM3lAiNi7w4P239ayTV3LBn6sLMqBU/qBs/gjQvfpJ9vXC6fVWk+cBzdRQKBgHoJHti2vujnA3D51EOWl/TV7Me0LSmauJeZgN+spi790aAYBNA3MNuyKIRcPNJLBxe3bFoQsjxpMHnuoqfHuuHt+f0TPYJIBGXvmwVUfdZ9QTcY5Q58wm3nboW2VkDadd+WX4Q0V5mH7X7aFXY69VRhEXqDHs+9CG90F/E3hwL9AoGAf5stH0xQmIkuitssnOHMZdOxHEqFuRNyhgi+jTQ03QGQyFcwZ7D1Nxxczu7aDtH9XJp/i3XSxgs/15TOzIasb6CGB8Y8Sav/JJxHTTxUtorU8mOZtuTREhMLfgpAEpDdeVwfZwiYbYaCaHN4ZY7YdrapKWN385e+RjKxR9x/xFg=
+ * Public Key:
+ * MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi7s+7ooDvIKkKo4pTisJvUlk0brzfJ2H5ffgLWCY0e7DhsftZacICSMxNTefB2snuYm/fQtMmG4SQ0xrG5AQHflZWyE7Gzg3QqfhHVmr9MB9FF65+y+JPJbHvioKRMvZ0XhO93OpJBqjDiwlfTId6s5cWE+BH6BjDlIiM6P0Vt7xVVRQo5Ed12WtPi/Gju2g+PSdKw4AJC8K5srdm0OYXSV7NRysirMbH7C/twBeJKH4euqUq9Bp3jZGCl7p+Fj0VB1I2rT7GzvNY5d8DO7XxNZTjnj8eTKAFznRyPabcM9/5nMOxuuryYtZ7GZ5DcP0LSWwSNn9r9a4sERoi0fliwIDAQAB
+ */
+class DecryptorTest {
+
+  private static final String PRIVATE_KEY = "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";
+
+  private Decryptor decryptor;
+
+  @BeforeEach
+  void setUp() throws Exception {
+    var keyFactory = KeyFactory.getInstance("RSA");
+    var privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(
+        PRIVATE_KEY)));
+    decryptor = new Decryptor(privateKey);
+    decryptor.init();
+  }
+
+  @Test
+  void decrypt() throws Exception {
+    var lines = Files.readAllLines(resultLogPath()).stream()
+        .map(ct -> decryptor.decrypt(ct))
+        .toList();
+
+    assertThat(lines).containsExactly(
+        "2023-05-16T11:13:55.489;0;site-name-142848;0",
+        "2023-05-16T11:14:23.860;0;site-name-142848;0"
+    );
+  }
+
+  @NonNull
+  private static Path resultLogPath() throws URISyntaxException {
+    return Paths.get(requireNonNull(DecryptorTest.class.getResource("result.log")).toURI());
+  }
+}

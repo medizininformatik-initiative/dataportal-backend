@@ -31,7 +31,7 @@
           <maxHistory>24</maxHistory>
         </rollingPolicy>
         <append>true</append>
-        <encoder class="de.numcodex.feasibility_gui_backend.query.result.EncryptingEncoder">
+        <encoder class="de.fdpg.dataportal_backend.query.result.EncryptingEncoder">
           <publicKey>${QUERYRESULT_PUBLIC_KEY}</publicKey>
           <pattern>%d{"yyyy-MM-dd'T'HH:mm:ss.SSS"};%msg</pattern>
         </encoder>
