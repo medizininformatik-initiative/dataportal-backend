@@ -206,7 +206,7 @@ public class FeasibilityQueryHandlerRestController {
     QueryResult queryResult = queryHandlerService.getQueryResult(queryId,
         ResultDetail.DETAILED_OBFUSCATED);
 
-    if (queryResult.totalNumberOfPatients() < privacyThresholdResults) {
+    if (queryResult.resultSize() < privacyThresholdResults) {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SIZE))
               .build();
@@ -263,7 +263,7 @@ public class FeasibilityQueryHandlerRestController {
     var queryResult = queryHandlerService.getQueryResult(queryId,
         ResultDetail.SUMMARY);
 
-    if (queryResult.totalNumberOfPatients() < privacyThresholdResults) {
+    if (queryResult.resultSize() < privacyThresholdResults) {
       var issues = FeasibilityIssues.builder()
               .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SIZE))
               .build();

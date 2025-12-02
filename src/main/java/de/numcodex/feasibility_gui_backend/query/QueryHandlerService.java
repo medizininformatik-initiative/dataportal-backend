@@ -102,7 +102,7 @@ public class QueryHandlerService {
         return QueryResult.builder()
             .queryId(queryId)
             .resultLines(resultLines)
-            .totalNumberOfPatients(totalMatchesInPopulation)
+            .resultSize(totalMatchesInPopulation)
             .build();
     }
 

@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
 
 import java.sql.Timestamp;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 @JsonInclude(Include.NON_EMPTY)
 @Builder
@@ -16,7 +18,7 @@ public record Dataquery(
     @JsonProperty Crtdl content,
     @JsonProperty String label,
     @JsonProperty String comment,
-    @JsonProperty String lastModified,
+    @JsonProperty Timestamp lastModified,
     @JsonProperty String createdBy,
     @JsonProperty CrtdlSectionInfo ccdl,
     @JsonProperty CrtdlSectionInfo dataExtraction,
@@ -32,7 +34,7 @@ public record Dataquery(
         .comment(in.getComment())
         .createdBy(in.getCreatedBy())
         .resultSize(in.getResultSize())
-        .lastModified(in.getLastModified() == null ? null : in.getLastModified().toString())
+        .lastModified(in.getLastModified())
         .content(jsonUtil.readValue(in.getCrtdl(), Crtdl.class))
         .expiresAt(in.getExpiresAt())
         .build();

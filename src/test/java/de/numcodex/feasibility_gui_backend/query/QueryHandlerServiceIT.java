@@ -181,7 +181,7 @@ public class QueryHandlerServiceIT {
         var queryResult = queryHandlerService.getQueryResult(UNKNOWN_QUERY_ID, DETAILED_OBFUSCATED);
 
         assertThat(queryResult.queryId()).isEqualTo(UNKNOWN_QUERY_ID);
-        assertThat(queryResult.totalNumberOfPatients()).isZero();
+        assertThat(queryResult.resultSize()).isZero();
         assertThat(queryResult.resultLines()).isEmpty();
     }
 
@@ -225,7 +225,7 @@ public class QueryHandlerServiceIT {
 
         var queryResult = queryHandlerService.getQueryResult(queryId, SUMMARY);
 
-        assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
+        assertThat(queryResult.resultSize()).isEqualTo(30L);
         assertThat(queryResult.resultLines()).isEmpty();
     }
 
@@ -251,7 +251,7 @@ public class QueryHandlerServiceIT {
 
         var queryResult = queryHandlerService.getQueryResult(queryId, DETAILED_OBFUSCATED);
 
-        assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
+        assertThat(queryResult.resultSize()).isEqualTo(30L);
         assertThat(queryResult.resultLines()).hasSize(2);
         assertThat(queryResult.resultLines().stream().map(QueryResultLine::siteName))
             .doesNotContain(SITE_NAME_1, SITE_NAME_2);
@@ -281,7 +281,7 @@ public class QueryHandlerServiceIT {
 
         var queryResult = queryHandlerService.getQueryResult(queryId, DETAILED);
 
-        assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
+        assertThat(queryResult.resultSize()).isEqualTo(30L);
         assertThat(queryResult.resultLines())
             .hasSize(2)
             .contains(QueryResultLine.builder().siteName(SITE_NAME_1).numberOfPatients(10L).build(),

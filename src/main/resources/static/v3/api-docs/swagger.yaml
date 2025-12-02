@@ -1003,7 +1003,7 @@ components:
           type: string
           examples:
             - this can be a longer text explaining what this query is for
-        totalNumberOfResults:
+        resultSize:
           type: integer
         content:
           type: object
@@ -1052,6 +1052,8 @@ components:
           format: date-time
         resultSize:
           type: integer
+        createdBy:
+          type: string
         ccdl:
           type: object
           properties:
@@ -1084,7 +1086,7 @@ components:
     QueryResultSummary:
       type: object
       properties:
-        totalNumberOfPatients:
+        resultSize:
           type: integer
           format: int64
         queryId:
@@ -1096,7 +1098,7 @@ components:
     QueryResultObfuscated:
       type: object
       properties:
-        totalNumberOfPatients:
+        resultSize:
           type: integer
           format: int64
         queryId:
@@ -1108,7 +1110,7 @@ components:
     QueryResult:
       type: object
       properties:
-        totalNumberOfPatients:
+        resultSize:
           type: integer
           format: int64
         queryId:

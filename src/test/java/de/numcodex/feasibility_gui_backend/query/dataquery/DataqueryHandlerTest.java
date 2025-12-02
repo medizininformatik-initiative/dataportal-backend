@@ -51,7 +51,7 @@ class DataqueryHandlerTest {
     public static final String CREATOR = "creator-557261";
     public static final String LABEL = "some-label";
     public static final String COMMENT = "some-comment";
-    public static final String TIME_STRING = "1969-07-20 20:17:40.0";
+    public static final String TIME_STRING = "1969-07-20T20:17:40.0";
     public static final String EXPIRY_STRING = "2063-04-05 20:17:40.0";
     private static final int MAX_QUERIES_PER_USER = 5;
     private static final String KEYCLOAK_ADMIN_ROLE = "ROLE_DATAPORTAL_TEST_ADMIN";
@@ -456,7 +456,7 @@ class DataqueryHandlerTest {
             .label(LABEL)
             .comment(COMMENT)
             .createdBy(CREATOR)
-            .lastModified(TIME_STRING)
+            .lastModified(Timestamp.valueOf(TIME_STRING))
             .build();
 
         assertThrows(DataqueryException.class, () -> dataqueryHandler.createCsvExportZipfile(dataqueryWithoutContent));
@@ -473,7 +473,7 @@ class DataqueryHandlerTest {
             .label(LABEL)
             .comment(COMMENT)
             .createdBy(CREATOR)
-            .lastModified(TIME_STRING)
+            .lastModified(Timestamp.valueOf(TIME_STRING))
             .build();
 
         assertThrows(DataqueryException.class, () -> dataqueryHandler.createCsvExportZipfile(dataqueryWithoutCohortDefinition));
@@ -566,7 +566,7 @@ class DataqueryHandlerTest {
             .comment(COMMENT)
             .content(createCrtdl(withInclusion, withExclusion, withExtraction))
             .createdBy(CREATOR)
-            .lastModified(TIME_STRING)
+            .lastModified(Timestamp.valueOf(TIME_STRING))
             .build();
     }
 
@@ -578,7 +578,7 @@ class DataqueryHandlerTest {
             .content(createCrtdl())
             .resultSize(withResult ? 123L : null)
             .createdBy(CREATOR)
-            .lastModified(TIME_STRING)
+            .lastModified(Timestamp.valueOf(TIME_STRING))
             .build();
     }
 
