@@ -13,26 +13,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class CqlQueryTranslator implements QueryTranslator {
 
-    @NonNull
-    private final Translator translator;
+  @NonNull
+  private final Translator translator;
 
-    @NonNull
-    private final ObjectMapper jsonUtil;
+  @NonNull
+  private final ObjectMapper jsonUtil;
 
-    @Override
-    public String translate(StructuredQuery query) throws QueryTranslationException {
-        de.numcodex.sq2cql.model.structured_query.StructuredQuery structuredQuery;
-        try {
-            structuredQuery = jsonUtil.readValue(jsonUtil.writeValueAsString(query),
-                    de.numcodex.sq2cql.model.structured_query.StructuredQuery.class);
-        } catch (JsonProcessingException e) {
-            throw new QueryTranslationException("cannot encode/decode structured query as JSON", e);
-        }
-
-        try {
-            return translator.toCql(structuredQuery).print();
-        } catch (Exception e) {
-            throw new QueryTranslationException("cannot translate structured query to CQL format", e);
-        }
+  @Override
+  public String translate(StructuredQuery query) throws QueryTranslationException {
+    de.numcodex.sq2cql.model.structured_query.StructuredQuery structuredQuery;
+    try {
+      structuredQuery = jsonUtil.readValue(jsonUtil.writeValueAsString(query),
+          de.numcodex.sq2cql.model.structured_query.StructuredQuery.class);
+    } catch (JsonProcessingException e) {
+      throw new QueryTranslationException("cannot encode/decode structured query as JSON", e);
     }
+
+    try {
+      return translator.toCql(structuredQuery).print();
+    } catch (Exception e) {
+      throw new QueryTranslationException("cannot translate structured query to CQL format", e);
+    }
+  }
 }

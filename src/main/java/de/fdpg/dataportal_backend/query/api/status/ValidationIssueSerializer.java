@@ -11,19 +11,19 @@ import java.io.IOException;
  */
 public class ValidationIssueSerializer extends StdSerializer<ValidationIssue> {
 
-    public ValidationIssueSerializer() {
-        this(null);
-    }
+  public ValidationIssueSerializer() {
+    this(null);
+  }
 
-    public ValidationIssueSerializer(Class<ValidationIssue> t) {
-        super(t);
-    }
+  public ValidationIssueSerializer(Class<ValidationIssue> t) {
+    super(t);
+  }
 
-    @Override
-    public void serialize(ValidationIssue validationIssue, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField("code", "VAL-" + validationIssue.code());
-        jsonGenerator.writeStringField("detail", validationIssue.detail());
-        jsonGenerator.writeEndObject();
-    }
+  @Override
+  public void serialize(ValidationIssue validationIssue, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    jsonGenerator.writeStartObject();
+    jsonGenerator.writeStringField("code", "VAL-" + validationIssue.code());
+    jsonGenerator.writeStringField("detail", validationIssue.detail());
+    jsonGenerator.writeEndObject();
+  }
 }

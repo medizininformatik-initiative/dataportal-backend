@@ -19,23 +19,23 @@ import static org.mockito.Mockito.doThrow;
 @ExtendWith(MockitoExtension.class)
 public class JsonQueryTranslatorTest {
 
-    @Spy
-    private ObjectMapper jsonUtil;
+  @Spy
+  private ObjectMapper jsonUtil;
 
-    @InjectMocks
-    private JsonQueryTranslator jsonQueryTranslator;
+  @InjectMocks
+  private JsonQueryTranslator jsonQueryTranslator;
 
-    @Test
-    public void testTranslate_TranslationFails() throws JsonProcessingException {
-        var testQuery = StructuredQuery.builder().build();
-        doThrow(JsonProcessingException.class).when(jsonUtil).writeValueAsString(testQuery);
+  @Test
+  public void testTranslate_TranslationFails() throws JsonProcessingException {
+    var testQuery = StructuredQuery.builder().build();
+    doThrow(JsonProcessingException.class).when(jsonUtil).writeValueAsString(testQuery);
 
-        assertThrows(QueryTranslationException.class, () -> jsonQueryTranslator.translate(testQuery));
-    }
+    assertThrows(QueryTranslationException.class, () -> jsonQueryTranslator.translate(testQuery));
+  }
 
-    @Test
-    public void testTranslate_TranslationSucceeds() {
-        var testQuery = StructuredQuery.builder().build();
-        assertDoesNotThrow(() -> jsonQueryTranslator.translate(testQuery));
-    }
+  @Test
+  public void testTranslate_TranslationSucceeds() {
+    var testQuery = StructuredQuery.builder().build();
+    assertDoesNotThrow(() -> jsonQueryTranslator.translate(testQuery));
+  }
 }

@@ -35,19 +35,12 @@ import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class CodeableConceptServiceTest {
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
   @Mock
   ElasticsearchOperations operations;
-
   @Mock
   CodeableConceptEsRepository repository;
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
-
   private CodeableConceptService codeableConceptService;
-
-  private CodeableConceptService createCodeableConceptService() {
-    return new CodeableConceptService(operations, repository);
-  }
 
   private static Stream<Arguments> generateArgumentsForTestPerformExactSearch() {
     var list = new ArrayList<Arguments>();
@@ -59,6 +52,10 @@ class CodeableConceptServiceTest {
     list.add(Arguments.of(List.of(), List.of(), ""));
 
     return list.stream();
+  }
+
+  private CodeableConceptService createCodeableConceptService() {
+    return new CodeableConceptService(operations, repository);
   }
 
   @BeforeEach
@@ -104,15 +101,15 @@ class CodeableConceptServiceTest {
     assertEquals(dummySearchHitsPage.getSearchHits().get(0).getContent().termCode(), result.getResults().get(0).termCode());
     assertEquals(dummySearchHitsPage.getSearchHits().get(0).getContent().display().original(), result.getResults().get(0).display().original());
     assertTrue(result.getResults().get(0).display().translations().containsAll(
-        List.of(
-            LocalizedValue.builder()
-                .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().deDe())
-                .language("de-DE")
-                .build(),
-            LocalizedValue.builder()
-                .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().enUs())
-                .language("en-US")
-                .build())
+            List.of(
+                LocalizedValue.builder()
+                    .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().deDe())
+                    .language("de-DE")
+                    .build(),
+                LocalizedValue.builder()
+                    .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().enUs())
+                    .language("en-US")
+                    .build())
         )
     );
   }
@@ -129,15 +126,15 @@ class CodeableConceptServiceTest {
     assertEquals(dummySearchHitsPage.getSearchHits().get(0).getContent().termCode(), result.getResults().get(0).termCode());
     assertEquals(dummySearchHitsPage.getSearchHits().get(0).getContent().display().original(), result.getResults().get(0).display().original());
     assertTrue(result.getResults().get(0).display().translations().containsAll(
-        List.of(
-            LocalizedValue.builder()
-                .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().deDe())
-                .language("de-DE")
-                .build(),
-            LocalizedValue.builder()
-                .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().enUs())
-                .language("en-US")
-                .build())
+            List.of(
+                LocalizedValue.builder()
+                    .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().deDe())
+                    .language("de-DE")
+                    .build(),
+                LocalizedValue.builder()
+                    .value(dummySearchHitsPage.getSearchHits().get(0).getContent().display().enUs())
+                    .language("en-US")
+                    .build())
         )
     );
   }

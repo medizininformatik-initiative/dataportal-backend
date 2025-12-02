@@ -7,8 +7,7 @@ import lombok.Builder;
 @JsonInclude()
 @Builder
 public record SavedQuerySlots(
-        @JsonProperty("used") long used,
-        @JsonProperty("total") long total
-)
-{
+    @JsonProperty("used") long used,
+    @JsonProperty("total") long total
+) {
 }

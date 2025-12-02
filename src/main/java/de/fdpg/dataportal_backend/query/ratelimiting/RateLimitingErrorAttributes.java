@@ -12,14 +12,14 @@ import java.util.Map;
 @Component
 public class RateLimitingErrorAttributes extends DefaultErrorAttributes {
 
-    @Override
-    public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
-        String originalErrorMessage = super.getMessage(webRequest, null);
+  @Override
+  public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
+    String originalErrorMessage = super.getMessage(webRequest, null);
 
-        try {
-            return Map.of("issues", List.of(FeasibilityIssue.valueOf(Integer.parseInt(originalErrorMessage))));
-        } catch (IllegalArgumentException e) {
-            return super.getErrorAttributes(webRequest, options);
-        }
+    try {
+      return Map.of("issues", List.of(FeasibilityIssue.valueOf(Integer.parseInt(originalErrorMessage))));
+    } catch (IllegalArgumentException e) {
+      return super.getErrorAttributes(webRequest, options);
     }
+  }
 }

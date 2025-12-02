@@ -8,7 +8,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 
 import static de.fdpg.dataportal_backend.query.QueryMediaType.STRUCTURED_QUERY;
 import static de.fdpg.dataportal_backend.query.collect.QueryStatus.COMPLETED;

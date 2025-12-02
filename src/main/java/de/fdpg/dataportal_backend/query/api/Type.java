@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public enum Type {
-    @JsonProperty("concept")
-    CONCEPT,
-    @JsonProperty("quantity-comparator")
-    QUANTITY_COMPARATOR,
-    @JsonProperty("quantity-range")
-    QUANTITY_RANGE
+  @JsonProperty("concept")
+  CONCEPT,
+  @JsonProperty("quantity-comparator")
+  QUANTITY_COMPARATOR,
+  @JsonProperty("quantity-range")
+  QUANTITY_RANGE
 }

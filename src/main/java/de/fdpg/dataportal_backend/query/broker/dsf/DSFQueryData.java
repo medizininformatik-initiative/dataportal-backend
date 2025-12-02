@@ -11,16 +11,16 @@ import java.util.Objects;
  */
 @Getter
 final class DSFQueryData {
-    private final Map<String, String> contentByType;
+  private final Map<String, String> contentByType;
 
-    public DSFQueryData() {
-        contentByType = new HashMap<>();
-    }
+  public DSFQueryData() {
+    contentByType = new HashMap<>();
+  }
 
-    public void addQueryContent(String mediaType, String content) {
-        Objects.requireNonNull(mediaType);
-        Objects.requireNonNull(content);
-        contentByType.put(mediaType, content);
-    }
+  public void addQueryContent(String mediaType, String content) {
+    Objects.requireNonNull(mediaType);
+    Objects.requireNonNull(content);
+    contentByType.put(mediaType, content);
+  }
 
 }

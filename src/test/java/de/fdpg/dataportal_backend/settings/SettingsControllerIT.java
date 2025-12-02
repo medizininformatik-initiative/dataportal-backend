@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @Import(RateLimitingServiceSpringConfig.class)
 @WebMvcTest(
-  controllers = SettingsController.class
+    controllers = SettingsController.class
 )
 class SettingsControllerIT {
   @Autowired

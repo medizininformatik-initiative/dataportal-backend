@@ -5,7 +5,8 @@ import de.fdpg.dataportal_backend.config.WebSecurityConfig;
 import de.fdpg.dataportal_backend.query.QueryHandlerService;
 import de.fdpg.dataportal_backend.query.QueryHandlerService.ResultDetail;
 import de.fdpg.dataportal_backend.query.QueryNotFoundException;
-import de.fdpg.dataportal_backend.query.api.*;
+import de.fdpg.dataportal_backend.query.api.QueryResult;
+import de.fdpg.dataportal_backend.query.api.QueryResultRateLimit;
 import de.fdpg.dataportal_backend.query.api.status.FeasibilityIssue;
 import de.fdpg.dataportal_backend.query.api.status.FeasibilityIssues;
 import de.fdpg.dataportal_backend.query.persistence.UserBlacklist;
@@ -120,8 +121,8 @@ public class FeasibilityQueryHandlerRestController {
 
     if (!isPowerUser && userBlacklistEntry.isPresent()) {
       var issues = FeasibilityIssues.builder()
-              .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
-              .build();
+          .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
+          .build();
       return Mono.just(
           new ResponseEntity<>(issues,
               HttpStatus.FORBIDDEN));
@@ -146,8 +147,8 @@ public class FeasibilityQueryHandlerRestController {
       userBlacklistRepository.save(userBlacklist);
 
       var issues = FeasibilityIssues.builder()
-              .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
-              .build();
+          .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
+          .build();
       return Mono.just(
           new ResponseEntity<>(issues,
               HttpStatus.FORBIDDEN));
@@ -160,8 +161,8 @@ public class FeasibilityQueryHandlerRestController {
       HttpHeaders httpHeaders = new HttpHeaders();
       httpHeaders.add(HttpHeaders.RETRY_AFTER, Long.toString(retryAfter));
       var issues = FeasibilityIssues.builder()
-              .issues(List.of(FeasibilityIssue.QUOTA_EXCEEDED))
-              .build();
+          .issues(List.of(FeasibilityIssue.QUOTA_EXCEEDED))
+          .build();
       return Mono.just(
           new ResponseEntity<>(issues, httpHeaders,
               HttpStatus.TOO_MANY_REQUESTS));
@@ -180,7 +181,7 @@ public class FeasibilityQueryHandlerRestController {
   }
 
   private URI buildResultLocationUri(HttpServletRequest httpServletRequest,
-      Long queryId) {
+                                     Long queryId) {
     UriComponentsBuilder uriBuilder =
         (apiBaseUrl != null && !apiBaseUrl.isEmpty())
             ? ServletUriComponentsBuilder.fromUriString(apiBaseUrl)
@@ -199,7 +200,7 @@ public class FeasibilityQueryHandlerRestController {
 
   @GetMapping("/{id}" + WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT)
   public ResponseEntity<Object> getDetailedObfuscatedQueryResult(@PathVariable("id") Long queryId,
-   Authentication authentication) {
+                                                                 Authentication authentication) {
     if (!hasAccess(queryId, authentication)) {
       return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
@@ -208,19 +209,19 @@ public class FeasibilityQueryHandlerRestController {
 
     if (queryResult.totalNumberOfPatients() < privacyThresholdResults) {
       var issues = FeasibilityIssues.builder()
-              .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SIZE))
-              .build();
+          .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SIZE))
+          .build();
       return new ResponseEntity<>(issues,
           HttpStatus.OK);
     }
     HttpHeaders headers = new HttpHeaders();
     if (queryResult.resultLines().stream().filter(result -> result.numberOfPatients() > privacyThresholdSitesResult).count() < privacyThresholdSites) {
       var issues = FeasibilityIssues.builder()
-              .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SITES))
-              .build();
+          .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SITES))
+          .build();
       return new ResponseEntity<>(
-              issues,
-              HttpStatus.OK);
+          issues,
+          HttpStatus.OK);
     }
     if (queryResult.resultLines().isEmpty()) {
       headers.add(HEADER_X_DETAILED_OBFUSCATED_RESULT_WAS_EMPTY, "true");
@@ -265,8 +266,8 @@ public class FeasibilityQueryHandlerRestController {
 
     if (queryResult.totalNumberOfPatients() < privacyThresholdResults) {
       var issues = FeasibilityIssues.builder()
-              .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SIZE))
-              .build();
+          .issues(List.of(FeasibilityIssue.PRIVACY_RESTRICTION_RESULT_SIZE))
+          .build();
       return new ResponseEntity<>(
           issues,
           HttpStatus.OK);

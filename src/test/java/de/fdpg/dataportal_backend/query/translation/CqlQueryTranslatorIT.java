@@ -1,8 +1,8 @@
 package de.fdpg.dataportal_backend.query.translation;
 
+import de.fdpg.dataportal_backend.common.api.Criterion;
 import de.fdpg.dataportal_backend.common.api.TermCode;
 import de.fdpg.dataportal_backend.common.api.Unit;
-import de.fdpg.dataportal_backend.common.api.Criterion;
 import de.fdpg.dataportal_backend.query.api.AttributeFilter;
 import de.fdpg.dataportal_backend.query.api.StructuredQuery;
 import de.fdpg.dataportal_backend.query.api.TimeRestriction;

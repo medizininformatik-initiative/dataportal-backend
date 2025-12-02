@@ -1,9 +1,9 @@
 package de.fdpg.dataportal_backend.terminology.persistence;
 
-import static java.util.Objects.requireNonNull;
-
 import java.io.Serializable;
 import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 public class Coding implements Serializable {
 

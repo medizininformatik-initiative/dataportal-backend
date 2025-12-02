@@ -14,18 +14,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JsonSchemaValidatorTest {
 
+  private final ObjectMapper mapper = new ObjectMapper();
   private JsonSchemaValidator validator;
-
   @Mock
   private Schema mockSchema;
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  @SuppressWarnings("unchecked")
+  private static Object getPrivateField(Object target, String fieldName) {
+    try {
+      var field = target.getClass().getDeclaredField(fieldName);
+      field.setAccessible(true);
+      return field.get(target);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @BeforeEach
   void setup() {
@@ -82,16 +92,5 @@ class JsonSchemaValidatorTest {
         JsonSchemaValidator.SCHEMA_CCDL,
         JsonSchemaValidator.SCHEMA_DATAEXTRACTION
     );
-  }
-
-  @SuppressWarnings("unchecked")
-  private static Object getPrivateField(Object target, String fieldName) {
-    try {
-      var field = target.getClass().getDeclaredField(fieldName);
-      field.setAccessible(true);
-      return field.get(target);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 }

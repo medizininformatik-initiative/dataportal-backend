@@ -6,10 +6,6 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import de.fdpg.dataportal_backend.query.persistence.BrokerClientType;
 import de.fdpg.dataportal_backend.query.persistence.QueryDispatchRepository;
 import de.fdpg.dataportal_backend.query.persistence.ResultType;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +13,10 @@ import org.aktin.broker.client2.BrokerAdmin2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.threeten.extra.PeriodDuration;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Stores results of queries volatile.
@@ -60,7 +60,7 @@ public class ResultService {
    */
   private void onRemoval(Object key, Object cause) {
 
-    if (this.aktinBrokerClient == null || ! cause.equals(RemovalCause.EXPIRED)) {
+    if (this.aktinBrokerClient == null || !cause.equals(RemovalCause.EXPIRED)) {
       return;
     }
 
@@ -125,8 +125,8 @@ public class ResultService {
   private record QueryResult(Map<String, ResultLine> resultsBySite) {
 
     private static final QueryResult EMPTY = QueryResult.builder()
-            .resultsBySite(Map.of())
-            .build();
+        .resultsBySite(Map.of())
+        .build();
 
     private QueryResult {
       resultsBySite = Map.copyOf(resultsBySite);
@@ -134,8 +134,8 @@ public class ResultService {
 
     private static QueryResult ofResultLine(ResultLine resultLine) {
       return QueryResult.builder()
-              .resultsBySite(Map.of(resultLine.siteName(), resultLine))
-              .build();
+          .resultsBySite(Map.of(resultLine.siteName(), resultLine))
+          .build();
     }
 
     /**
@@ -156,8 +156,8 @@ public class ResultService {
           resultsBySite);
       other.resultsBySite.forEach(mergedResultsBySite::putIfAbsent);
       return QueryResult.builder()
-              .resultsBySite(mergedResultsBySite)
-              .build();
+          .resultsBySite(mergedResultsBySite)
+          .build();
     }
   }
 }

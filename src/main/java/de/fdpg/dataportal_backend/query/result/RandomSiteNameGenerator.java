@@ -10,9 +10,9 @@ import java.util.UUID;
  */
 public interface RandomSiteNameGenerator {
 
-    int BEGIN_INDEX = 26;
+  int BEGIN_INDEX = 26;
 
-    static String generateRandomSiteName() {
-        return UUID.randomUUID().toString().substring(BEGIN_INDEX);
-    }
+  static String generateRandomSiteName() {
+    return UUID.randomUUID().toString().substring(BEGIN_INDEX);
+  }
 }

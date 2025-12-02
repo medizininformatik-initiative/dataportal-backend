@@ -15,10 +15,9 @@ import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class PropertiesReaderTest {
 
+  PropertiesReader reader;
   @Mock
   private Environment env;
-
-  PropertiesReader reader;
 
   @BeforeEach
   void setUp() {

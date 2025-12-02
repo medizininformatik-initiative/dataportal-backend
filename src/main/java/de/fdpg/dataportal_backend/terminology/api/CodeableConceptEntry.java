@@ -1,7 +1,7 @@
 package de.fdpg.dataportal_backend.terminology.api;
 
-import de.fdpg.dataportal_backend.common.api.TermCode;
 import de.fdpg.dataportal_backend.common.api.DisplayEntry;
+import de.fdpg.dataportal_backend.common.api.TermCode;
 import de.fdpg.dataportal_backend.dse.api.LocalizedValue;
 import de.fdpg.dataportal_backend.terminology.es.model.CodeableConceptDocument;
 import lombok.Builder;

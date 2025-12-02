@@ -5,13 +5,14 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class FieldDisplayEntryTest {
 
   @Test
   public void testConstructorWithValues() {
-    List<String> original = List.of("original-value1",  "original-value2");
+    List<String> original = List.of("original-value1", "original-value2");
     List<LocalizedValueList> translations = List.of(LocalizedValueList.builder()
         .language("de-De")
         .value(List.of("value-value"))

@@ -2,11 +2,10 @@ package de.fdpg.dataportal_backend.query.api.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fdpg.dataportal_backend.query.api.StructuredQuery;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Validator for {@link StructuredQuery} that does an actual check based on a JSON schema.
@@ -19,7 +18,7 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
 
   /**
    * Required args constructor.
-   *
+   * <p>
    * Lombok annotation had to be removed since it could not take the necessary Schema Qualifier
    */
   public StructuredQueryValidator(ObjectMapper jsonUtil) {
@@ -33,7 +32,7 @@ public class StructuredQueryValidator implements ConstraintValidator<StructuredQ
    */
   @Override
   public boolean isValid(StructuredQuery structuredQuery,
-      ConstraintValidatorContext constraintValidatorContext) {
+                         ConstraintValidatorContext constraintValidatorContext) {
     return true;
   }
 }

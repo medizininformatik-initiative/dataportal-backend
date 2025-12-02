@@ -49,7 +49,7 @@ class AttributeDefinitionTest {
         .max(0.0)
         .referencedCriteriaSets(null)
         .referencedValueSets(null)
-      .build();
+        .build();
 
     assertNotNull(attributeDefinition);
     assertNotNull(attributeDefinition.selectableConcepts());

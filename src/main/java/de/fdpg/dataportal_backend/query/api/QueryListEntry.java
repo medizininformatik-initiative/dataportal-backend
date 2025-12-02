@@ -16,6 +16,6 @@ public record QueryListEntry(
     @JsonProperty Timestamp createdAt,
     @JsonProperty Long totalNumberOfPatients,
     @JsonProperty Boolean isValid
-)  {
+) {
 
 }

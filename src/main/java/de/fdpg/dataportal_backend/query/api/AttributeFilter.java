@@ -27,10 +27,10 @@ public record AttributeFilter(
     @JsonProperty(value = "attributeCode", required = true) TermCode attributeCode
 ) {
 
-    public AttributeFilter {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(attributeCode);
-        criteria = criteria == null ? List.of() : criteria;
-        selectedConcepts = selectedConcepts == null ? List.of() : selectedConcepts;
-    }
+  public AttributeFilter {
+    Objects.requireNonNull(type);
+    Objects.requireNonNull(attributeCode);
+    criteria = criteria == null ? List.of() : criteria;
+    selectedConcepts = selectedConcepts == null ? List.of() : selectedConcepts;
+  }
 }

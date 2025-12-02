@@ -5,15 +5,9 @@ import ca.uhn.fhir.rest.gclient.IOperationUntypedWithInput;
 import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.CapabilityStatement;
+import org.hl7.fhir.r4.model.*;
 import org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementSoftwareComponent;
-import org.hl7.fhir.r4.model.Measure;
-import org.hl7.fhir.r4.model.MeasureReport;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r4.model.StringType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,10 +37,9 @@ public class FhirConnectorTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   IGenericClient client;
-  @Mock private IOperationUntypedWithInput<Parameters> operation;
-
-
   FhirConnector fhirConnector;
+  @Mock
+  private IOperationUntypedWithInput<Parameters> operation;
 
   @BeforeEach
   void setUp() {
@@ -71,7 +64,7 @@ public class FhirConnectorTest {
     Mockito.when(client.transaction().withBundle(bundle).execute()).thenThrow(e);
 
     assertThatThrownBy(() -> fhirConnector.transmitBundle(bundle))
-            .isInstanceOf(IOException.class);
+        .isInstanceOf(IOException.class);
   }
 
   @Test
@@ -79,8 +72,8 @@ public class FhirConnectorTest {
     var measureReport = new MeasureReport();
     measureReport.addGroup().addPopulation().setCount(MEASURE_COUNT);
     var paramerters = new Parameters()
-            .addParameter(new ParametersParameterComponent()
-                    .setResource(measureReport));
+        .addParameter(new ParametersParameterComponent()
+            .setResource(measureReport));
 
     when(client.operation()
         .onType(Measure.class)
@@ -88,129 +81,129 @@ public class FhirConnectorTest {
         .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
         .andSearchParameter("periodStart", new DateParam("1900"))
         .andSearchParameter("periodEnd", new DateParam("2100"))
-            .useHttpGet())
-                    .thenReturn(operation);
+        .useHttpGet())
+        .thenReturn(operation);
     when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
-            .thenReturn(operation);
+        .thenReturn(operation);
     when(operation
         .execute()).thenReturn(paramerters);
 
     assertThat(fhirConnector.evaluateMeasure(MEASURE_URI).getGroup().get(0).getPopulationFirstRep().getCount())
-            .isEqualTo(MEASURE_COUNT);
+        .isEqualTo(MEASURE_COUNT);
 
   }
 
   @Test
   @DisplayName("Result of evaluating measure is a Bundle containing the MeasureReport and gets processed correctly")
   void testEvaluateMeasureSucceedsWithMeasureReportInBundle() throws Exception {
-      var measureReport = new MeasureReport();
-      var bundle = new Bundle().setEntry(List.of(new Bundle.BundleEntryComponent().setResource(measureReport)));
-      measureReport.addGroup().addPopulation().setCount(MEASURE_COUNT);
-      var paramerters = new Parameters()
-              .addParameter(new ParametersParameterComponent()
-                      .setResource(bundle));
+    var measureReport = new MeasureReport();
+    var bundle = new Bundle().setEntry(List.of(new Bundle.BundleEntryComponent().setResource(measureReport)));
+    measureReport.addGroup().addPopulation().setCount(MEASURE_COUNT);
+    var paramerters = new Parameters()
+        .addParameter(new ParametersParameterComponent()
+            .setResource(bundle));
 
-      when(client.operation()
-              .onType(Measure.class)
-              .named("evaluate-measure")
-              .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
-              .andSearchParameter("periodStart", new DateParam("1900"))
-              .andSearchParameter("periodEnd", new DateParam("2100"))
-              .useHttpGet())
-      .thenReturn(operation);
-      when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
-      .thenReturn(operation);
-      when(operation
-              .execute()).thenReturn(paramerters);
+    when(client.operation()
+        .onType(Measure.class)
+        .named("evaluate-measure")
+        .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
+        .andSearchParameter("periodStart", new DateParam("1900"))
+        .andSearchParameter("periodEnd", new DateParam("2100"))
+        .useHttpGet())
+        .thenReturn(operation);
+    when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
+        .thenReturn(operation);
+    when(operation
+        .execute()).thenReturn(paramerters);
 
-      assertThat(fhirConnector.evaluateMeasure(MEASURE_URI).getGroup().get(0).getPopulationFirstRep().getCount())
-              .isEqualTo(MEASURE_COUNT);
+    assertThat(fhirConnector.evaluateMeasure(MEASURE_URI).getGroup().get(0).getPopulationFirstRep().getCount())
+        .isEqualTo(MEASURE_COUNT);
 
   }
 
   @Test
   @DisplayName("OperationOutcome issue message of failed operation gets logged")
   void testEvaluateMeasureFailsWithOperationOutcome(CapturedOutput output) throws Exception {
-      var issueMessage = "foobar-042104";
-      var outcome = new OperationOutcome()
-              .setIssue(List.of(new OperationOutcome.OperationOutcomeIssueComponent().setDiagnostics(issueMessage)));
-      var paramerters = new Parameters()
-              .addParameter(new ParametersParameterComponent()
-                      .setResource(outcome));
+    var issueMessage = "foobar-042104";
+    var outcome = new OperationOutcome()
+        .setIssue(List.of(new OperationOutcome.OperationOutcomeIssueComponent().setDiagnostics(issueMessage)));
+    var paramerters = new Parameters()
+        .addParameter(new ParametersParameterComponent()
+            .setResource(outcome));
 
-      when(client.operation()
-              .onType(Measure.class)
-              .named("evaluate-measure")
-              .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
-              .andSearchParameter("periodStart", new DateParam("1900"))
-              .andSearchParameter("periodEnd", new DateParam("2100"))
-              .useHttpGet())
-                      .thenReturn(operation);
-      when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
-              .thenReturn(operation);
-      when(operation
-              .execute()).thenReturn(paramerters);
+    when(client.operation()
+        .onType(Measure.class)
+        .named("evaluate-measure")
+        .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
+        .andSearchParameter("periodStart", new DateParam("1900"))
+        .andSearchParameter("periodEnd", new DateParam("2100"))
+        .useHttpGet())
+        .thenReturn(operation);
+    when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
+        .thenReturn(operation);
+    when(operation
+        .execute()).thenReturn(paramerters);
 
-      assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
-              .isInstanceOf(IOException.class);
-      assertThat(output.getOut()).contains(issueMessage);
+    assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
+        .isInstanceOf(IOException.class);
+    assertThat(output.getOut()).contains(issueMessage);
 
   }
 
   @Test
   @DisplayName("evaluating measure returns Bundle with unknown resource type entry")
   void testEvaluateMeasureFailsWithBundleContainingInvalidResourceType(CapturedOutput output) throws Exception {
-      var resource = new CapabilityStatement()
-              .setSoftware(new CapabilityStatementSoftwareComponent(new StringType("name-073450")));
-      var bundle = new Bundle().addEntry(new Bundle.BundleEntryComponent().setResource(resource));
-      var paramerters = new Parameters()
-              .addParameter(new ParametersParameterComponent()
-                      .setResource(bundle));
+    var resource = new CapabilityStatement()
+        .setSoftware(new CapabilityStatementSoftwareComponent(new StringType("name-073450")));
+    var bundle = new Bundle().addEntry(new Bundle.BundleEntryComponent().setResource(resource));
+    var paramerters = new Parameters()
+        .addParameter(new ParametersParameterComponent()
+            .setResource(bundle));
 
-      when(client.operation()
-              .onType(Measure.class)
-              .named("evaluate-measure")
-              .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
-              .andSearchParameter("periodStart", new DateParam("1900"))
-              .andSearchParameter("periodEnd", new DateParam("2100"))
-              .useHttpGet())
-      .thenReturn(operation);
-      when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
-      .thenReturn(operation);
-      when(operation
-              .execute()).thenReturn(paramerters);
+    when(client.operation()
+        .onType(Measure.class)
+        .named("evaluate-measure")
+        .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
+        .andSearchParameter("periodStart", new DateParam("1900"))
+        .andSearchParameter("periodEnd", new DateParam("2100"))
+        .useHttpGet())
+        .thenReturn(operation);
+    when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
+        .thenReturn(operation);
+    when(operation
+        .execute()).thenReturn(paramerters);
 
-      assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
-      .isInstanceOf(IOException.class);
-      assertThat(output.getOut()).contains("Failed to extract MeasureReport from Bundle");
+    assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
+        .isInstanceOf(IOException.class);
+    assertThat(output.getOut()).contains("Failed to extract MeasureReport from Bundle");
 
   }
 
   @Test
   @DisplayName("evaluating measure returns Bundle with unknown resource type entry")
   void testEvaluateMeasureFailsWithInvalidResourceType(CapturedOutput output) throws Exception {
-      var resource = new CapabilityStatement()
-              .setSoftware(new CapabilityStatementSoftwareComponent(new StringType("name-073450")));
-      var paramerters = new Parameters()
-              .addParameter(new ParametersParameterComponent()
-                      .setResource(resource));
+    var resource = new CapabilityStatement()
+        .setSoftware(new CapabilityStatementSoftwareComponent(new StringType("name-073450")));
+    var paramerters = new Parameters()
+        .addParameter(new ParametersParameterComponent()
+            .setResource(resource));
 
-      when(client.operation()
-              .onType(Measure.class)
-              .named("evaluate-measure")
-              .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
-              .andSearchParameter("periodStart", new DateParam("1900"))
-              .andSearchParameter("periodEnd", new DateParam("2100"))
-              .useHttpGet())
-                      .thenReturn(operation);
-      when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
-              .thenReturn(operation);
-      when(operation
-              .execute()).thenReturn(paramerters);
+    when(client.operation()
+        .onType(Measure.class)
+        .named("evaluate-measure")
+        .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
+        .andSearchParameter("periodStart", new DateParam("1900"))
+        .andSearchParameter("periodEnd", new DateParam("2100"))
+        .useHttpGet())
+        .thenReturn(operation);
+    when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
+        .thenReturn(operation);
+    when(operation
+        .execute()).thenReturn(paramerters);
 
-      assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
-              .isInstanceOf(IOException.class);
-      assertThat(output.getOut()).contains("unexpected resource type");
+    assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
+        .isInstanceOf(IOException.class);
+    assertThat(output.getOut()).contains("unexpected resource type");
 
   }
 
@@ -218,20 +211,20 @@ public class FhirConnectorTest {
   void testEvaluateMeasureIOException() {
     BaseServerResponseException e = BaseServerResponseException.newInstance(200, "test");
     Mockito.when(client.operation()
-        .onType(Measure.class)
-        .named("evaluate-measure")
-        .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
-        .andSearchParameter("periodStart", new DateParam("1900"))
-        .andSearchParameter("periodEnd", new DateParam("2100"))
+            .onType(Measure.class)
+            .named("evaluate-measure")
+            .withSearchParameter(Parameters.class, "measure", new StringParam(MEASURE_URI))
+            .andSearchParameter("periodStart", new DateParam("1900"))
+            .andSearchParameter("periodEnd", new DateParam("2100"))
             .useHttpGet())
-            .thenReturn(operation);
+        .thenReturn(operation);
     when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
-            .thenReturn(operation);
+        .thenReturn(operation);
     when(operation
-            .execute()).thenThrow(e);
+        .execute()).thenThrow(e);
 
     assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
-            .isInstanceOf(IOException.class);
+        .isInstanceOf(IOException.class);
   }
 
 }

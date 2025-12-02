@@ -1,6 +1,9 @@
 package de.fdpg.dataportal_backend.terminology.v5;
 
-import de.fdpg.dataportal_backend.terminology.api.*;
+import de.fdpg.dataportal_backend.terminology.api.CcSearchResult;
+import de.fdpg.dataportal_backend.terminology.api.CodeableConceptBulkSearchRequest;
+import de.fdpg.dataportal_backend.terminology.api.CodeableConceptBulkSearchResult;
+import de.fdpg.dataportal_backend.terminology.api.CodeableConceptEntry;
 import de.fdpg.dataportal_backend.terminology.es.CodeableConceptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -37,7 +40,7 @@ public class CodeableConceptRestController {
     return codeableConceptService.performExactSearch(bulkSearchRequest);
   }
 
-  @GetMapping(value = "/entry",  produces = MediaType.APPLICATION_JSON_VALUE)
+  @GetMapping(value = "/entry", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<CodeableConceptEntry> getCodeableConceptsByCode(@RequestParam List<String> ids) {
     return codeableConceptService.getSearchResultsEntryByIds(ids);
   }

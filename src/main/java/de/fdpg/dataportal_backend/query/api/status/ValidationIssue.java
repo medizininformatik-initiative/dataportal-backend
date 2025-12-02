@@ -24,14 +24,6 @@ public enum ValidationIssue {
     this.detail = detail;
   }
 
-  public int code() {
-    return this.code;
-  }
-
-  public String detail() {
-    return this.detail;
-  }
-
   public static ValidationIssue valueOf(int validationIssueCode) {
     ValidationIssue validationIssue = resolve(validationIssueCode);
     if (validationIssue == null) {
@@ -48,5 +40,13 @@ public enum ValidationIssue {
       }
     }
     return null;
+  }
+
+  public int code() {
+    return this.code;
+  }
+
+  public String detail() {
+    return this.detail;
   }
 }

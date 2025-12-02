@@ -1,8 +1,8 @@
 package de.fdpg.dataportal_backend.dse.v5;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fdpg.dataportal_backend.dse.DseService;
 import de.fdpg.dataportal_backend.common.api.DisplayEntry;
+import de.fdpg.dataportal_backend.dse.DseService;
 import de.fdpg.dataportal_backend.dse.api.DseProfile;
 import de.fdpg.dataportal_backend.dse.api.DseProfileTreeNode;
 import de.fdpg.dataportal_backend.dse.api.LocalizedValue;
@@ -22,7 +22,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
-import static de.fdpg.dataportal_backend.config.WebSecurityConfig.*;
+import static de.fdpg.dataportal_backend.config.WebSecurityConfig.PATH_API;
+import static de.fdpg.dataportal_backend.config.WebSecurityConfig.PATH_DSE;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doReturn;

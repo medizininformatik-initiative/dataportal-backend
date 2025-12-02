@@ -1,4 +1,5 @@
 package de.fdpg.dataportal_backend.query.api.validation;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.*;
 import com.networknt.schema.Error;
@@ -59,7 +60,7 @@ public class JsonSchemaValidator {
       throw new IllegalArgumentException("Unknown schema: " + schemaKey);
     }
 
-    return schema.validate(jsonNode,executionContext -> executionContext
+    return schema.validate(jsonNode, executionContext -> executionContext
         .executionConfig(executionConfig -> executionConfig.formatAssertionsEnabled(true)));
   }
 }

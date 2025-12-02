@@ -1,8 +1,6 @@
 package de.fdpg.dataportal_backend.query.result;
 
 import de.fdpg.dataportal_backend.query.persistence.QueryDispatchRepository;
-import java.net.URI;
-import java.net.http.WebSocket.Builder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aktin.broker.client2.AuthFilter;
@@ -11,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.threeten.extra.PeriodDuration;
+
+import java.net.URI;
+import java.net.http.WebSocket.Builder;
 
 @Configuration
 @Slf4j
@@ -31,7 +32,7 @@ public class ResultServiceSpringConfig {
 
     BrokerAdmin2 client = null;
 
-    if (aktinEnabled){
+    if (aktinEnabled) {
       client = new BrokerAdmin2(URI.create(brokerBaseUrl));
       client.setAuthFilter(new ApiKeyAuthFilter(brokerApiKey));
     }

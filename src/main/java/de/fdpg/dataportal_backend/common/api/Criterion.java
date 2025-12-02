@@ -13,7 +13,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 @Builder
-public record Criterion (
+public record Criterion(
     @JsonProperty("context") TermCode context,
     @JsonProperty("termCodes") List<TermCode> termCodes,
     @JsonProperty("attributeFilters") List<AttributeFilter> attributeFilters,

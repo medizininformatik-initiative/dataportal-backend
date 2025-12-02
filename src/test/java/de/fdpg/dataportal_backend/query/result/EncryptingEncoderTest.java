@@ -1,18 +1,19 @@
 package de.fdpg.dataportal_backend.query.result;
 
-import static java.nio.charset.StandardCharsets.US_ASCII;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
 import java.security.KeyFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class EncryptingEncoderTest {
 
@@ -23,6 +24,23 @@ class EncryptingEncoderTest {
   private Decryptor decryptor;
 
   private EncryptingEncoder encoder;
+
+  private static String changeMessagePart(String msg) {
+    var dotIndex = msg.indexOf('.');
+    var decodedBytes = Base64.getDecoder().decode(msg.substring(dotIndex + 1));
+    decodedBytes[0]++;
+    return msg.substring(0, dotIndex + 1) + Base64.getEncoder().encodeToString(decodedBytes);
+  }
+
+  private static LoggingEvent loggingEvent(String message) {
+    var event = new LoggingEvent();
+    event.setMessage(message);
+    return event;
+  }
+
+  private static String removeNewline(String encryptedMsg) {
+    return encryptedMsg.substring(0, encryptedMsg.length() - 1);
+  }
 
   @BeforeEach
   void setUp() throws Exception {
@@ -70,13 +88,6 @@ class EncryptingEncoderTest {
             .formatted(changedMsg.substring(changedMsg.indexOf('.') + 1)));
   }
 
-  private static String changeMessagePart(String msg) {
-    var dotIndex = msg.indexOf('.');
-    var decodedBytes = Base64.getDecoder().decode(msg.substring(dotIndex + 1));
-    decodedBytes[0]++;
-    return msg.substring(0, dotIndex + 1) + Base64.getEncoder().encodeToString(decodedBytes);
-  }
-
   @Test
   @DisplayName("Doesn't change the key in the first 1000 encodings.")
   void encode_rollover_1000() {
@@ -115,15 +126,5 @@ class EncryptingEncoderTest {
         .collect(Collectors.toSet());
 
     assertThat(encryptedKeys).hasSize(2);
-  }
-
-  private static LoggingEvent loggingEvent(String message) {
-    var event = new LoggingEvent();
-    event.setMessage(message);
-    return event;
-  }
-
-  private static String removeNewline(String encryptedMsg) {
-    return encryptedMsg.substring(0, encryptedMsg.length() - 1);
   }
 }

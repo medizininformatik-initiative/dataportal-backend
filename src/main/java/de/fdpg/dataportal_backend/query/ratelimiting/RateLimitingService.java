@@ -30,9 +30,9 @@ public class RateLimitingService {
    * This will limit the polling rate for default users on any result endpoint. It will also limit
    * the amount of times a user can request detailed obfuscated results in a given timespan.
    *
-   * @param intervalPollingSummary the duration after which the user can poll summary results again
-   * @param intervalPollingDetailed the duration after which the user can poll detailed results again
-   * @param amountDetailedObfuscated the amount of times a user can request detailed obfuscated results
+   * @param intervalPollingSummary     the duration after which the user can poll summary results again
+   * @param intervalPollingDetailed    the duration after which the user can poll detailed results again
+   * @param amountDetailedObfuscated   the amount of times a user can request detailed obfuscated results
    * @param intervalDetailedObfuscated the timespan after which a users access is "forgotten"
    */
   public RateLimitingService(PeriodDuration intervalPollingSummary, PeriodDuration intervalPollingDetailed, int amountDetailedObfuscated, PeriodDuration intervalDetailedObfuscated) {
@@ -75,6 +75,5 @@ public class RateLimitingService {
         .addLimit(limit -> limit.capacity(amountDetailedObfuscated).refillIntervally(1, intervalDetailedObfuscated.getDuration()))
         .build();
   }
-
 
 }

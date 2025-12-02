@@ -8,12 +8,12 @@ import de.fdpg.dataportal_backend.query.api.StructuredQuery;
 import de.fdpg.dataportal_backend.query.api.TimeRestriction;
 import de.fdpg.dataportal_backend.query.api.status.ValidationIssue;
 import de.fdpg.dataportal_backend.terminology.TerminologyService;
-
-import java.time.LocalDate;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -30,12 +30,12 @@ public class StructuredQueryValidation {
 
   /**
    * Check a structured query for invalid/outdated termcodes in criteria and annotate it with the issues.
-   *
+   * <p>
    * For now, just check if the term codes still exist in the current ui profiles. Further
    * iterations may contain checking for availability of values and units of the term codes as well.
    *
    * @param structuredQuery the structured query to check
-   * @param skipValidation if set to true, the issues list will always be empty
+   * @param skipValidation  if set to true, the issues list will always be empty
    * @return the structuredQuery with issue annotation
    */
   public StructuredQuery annotateStructuredQuery(StructuredQuery structuredQuery, boolean skipValidation) {
@@ -54,7 +54,7 @@ public class StructuredQueryValidation {
 
   /**
    * Check a structured query for invalid/outdated termcodes in criteria and annotate it with the issues.
-   *
+   * <p>
    * For now, just check if the term codes still exist in the current ui profiles. Further
    * iterations may contain checking for availability of values and units of the term codes as well.
    *

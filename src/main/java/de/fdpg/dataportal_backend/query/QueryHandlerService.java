@@ -4,14 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fdpg.dataportal_backend.query.api.Query;
-import de.fdpg.dataportal_backend.query.api.*;
+import de.fdpg.dataportal_backend.query.api.QueryResult;
+import de.fdpg.dataportal_backend.query.api.QueryResultLine;
+import de.fdpg.dataportal_backend.query.api.StructuredQuery;
 import de.fdpg.dataportal_backend.query.api.status.IssueWrapper;
 import de.fdpg.dataportal_backend.query.api.status.QueryQuota;
 import de.fdpg.dataportal_backend.query.api.status.QueryQuotaEntry;
 import de.fdpg.dataportal_backend.query.api.validation.JsonSchemaValidator;
 import de.fdpg.dataportal_backend.query.dispatch.QueryDispatchException;
 import de.fdpg.dataportal_backend.query.dispatch.QueryDispatcher;
-import de.fdpg.dataportal_backend.query.persistence.*;
+import de.fdpg.dataportal_backend.query.persistence.QueryContentRepository;
+import de.fdpg.dataportal_backend.query.persistence.QueryRepository;
 import de.fdpg.dataportal_backend.query.result.RandomSiteNameGenerator;
 import de.fdpg.dataportal_backend.query.result.ResultLine;
 import de.fdpg.dataportal_backend.query.result.ResultService;
@@ -31,123 +34,109 @@ import java.util.List;
 @Service
 public class QueryHandlerService {
 
-    public enum ResultDetail {
-        SUMMARY,
-        DETAILED_OBFUSCATED,
-        DETAILED
+  private final QueryDispatcher queryDispatcher;
+  private final QueryRepository queryRepository;
+  private final QueryContentRepository queryContentRepository;
+  private final ResultService resultService;
+  private final StructuredQueryValidation structuredQueryValidation;
+  private final JsonSchemaValidator jsonSchemaValidator;
+  private QueryTranslator queryTranslator;
+  private ObjectMapper jsonUtil;
+
+  public QueryHandlerService(@NonNull QueryDispatcher queryDispatcher,
+                             @NonNull QueryRepository queryRepository,
+                             @NonNull QueryContentRepository queryContentRepository,
+                             @NonNull ResultService resultService,
+                             @NonNull StructuredQueryValidation structuredQueryValidation,
+                             @NonNull @Qualifier("cql") QueryTranslator queryTranslator,
+                             @NonNull JsonSchemaValidator jsonSchemaValidator,
+                             @NonNull ObjectMapper jsonUtil) {
+    this.queryDispatcher = queryDispatcher;
+    this.queryRepository = queryRepository;
+    this.queryContentRepository = queryContentRepository;
+    this.resultService = resultService;
+    this.structuredQueryValidation = structuredQueryValidation;
+    this.queryTranslator = queryTranslator;
+    this.jsonSchemaValidator = jsonSchemaValidator;
+    this.jsonUtil = jsonUtil;
+  }
+
+  public Mono<Long> runQuery(StructuredQuery structuredQuery, String userId) {
+    try {
+      var queryId = queryDispatcher.enqueueNewQuery(structuredQuery, userId);
+      return queryDispatcher.dispatchEnqueuedQuery(queryId)
+          .thenReturn(queryId);
+    } catch (QueryDispatchException e) {
+      return Mono.error(e);
+    }
+  }
+
+  @Transactional
+  public QueryResult getQueryResult(Long queryId, ResultDetail resultDetail) {
+    var singleSiteResults = resultService.findSuccessfulByQuery(queryId);
+    List<QueryResultLine> resultLines = new ArrayList<>();
+
+    if (resultDetail != ResultDetail.SUMMARY) {
+      resultLines = singleSiteResults.stream()
+          .map(ssr -> QueryResultLine.builder()
+              .siteName(resultDetail == ResultDetail.DETAILED_OBFUSCATED ? RandomSiteNameGenerator.generateRandomSiteName() : ssr.siteName())
+              .numberOfPatients(ssr.result())
+              .build())
+          .toList();
     }
 
-    public QueryHandlerService(@NonNull QueryDispatcher queryDispatcher,
-                               @NonNull QueryRepository queryRepository,
-                               @NonNull QueryContentRepository queryContentRepository,
-                               @NonNull ResultService resultService,
-                               @NonNull StructuredQueryValidation structuredQueryValidation,
-                               @NonNull @Qualifier("cql") QueryTranslator queryTranslator,
-                               @NonNull JsonSchemaValidator jsonSchemaValidator,
-                               @NonNull ObjectMapper jsonUtil) {
-        this.queryDispatcher = queryDispatcher;
-        this.queryRepository = queryRepository;
-        this.queryContentRepository = queryContentRepository;
-        this.resultService = resultService;
-        this.structuredQueryValidation = structuredQueryValidation;
-        this.queryTranslator = queryTranslator;
-        this.jsonSchemaValidator = jsonSchemaValidator;
-        this.jsonUtil = jsonUtil;
+    var totalMatchesInPopulation = singleSiteResults.stream()
+        .mapToLong(ResultLine::result).sum();
+
+    return QueryResult.builder()
+        .queryId(queryId)
+        .resultLines(resultLines)
+        .totalNumberOfPatients(totalMatchesInPopulation)
+        .build();
+  }
+
+  public Query getQuery(Long queryId) throws JsonProcessingException {
+    var query = queryRepository.findById(queryId);
+    if (query.isPresent()) {
+      return convertQueryToApi(query.get());
+    } else {
+      return null;
     }
+  }
 
-    private final QueryDispatcher queryDispatcher;
-
-    private final QueryRepository queryRepository;
-
-    private final QueryContentRepository queryContentRepository;
-
-    private final ResultService resultService;
-
-    private final StructuredQueryValidation structuredQueryValidation;
-
-    private QueryTranslator queryTranslator;
-
-    private final JsonSchemaValidator jsonSchemaValidator;
-
-    private ObjectMapper jsonUtil;
-
-    public Mono<Long> runQuery(StructuredQuery structuredQuery, String userId) {
-        try {
-            var queryId = queryDispatcher.enqueueNewQuery(structuredQuery, userId);
-            return queryDispatcher.dispatchEnqueuedQuery(queryId)
-                    .thenReturn(queryId);
-        } catch (QueryDispatchException e) {
-            return Mono.error(e);
-        }
+  public StructuredQuery getQueryContent(Long queryId) throws JsonProcessingException {
+    var queryContent = queryContentRepository.findByQueryId(queryId);
+    if (queryContent.isPresent()) {
+      return jsonUtil.readValue(queryContent.get().getQueryContent(), StructuredQuery.class);
+    } else {
+      return null;
     }
+  }
 
-    @Transactional
-    public QueryResult getQueryResult(Long queryId, ResultDetail resultDetail) {
-        var singleSiteResults = resultService.findSuccessfulByQuery(queryId);
-        List<QueryResultLine> resultLines = new ArrayList<>();
+  private Query convertQueryToApi(de.fdpg.dataportal_backend.query.persistence.Query in)
+      throws JsonProcessingException {
 
-        if (resultDetail != ResultDetail.SUMMARY) {
-            resultLines = singleSiteResults.stream()
-                .map(ssr -> QueryResultLine.builder()
-                    .siteName(resultDetail == ResultDetail.DETAILED_OBFUSCATED ? RandomSiteNameGenerator.generateRandomSiteName() : ssr.siteName())
-                    .numberOfPatients(ssr.result())
-                    .build())
-                .toList();
-        }
+    return Query.builder()
+        .id(in.getId())
+        .content(jsonUtil.readValue(in.getQueryContent().getQueryContent(), StructuredQuery.class))
+        .build();
+  }
 
-        var totalMatchesInPopulation = singleSiteResults.stream()
-            .mapToLong(ResultLine::result).sum();
+  public String getAuthorId(Long queryId) throws QueryNotFoundException {
+    return queryRepository.getAuthor(queryId).orElseThrow(QueryNotFoundException::new);
+  }
 
-        return QueryResult.builder()
-            .queryId(queryId)
-            .resultLines(resultLines)
-            .totalNumberOfPatients(totalMatchesInPopulation)
-            .build();
+  public Long getAmountOfQueriesByUserAndInterval(String userId, String interval) {
+    return queryRepository.countQueriesByAuthorInTheLastNMinutes(userId, PeriodDuration.parse(interval).getDuration().toMinutes());
+  }
+
+  public Long getRetryAfterTime(String userId, int offset, String interval) {
+    try {
+      return PeriodDuration.parse(interval).getDuration().getSeconds() - queryRepository.getAgeOfNToLastQueryInSeconds(userId, offset) + 1;
+    } catch (NullPointerException e) {
+      return 0L;
     }
-
-    public Query getQuery(Long queryId) throws JsonProcessingException {
-        var query = queryRepository.findById(queryId);
-        if (query.isPresent()) {
-            return convertQueryToApi(query.get());
-        } else {
-            return null;
-        }
-    }
-
-    public StructuredQuery getQueryContent(Long queryId) throws JsonProcessingException {
-        var queryContent = queryContentRepository.findByQueryId(queryId);
-        if (queryContent.isPresent()) {
-            return jsonUtil.readValue(queryContent.get().getQueryContent(), StructuredQuery.class);
-        } else {
-            return null;
-        }
-    }
-
-
-    private Query convertQueryToApi(de.fdpg.dataportal_backend.query.persistence.Query in)
-        throws JsonProcessingException {
-
-        return Query.builder()
-                .id(in.getId())
-                .content(jsonUtil.readValue(in.getQueryContent().getQueryContent(), StructuredQuery.class))
-                .build();
-    }
-
-    public String getAuthorId(Long queryId) throws QueryNotFoundException {
-        return queryRepository.getAuthor(queryId).orElseThrow(QueryNotFoundException::new);
-    }
-
-    public Long getAmountOfQueriesByUserAndInterval(String userId, String interval) {
-        return queryRepository.countQueriesByAuthorInTheLastNMinutes(userId, PeriodDuration.parse(interval).getDuration().toMinutes());
-    }
-
-    public Long getRetryAfterTime(String userId, int offset, String interval) {
-        try {
-            return PeriodDuration.parse(interval).getDuration().getSeconds() - queryRepository.getAgeOfNToLastQueryInSeconds(userId, offset) + 1;
-        } catch (NullPointerException e) {
-            return 0L;
-        }
-    }
+  }
 
   public QueryQuota getSentQueryStatistics(String userName, int softAmount, String softInterval, int hardAmount, String hardInterval) {
     var softUsed = queryRepository.countQueriesByAuthorInTheLastNMinutes(userName, PeriodDuration.parse(softInterval).getDuration().toMinutes());
@@ -168,7 +157,7 @@ public class QueryHandlerService {
   }
 
   public String translateQueryToCql(StructuredQuery structuredQuery) throws QueryTranslationException {
-        return queryTranslator.translate(structuredQuery);
+    return queryTranslator.translate(structuredQuery);
   }
 
   public List<IssueWrapper> validateCcdl(JsonNode ccdlNode) {
@@ -183,6 +172,12 @@ public class QueryHandlerService {
   }
 
   public StructuredQuery ccdlFromJsonNode(JsonNode jsonNode) {
-      return jsonUtil.convertValue(jsonNode, StructuredQuery.class);
+    return jsonUtil.convertValue(jsonNode, StructuredQuery.class);
+  }
+
+  public enum ResultDetail {
+    SUMMARY,
+    DETAILED_OBFUSCATED,
+    DETAILED
   }
 }

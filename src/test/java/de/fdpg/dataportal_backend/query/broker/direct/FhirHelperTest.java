@@ -1,8 +1,6 @@
 package de.fdpg.dataportal_backend.query.broker.direct;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import ca.uhn.fhir.context.FhirContext;
-import java.nio.charset.StandardCharsets;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Library;
 import org.hl7.fhir.r4.model.Measure;
@@ -10,6 +8,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.nio.charset.StandardCharsets;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 public class FhirHelperTest {
@@ -28,7 +30,7 @@ public class FhirHelperTest {
   }
 
   @Test
-  void testCreateBundleSuccess() throws Exception{
+  void testCreateBundleSuccess() throws Exception {
     Bundle bundle = fhirHelper.createBundle(CQL_STRING, LIBRARY_URI, MEASURE_URI);
 
     Library library = (Library) bundle.getEntry().get(0).getResource();

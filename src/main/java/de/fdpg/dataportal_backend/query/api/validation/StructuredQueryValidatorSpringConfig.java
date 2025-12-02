@@ -2,12 +2,11 @@ package de.fdpg.dataportal_backend.query.api.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fdpg.dataportal_backend.query.api.StructuredQuery;
+import jakarta.validation.ConstraintValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import jakarta.validation.ConstraintValidator;
 
 @Configuration
 @Slf4j
@@ -21,7 +20,7 @@ public class StructuredQueryValidatorSpringConfig {
   @Bean
   public ConstraintValidator<StructuredQueryValidation, StructuredQuery> createQueryValidator() {
     return enabled
-            ? new StructuredQueryValidator(new ObjectMapper())
-            : new StructuredQueryPassValidator();
+        ? new StructuredQueryValidator(new ObjectMapper())
+        : new StructuredQueryPassValidator();
   }
 }

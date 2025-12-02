@@ -8,14 +8,13 @@ import de.fdpg.dataportal_backend.query.api.StructuredQuery;
  */
 public interface QueryTranslator {
 
-    /**
-     * Translates a given {@link StructuredQuery} into another format.
-     *
-     * @param query The structured query that gets translated.
-     * @return A string representation of the translated structured query in the targeted format.
-     *
-     * @throws QueryTranslationException If the translation fails.
-     */
-    String translate(StructuredQuery query) throws QueryTranslationException
-    ;
+  /**
+   * Translates a given {@link StructuredQuery} into another format.
+   *
+   * @param query The structured query that gets translated.
+   * @return A string representation of the translated structured query in the targeted format.
+   * @throws QueryTranslationException If the translation fails.
+   */
+  String translate(StructuredQuery query) throws QueryTranslationException
+  ;
 }

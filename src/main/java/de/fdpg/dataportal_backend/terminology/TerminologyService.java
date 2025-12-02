@@ -3,8 +3,10 @@ package de.fdpg.dataportal_backend.terminology;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fdpg.dataportal_backend.terminology.api.*;
-import de.fdpg.dataportal_backend.terminology.api.UiProfile;
-import de.fdpg.dataportal_backend.terminology.persistence.*;
+import de.fdpg.dataportal_backend.terminology.persistence.Context;
+import de.fdpg.dataportal_backend.terminology.persistence.TermCode;
+import de.fdpg.dataportal_backend.terminology.persistence.TermCodeRepository;
+import de.fdpg.dataportal_backend.terminology.persistence.UiProfileRepository;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +15,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -37,7 +42,13 @@ public class TerminologyService {
     this.uiProfileRepository = uiProfileRepository;
     this.termCodeRepository = termCodeRepository;
     this.jsonUtil = jsonUtil;
-    this.terminologySystems = jsonUtil.readValue(new URL("file:" + terminologySystemsFilename), new TypeReference<>() {});
+    this.terminologySystems = jsonUtil.readValue(new URL("file:" + terminologySystemsFilename), new TypeReference<>() {
+    });
+  }
+
+  public static int min(int... numbers) {
+    return Arrays.stream(numbers)
+        .min().orElse(Integer.MAX_VALUE);
   }
 
   public String getUiProfileName(String contextualizedTermCodeHash) {
@@ -47,11 +58,6 @@ public class TerminologyService {
 
   public boolean isExistingTermCode(String system, String code) {
     return termCodeRepository.existsTermCode(system, code);
-  }
-
-  public static int min(int... numbers) {
-    return Arrays.stream(numbers)
-        .min().orElse(Integer.MAX_VALUE);
   }
 
   public List<CriteriaProfileData> getCriteriaProfileData(List<String> criteriaIds) {
@@ -112,7 +118,7 @@ public class TerminologyService {
   public List<UiProfileEntry> getUiProfiles() {
     var uiProfiles = uiProfileRepository.findAll();
     var convertedUiProfiles = uiProfiles.stream()
-        .map(uip ->{
+        .map(uip -> {
           try {
             return jsonUtil.readValue(uip.getUiProfile(), UiProfile.class);
           } catch (Exception e) {

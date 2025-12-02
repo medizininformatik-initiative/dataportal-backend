@@ -1,12 +1,12 @@
 package de.fdpg.dataportal_backend.query.api;
 
-import java.time.LocalDate;
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.fdpg.dataportal_backend.common.api.TermCode;
 import lombok.Builder;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Builder
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

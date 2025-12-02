@@ -22,12 +22,6 @@ import de.fdpg.dataportal_backend.query.result.ResultLine;
 import de.fdpg.dataportal_backend.query.result.ResultService;
 import de.fdpg.dataportal_backend.query.result.ResultServiceSpringConfig;
 import de.fdpg.dataportal_backend.query.translation.QueryTranslatorSpringConfig;
-
-import java.net.URI;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.List;
-
 import de.fdpg.dataportal_backend.terminology.validation.StructuredQueryValidation;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.DisplayName;
@@ -45,325 +39,329 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.threeten.extra.PeriodDuration;
 
+import java.net.URI;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static de.fdpg.dataportal_backend.common.api.Comparator.GREATER_EQUAL;
-import static de.fdpg.dataportal_backend.query.QueryHandlerService.ResultDetail.DETAILED;
-import static de.fdpg.dataportal_backend.query.QueryHandlerService.ResultDetail.DETAILED_OBFUSCATED;
-import static de.fdpg.dataportal_backend.query.QueryHandlerService.ResultDetail.SUMMARY;
+import static de.fdpg.dataportal_backend.query.QueryHandlerService.ResultDetail.*;
 import static de.fdpg.dataportal_backend.query.api.ValueFilterType.QUANTITY_COMPARATOR;
 import static de.fdpg.dataportal_backend.query.persistence.ResultType.ERROR;
 import static de.fdpg.dataportal_backend.query.persistence.ResultType.SUCCESS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("query")
 @Tag("handler")
 @Import({
-        BrokerSpringConfig.class,
-        QueryTranslatorSpringConfig.class,
-        QueryDispatchSpringConfig.class,
-        QueryCollectSpringConfig.class,
-        QueryHandlerService.class,
-        ResultServiceSpringConfig.class,
-        DataquerySpringConfig.class
+    BrokerSpringConfig.class,
+    QueryTranslatorSpringConfig.class,
+    QueryDispatchSpringConfig.class,
+    QueryCollectSpringConfig.class,
+    QueryHandlerService.class,
+    ResultServiceSpringConfig.class,
+    DataquerySpringConfig.class
 })
 @DataJpaTest(
-        properties = {
-                "app.cqlTranslationEnabled=true",
-                "app.fhirTranslationEnabled=false",
-                "app.broker.mock.enabled=true",
-                "app.broker.direct.enabled=false",
-                "app.broker.aktin.enabled=false",
-                "app.broker.dsf.enabled=false"
-        }
+    properties = {
+        "app.cqlTranslationEnabled=true",
+        "app.fhirTranslationEnabled=false",
+        "app.broker.mock.enabled=true",
+        "app.broker.direct.enabled=false",
+        "app.broker.aktin.enabled=false",
+        "app.broker.dsf.enabled=false"
+    }
 )
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 public class QueryHandlerServiceIT {
 
-    public static final String SITE_NAME_1 = "site-name-114606";
-    public static final String SITE_NAME_2 = "site-name-114610";
-    public static final String CREATOR = "creator-114634";
-    public static final long UNKNOWN_QUERY_ID = 9999999L;
-    public static final String TIME_STRING = "1969-07-20 20:17:40.0";
+  public static final String SITE_NAME_1 = "site-name-114606";
+  public static final String SITE_NAME_2 = "site-name-114610";
+  public static final String CREATOR = "creator-114634";
+  public static final long UNKNOWN_QUERY_ID = 9999999L;
+  public static final String TIME_STRING = "1969-07-20 20:17:40.0";
 
-    @Autowired
-    private QueryHandlerService queryHandlerService;
+  @Autowired
+  private QueryHandlerService queryHandlerService;
 
-    @Autowired
-    private QueryRepository queryRepository;
+  @Autowired
+  private QueryRepository queryRepository;
 
-    @Autowired
-    private QueryContentRepository queryContentRepository;
+  @Autowired
+  private QueryContentRepository queryContentRepository;
 
-    @Autowired
-    private QueryDispatchRepository queryDispatchRepository;
+  @Autowired
+  private QueryDispatchRepository queryDispatchRepository;
 
-    @Autowired
-    private ResultService resultService;
+  @Autowired
+  private ResultService resultService;
 
-    @Autowired
-    private QueryHashCalculator queryHashCalculator;
+  @Autowired
+  private QueryHashCalculator queryHashCalculator;
 
-    @MockitoBean
-    private DataqueryCsvExportService dataqueryCsvExportService;
+  @MockitoBean
+  private DataqueryCsvExportService dataqueryCsvExportService;
 
-    @MockitoBean
-    private StructuredQueryValidation structuredQueryValidation;
+  @MockitoBean
+  private StructuredQueryValidation structuredQueryValidation;
 
-    @MockitoBean
-    private JsonSchemaValidator jsonSchemaValidator;
+  @MockitoBean
+  private JsonSchemaValidator jsonSchemaValidator;
 
-    @Autowired
-    @Qualifier("translation")
-    private ObjectMapper jsonUtil;
+  @Autowired
+  @Qualifier("translation")
+  private ObjectMapper jsonUtil;
 
-    @Test
-    public void testRunQuery() {
-        var testStructuredQuery = createValidStructuredQuery();
+  @Test
+  public void testRunQuery() {
+    var testStructuredQuery = createValidStructuredQuery();
 
-        queryHandlerService.runQuery(testStructuredQuery, "test").block();
+    queryHandlerService.runQuery(testStructuredQuery, "test").block();
 
-        assertThat(queryRepository.count()).isOne();
-        assertThat(queryDispatchRepository.count()).isOne();
-    }
+    assertThat(queryRepository.count()).isOne();
+    assertThat(queryDispatchRepository.count()).isOne();
+  }
 
-    @Test
-    public void testGetQuery_succeeds() throws JsonProcessingException {
-        var fakeContent = new QueryContent("{}");
-        fakeContent.setHash("a2189dffb");
-        queryContentRepository.save(fakeContent);
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        query.setQueryContent(fakeContent);
-        var queryId = queryRepository.save(query).getId();
+  @Test
+  public void testGetQuery_succeeds() throws JsonProcessingException {
+    var fakeContent = new QueryContent("{}");
+    fakeContent.setHash("a2189dffb");
+    queryContentRepository.save(fakeContent);
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    query.setQueryContent(fakeContent);
+    var queryId = queryRepository.save(query).getId();
 
-        var loadedQuery = queryHandlerService.getQuery(queryId);
+    var loadedQuery = queryHandlerService.getQuery(queryId);
 
-        assertThat(loadedQuery).isNotNull();
-        assertThat(jsonUtil.writeValueAsString(loadedQuery.content())).isEqualTo(fakeContent.getQueryContent());
-    }
+    assertThat(loadedQuery).isNotNull();
+    assertThat(jsonUtil.writeValueAsString(loadedQuery.content())).isEqualTo(fakeContent.getQueryContent());
+  }
 
-    @Test
-    public void testGetQuery_UnknownQueryIdReturnsNull() throws JsonProcessingException {
-        var query = queryHandlerService.getQuery(UNKNOWN_QUERY_ID);
+  @Test
+  public void testGetQuery_UnknownQueryIdReturnsNull() throws JsonProcessingException {
+    var query = queryHandlerService.getQuery(UNKNOWN_QUERY_ID);
 
-        assertThat(query).isNull();
-    }
+    assertThat(query).isNull();
+  }
 
-    @Test
-    public void testGetQueryContent_succeeds() throws JsonProcessingException {
-        var fakeContent = new QueryContent("{}");
-        fakeContent.setHash("a2189dffb");
-        queryContentRepository.save(fakeContent);
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        query.setQueryContent(fakeContent);
-        var queryId = queryRepository.save(query).getId();
+  @Test
+  public void testGetQueryContent_succeeds() throws JsonProcessingException {
+    var fakeContent = new QueryContent("{}");
+    fakeContent.setHash("a2189dffb");
+    queryContentRepository.save(fakeContent);
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    query.setQueryContent(fakeContent);
+    var queryId = queryRepository.save(query).getId();
 
-        var loadedQueryContent = queryHandlerService.getQueryContent(queryId);
+    var loadedQueryContent = queryHandlerService.getQueryContent(queryId);
 
-        assertThat(loadedQueryContent).isNotNull();
-        assertThat(jsonUtil.writeValueAsString(loadedQueryContent)).isEqualTo(fakeContent.getQueryContent());
-    }
+    assertThat(loadedQueryContent).isNotNull();
+    assertThat(jsonUtil.writeValueAsString(loadedQueryContent)).isEqualTo(fakeContent.getQueryContent());
+  }
 
-    @Test
-    public void testGetQueryContent_UnknownQueryIdReturnsNull() throws JsonProcessingException {
-        var queryContent = queryHandlerService.getQueryContent(UNKNOWN_QUERY_ID);
+  @Test
+  public void testGetQueryContent_UnknownQueryIdReturnsNull() throws JsonProcessingException {
+    var queryContent = queryHandlerService.getQueryContent(UNKNOWN_QUERY_ID);
 
-        assertThat(queryContent).isNull();
-    }
+    assertThat(queryContent).isNull();
+  }
 
-    // This behavior seems to be necessary since the UI is polling constantly.
-    // If the response was an error then the UI would need to handle it accordingly.
-    // TODO: We should discuss this with the UI team. Maybe a better solution can be identified.
-    @Test
-    public void testGetQueryResult_UnknownQueryIdLeadsToResultWithZeroMatchesInPopulation() {
-        var queryResult = queryHandlerService.getQueryResult(UNKNOWN_QUERY_ID, DETAILED_OBFUSCATED);
+  // This behavior seems to be necessary since the UI is polling constantly.
+  // If the response was an error then the UI would need to handle it accordingly.
+  // TODO: We should discuss this with the UI team. Maybe a better solution can be identified.
+  @Test
+  public void testGetQueryResult_UnknownQueryIdLeadsToResultWithZeroMatchesInPopulation() {
+    var queryResult = queryHandlerService.getQueryResult(UNKNOWN_QUERY_ID, DETAILED_OBFUSCATED);
 
-        assertThat(queryResult.queryId()).isEqualTo(UNKNOWN_QUERY_ID);
-        assertThat(queryResult.totalNumberOfPatients()).isZero();
-        assertThat(queryResult.resultLines()).isEmpty();
-    }
+    assertThat(queryResult.queryId()).isEqualTo(UNKNOWN_QUERY_ID);
+    assertThat(queryResult.totalNumberOfPatients()).isZero();
+    assertThat(queryResult.resultLines()).isEmpty();
+  }
 
-    @ParameterizedTest
-    @EnumSource
-    public void testGetQueryResult_ErrorResultsAreIgnored(ResultDetail resultDetail) {
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        var queryId = queryRepository.save(query).getId();
-        resultService.addResultLine(query.getId(),
-                ResultLine.builder()
-                        .siteName(SITE_NAME_1)
-                        .type(ERROR)
-                        .result(0L)
-                        .build()
-        );
+  @ParameterizedTest
+  @EnumSource
+  public void testGetQueryResult_ErrorResultsAreIgnored(ResultDetail resultDetail) {
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    var queryId = queryRepository.save(query).getId();
+    resultService.addResultLine(query.getId(),
+        ResultLine.builder()
+            .siteName(SITE_NAME_1)
+            .type(ERROR)
+            .result(0L)
+            .build()
+    );
 
-        var queryResult = queryHandlerService.getQueryResult(queryId, resultDetail);
+    var queryResult = queryHandlerService.getQueryResult(queryId, resultDetail);
 
-        assertThat(queryResult.resultLines()).isEmpty();
-    }
+    assertThat(queryResult.resultLines()).isEmpty();
+  }
 
-    @Test
-    public void testGetQueryResult_SummaryContainsOnlyTheTotal() {
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        var queryId = queryRepository.save(query).getId();
-        resultService.addResultLine(query.getId(),
-                ResultLine.builder()
-                        .siteName(SITE_NAME_1)
-                        .type(SUCCESS)
-                        .result(10L)
-                        .build());
-        resultService.addResultLine(query.getId(),
-                ResultLine.builder()
-                        .siteName(SITE_NAME_2)
-                        .type(SUCCESS)
-                        .result(20L)
-                        .build()
-        );
+  @Test
+  public void testGetQueryResult_SummaryContainsOnlyTheTotal() {
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    var queryId = queryRepository.save(query).getId();
+    resultService.addResultLine(query.getId(),
+        ResultLine.builder()
+            .siteName(SITE_NAME_1)
+            .type(SUCCESS)
+            .result(10L)
+            .build());
+    resultService.addResultLine(query.getId(),
+        ResultLine.builder()
+            .siteName(SITE_NAME_2)
+            .type(SUCCESS)
+            .result(20L)
+            .build()
+    );
 
-        var queryResult = queryHandlerService.getQueryResult(queryId, SUMMARY);
+    var queryResult = queryHandlerService.getQueryResult(queryId, SUMMARY);
 
-        assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
-        assertThat(queryResult.resultLines()).isEmpty();
-    }
+    assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
+    assertThat(queryResult.resultLines()).isEmpty();
+  }
 
-    @Test
-    public void testGetQueryResult_DetailedObfuscatedDoesNotContainTheSiteNames() {
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        var queryId = queryRepository.save(query).getId();
-        resultService.addResultLine(query.getId(),
-                ResultLine.builder()
-                        .siteName(SITE_NAME_1)
-                        .type(SUCCESS)
-                        .result(10L)
-                        .build()
-        );
-        resultService.addResultLine(query.getId(),
-                ResultLine.builder()
-                        .siteName(SITE_NAME_2)
-                        .type(SUCCESS)
-                        .result(20L)
-                        .build()
-        );
+  @Test
+  public void testGetQueryResult_DetailedObfuscatedDoesNotContainTheSiteNames() {
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    var queryId = queryRepository.save(query).getId();
+    resultService.addResultLine(query.getId(),
+        ResultLine.builder()
+            .siteName(SITE_NAME_1)
+            .type(SUCCESS)
+            .result(10L)
+            .build()
+    );
+    resultService.addResultLine(query.getId(),
+        ResultLine.builder()
+            .siteName(SITE_NAME_2)
+            .type(SUCCESS)
+            .result(20L)
+            .build()
+    );
 
-        var queryResult = queryHandlerService.getQueryResult(queryId, DETAILED_OBFUSCATED);
+    var queryResult = queryHandlerService.getQueryResult(queryId, DETAILED_OBFUSCATED);
 
-        assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
-        assertThat(queryResult.resultLines()).hasSize(2);
-        assertThat(queryResult.resultLines().stream().map(QueryResultLine::siteName))
-            .doesNotContain(SITE_NAME_1, SITE_NAME_2);
-        assertThat(queryResult.resultLines().stream().map(QueryResultLine::numberOfPatients))
-            .contains(10L, 20L);
-    }
+    assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
+    assertThat(queryResult.resultLines()).hasSize(2);
+    assertThat(queryResult.resultLines().stream().map(QueryResultLine::siteName))
+        .doesNotContain(SITE_NAME_1, SITE_NAME_2);
+    assertThat(queryResult.resultLines().stream().map(QueryResultLine::numberOfPatients))
+        .contains(10L, 20L);
+  }
 
-    @Test
-    public void testGetQueryResult_DetailedContainsTheSiteNames() {
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        var queryId = queryRepository.save(query).getId();
-        resultService.addResultLine(query.getId(),
-                ResultLine.builder()
-                        .siteName(SITE_NAME_1)
-                        .type(SUCCESS)
-                        .result(10L)
-                        .build()
-        );
-        resultService.addResultLine(query.getId(),
-                ResultLine.builder()
-                        .siteName(SITE_NAME_2)
-                        .type(SUCCESS)
-                        .result(20L)
-                        .build()
-        );
+  @Test
+  public void testGetQueryResult_DetailedContainsTheSiteNames() {
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    var queryId = queryRepository.save(query).getId();
+    resultService.addResultLine(query.getId(),
+        ResultLine.builder()
+            .siteName(SITE_NAME_1)
+            .type(SUCCESS)
+            .result(10L)
+            .build()
+    );
+    resultService.addResultLine(query.getId(),
+        ResultLine.builder()
+            .siteName(SITE_NAME_2)
+            .type(SUCCESS)
+            .result(20L)
+            .build()
+    );
 
-        var queryResult = queryHandlerService.getQueryResult(queryId, DETAILED);
+    var queryResult = queryHandlerService.getQueryResult(queryId, DETAILED);
 
-        assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
-        assertThat(queryResult.resultLines())
-            .hasSize(2)
-            .contains(QueryResultLine.builder().siteName(SITE_NAME_1).numberOfPatients(10L).build(),
-                QueryResultLine.builder().siteName(SITE_NAME_2).numberOfPatients(20L).build());
-    }
+    assertThat(queryResult.totalNumberOfPatients()).isEqualTo(30L);
+    assertThat(queryResult.resultLines())
+        .hasSize(2)
+        .contains(QueryResultLine.builder().siteName(SITE_NAME_1).numberOfPatients(10L).build(),
+            QueryResultLine.builder().siteName(SITE_NAME_2).numberOfPatients(20L).build());
+  }
 
-    @Test
-    public void testGetQuery_nullOnNotFound() throws JsonProcessingException {
-        var queryFromDb = queryHandlerService.getQuery(1L);
+  @Test
+  public void testGetQuery_nullOnNotFound() throws JsonProcessingException {
+    var queryFromDb = queryHandlerService.getQuery(1L);
 
-        assertThat(queryFromDb).isNull();
-    }
+    assertThat(queryFromDb).isNull();
+  }
 
-    @Test
-    public void testGetQuery_succeess() throws JsonProcessingException {
-        var queryContentString = jsonUtil.writeValueAsString(createValidStructuredQuery());
-        var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
-        var queryContent = new QueryContent(queryContentString);
-        queryContent.setHash(queryContentHash);
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        query.setQueryContent(queryContent);
-        var queryId = queryRepository.save(query).getId();
+  @Test
+  public void testGetQuery_succeess() throws JsonProcessingException {
+    var queryContentString = jsonUtil.writeValueAsString(createValidStructuredQuery());
+    var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
+    var queryContent = new QueryContent(queryContentString);
+    queryContent.setHash(queryContentHash);
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    query.setQueryContent(queryContent);
+    var queryId = queryRepository.save(query).getId();
 
-        var queryFromDb = queryHandlerService.getQuery(queryId);
+    var queryFromDb = queryHandlerService.getQuery(queryId);
 
-        assertThat(queryFromDb.label()).isNull();
-        assertThat(queryFromDb.comment()).isNull();
-        assertThat(queryFromDb.content().inclusionCriteria()).isEqualTo(createValidStructuredQuery().inclusionCriteria());
-    }
+    assertThat(queryFromDb.label()).isNull();
+    assertThat(queryFromDb.comment()).isNull();
+    assertThat(queryFromDb.content().inclusionCriteria()).isEqualTo(createValidStructuredQuery().inclusionCriteria());
+  }
 
-    @Test
-    public void testGetQueryContent_nullIfNotFound() throws JsonProcessingException {
-        var queryContentString = jsonUtil.writeValueAsString(createValidStructuredQuery());
-        var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
-        var queryContent = new QueryContent(queryContentString);
-        queryContent.setHash(queryContentHash);
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        query.setQueryContent(queryContent);
-        var queryId = queryRepository.save(query).getId();
+  @Test
+  public void testGetQueryContent_nullIfNotFound() throws JsonProcessingException {
+    var queryContentString = jsonUtil.writeValueAsString(createValidStructuredQuery());
+    var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
+    var queryContent = new QueryContent(queryContentString);
+    queryContent.setHash(queryContentHash);
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    query.setQueryContent(queryContent);
+    var queryId = queryRepository.save(query).getId();
 
-        var queryContentFromDb = queryHandlerService.getQueryContent(++queryId);
+    var queryContentFromDb = queryHandlerService.getQueryContent(++queryId);
 
-        assertThat(queryContentFromDb).isNull();
-    }
+    assertThat(queryContentFromDb).isNull();
+  }
 
-    @Test
-    public void testGetAuthorId_UnknownQueryIdThrows() {
-        assertThrows(QueryNotFoundException.class,
-            () -> queryHandlerService.getAuthorId(UNKNOWN_QUERY_ID));
-    }
+  @Test
+  public void testGetAuthorId_UnknownQueryIdThrows() {
+    assertThrows(QueryNotFoundException.class,
+        () -> queryHandlerService.getAuthorId(UNKNOWN_QUERY_ID));
+  }
 
-    @Test
-    public void testGetAmountOfQueriesByUserAndInterval() throws JsonProcessingException {
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        queryRepository.save(query).getId();
+  @Test
+  public void testGetAmountOfQueriesByUserAndInterval() throws JsonProcessingException {
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    queryRepository.save(query).getId();
 
-        var count0 = queryHandlerService.getAmountOfQueriesByUserAndInterval(CREATOR, "PT0M");
-        var count1 = queryHandlerService.getAmountOfQueriesByUserAndInterval(CREATOR, "PT1M");
+    var count0 = queryHandlerService.getAmountOfQueriesByUserAndInterval(CREATOR, "PT0M");
+    var count1 = queryHandlerService.getAmountOfQueriesByUserAndInterval(CREATOR, "PT1M");
 
-        assertThat(count0).isEqualTo(0);
-        assertThat(count1).isEqualTo(1);
-    }
+    assertThat(count0).isEqualTo(0);
+    assertThat(count1).isEqualTo(1);
+  }
 
-    @Test
-    @DisplayName("getRetryAfterTime() -> return 0 on empty")
-    public void getRetryAfterTime_zeroOnEmpty() {
-        Long retryAfterTime = queryHandlerService.getRetryAfterTime(CREATOR, 0, "PT1000000M");
-        assertThat(retryAfterTime).isEqualTo(0L);
-    }
+  @Test
+  @DisplayName("getRetryAfterTime() -> return 0 on empty")
+  public void getRetryAfterTime_zeroOnEmpty() {
+    Long retryAfterTime = queryHandlerService.getRetryAfterTime(CREATOR, 0, "PT1000000M");
+    assertThat(retryAfterTime).isEqualTo(0L);
+  }
 
-    @Test
-    @DisplayName("getRetryAfterTime() -> return >0 on non empty")
-    public void getRetryAfterTime_nonZeroOnNotEmpty() {
-        var query = new Query();
-        query.setCreatedBy(CREATOR);
-        queryRepository.save(query);
-        Long retryAfterTime = queryHandlerService.getRetryAfterTime(CREATOR, 0, "PT1000000M");
-        assertThat(retryAfterTime).isGreaterThan(0L);
-    }
+  @Test
+  @DisplayName("getRetryAfterTime() -> return >0 on non empty")
+  public void getRetryAfterTime_nonZeroOnNotEmpty() {
+    var query = new Query();
+    query.setCreatedBy(CREATOR);
+    queryRepository.save(query);
+    Long retryAfterTime = queryHandlerService.getRetryAfterTime(CREATOR, 0, "PT1000000M");
+    assertThat(retryAfterTime).isGreaterThan(0L);
+  }
 
   @Test
   @DisplayName("getSentQueryStatistics() -> succeeds with no entries")

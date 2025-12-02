@@ -26,14 +26,15 @@ public class AuthenticationHelper {
    * Check if a submitted {@link Authentication} contains the given authority.
    * <p>
    * {@link Authentication} must be of type {@link JwtAuthenticationToken}
+   *
    * @param authentication an object that should be of type {@link JwtAuthenticationToken}
-   * @param authority the role/authority name to check
+   * @param authority      the role/authority name to check
    * @return whether the principal contains the desired authority
    * @throws InvalidAuthenticationException in case some Object that is NOT a {@link JwtAuthenticationToken} is submitted
    */
   public boolean hasAuthority(Authentication authentication, String authority) throws InvalidAuthenticationException {
     if (authentication.getClass() == JwtAuthenticationToken.class) {
-      var jwtPrincipal = (Jwt)authentication.getPrincipal();
+      var jwtPrincipal = (Jwt) authentication.getPrincipal();
       JwtAuthenticationToken jwtAuthenticationToken
           = new JwtAuthenticationToken(jwtPrincipal,
           jwt2AuthoritiesConverter.convert(jwtPrincipal));

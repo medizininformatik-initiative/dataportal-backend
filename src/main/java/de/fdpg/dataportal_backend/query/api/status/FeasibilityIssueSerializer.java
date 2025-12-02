@@ -11,21 +11,21 @@ import java.io.IOException;
  */
 public class FeasibilityIssueSerializer extends StdSerializer<FeasibilityIssue> {
 
-    public FeasibilityIssueSerializer() {
-        this(null);
-    }
+  public FeasibilityIssueSerializer() {
+    this(null);
+  }
 
-    public FeasibilityIssueSerializer(Class<FeasibilityIssue> t) {
-        super(t);
-    }
+  public FeasibilityIssueSerializer(Class<FeasibilityIssue> t) {
+    super(t);
+  }
 
-    @Override
-    public void serialize(FeasibilityIssue feasibilityIssue, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField("message", feasibilityIssue.message());
-        jsonGenerator.writeStringField("type", feasibilityIssue.type().value());
-        jsonGenerator.writeStringField("code", "FEAS-" + feasibilityIssue.code());
-        jsonGenerator.writeStringField("severity", feasibilityIssue.severity().value());
-        jsonGenerator.writeEndObject();
-    }
+  @Override
+  public void serialize(FeasibilityIssue feasibilityIssue, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    jsonGenerator.writeStartObject();
+    jsonGenerator.writeStringField("message", feasibilityIssue.message());
+    jsonGenerator.writeStringField("type", feasibilityIssue.type().value());
+    jsonGenerator.writeStringField("code", "FEAS-" + feasibilityIssue.code());
+    jsonGenerator.writeStringField("severity", feasibilityIssue.severity().value());
+    jsonGenerator.writeEndObject();
+  }
 }

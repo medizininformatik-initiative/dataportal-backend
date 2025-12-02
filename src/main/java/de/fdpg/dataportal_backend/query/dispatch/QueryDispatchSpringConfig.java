@@ -16,23 +16,23 @@ import java.util.List;
 @Configuration
 public class QueryDispatchSpringConfig {
 
-    // Keep the dispatcher a singleton instance since it uses a task executor.
-    // Without this you may use more threads than intended.
-    @Bean
-    public QueryDispatcher createQueryDispatcher(
-            @Qualifier("brokerClients") List<BrokerClient> queryBrokerClients,
-            QueryTranslationComponent queryTranslationComponent,
-            QueryHashCalculator queryHashCalculator,
-            @Qualifier("translation") ObjectMapper jsonUtil,
-            QueryRepository queryRepository,
-            QueryContentRepository queryContentRepository,
-            QueryDispatchRepository queryDispatchRepository) {
-        return new QueryDispatcher(queryBrokerClients, queryTranslationComponent, queryHashCalculator, jsonUtil, queryRepository,
-                queryContentRepository, queryDispatchRepository);
-    }
+  // Keep the dispatcher a singleton instance since it uses a task executor.
+  // Without this you may use more threads than intended.
+  @Bean
+  public QueryDispatcher createQueryDispatcher(
+      @Qualifier("brokerClients") List<BrokerClient> queryBrokerClients,
+      QueryTranslationComponent queryTranslationComponent,
+      QueryHashCalculator queryHashCalculator,
+      @Qualifier("translation") ObjectMapper jsonUtil,
+      QueryRepository queryRepository,
+      QueryContentRepository queryContentRepository,
+      QueryDispatchRepository queryDispatchRepository) {
+    return new QueryDispatcher(queryBrokerClients, queryTranslationComponent, queryHashCalculator, jsonUtil, queryRepository,
+        queryContentRepository, queryDispatchRepository);
+  }
 
-    @Bean
-    public QueryHashCalculator createQueryHashCalculator() {
-        return new QueryHashCalculator(Hashing.sha256());
-    }
+  @Bean
+  public QueryHashCalculator createQueryHashCalculator() {
+    return new QueryHashCalculator(Hashing.sha256());
+  }
 }

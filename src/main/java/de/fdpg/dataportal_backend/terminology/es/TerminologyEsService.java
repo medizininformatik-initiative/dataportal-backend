@@ -29,7 +29,9 @@ import org.springframework.util.CollectionUtils;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -61,6 +63,28 @@ public class TerminologyEsService {
     this.ontologyListItemEsRepository = ontologyListItemEsRepository;
   }
 
+  public static String createContextualizedTermcodeHash(Criterion criterion) {
+    String contextualizedTermcode = MessageFormat.format("{0}{1}{2}{3}{4}",
+        criterion.context().system(),
+        criterion.context().code(),
+        (criterion.context().version() == null || criterion.context().version().isBlank()) ? "" : criterion.context().version(),
+        criterion.termCodes().get(0).system(),
+        criterion.termCodes().get(0).code()
+    );
+    return createUuidV3(NAMESPACE_UUID, contextualizedTermcode).toString();
+  }
+
+  public static UUID createUuidV3(UUID namespace, String subject) {
+    final byte[] nameBytes = subject.getBytes(StandardCharsets.UTF_8);
+
+    ByteBuffer buffer = ByteBuffer.allocate(nameBytes.length + 16);
+    buffer.putLong(namespace.getMostSignificantBits());
+    buffer.putLong(namespace.getLeastSignificantBits());
+    buffer.put(nameBytes);
+
+    return UUID.nameUUIDFromBytes(buffer.array());
+  }
+
   public EsSearchResultEntry getSearchResultEntryByCriterion(Criterion criterion) {
     var contextualizedTermcodeHash = createContextualizedTermcodeHash(criterion);
     return getSearchResultEntryByHash(contextualizedTermcodeHash);
@@ -74,7 +98,7 @@ public class TerminologyEsService {
   public List<EsSearchResultEntry> getSearchResultEntriesByHash(List<String> hashes) {
     var ontologyItems = ontologyListItemEsRepository.findAllById(hashes);
     List<EsSearchResultEntry> results = new ArrayList<>();
-    ontologyItems.forEach(oi  -> results.add(EsSearchResultEntry.of(oi)));
+    ontologyItems.forEach(oi -> results.add(EsSearchResultEntry.of(oi)));
     return results;
   }
 
@@ -155,7 +179,7 @@ public class TerminologyEsService {
   }
 
   private SearchHits<OntologyListItemDocument> findByNameOrTermcode(String keyword,
-                                                                    List<Pair<String,List<String>>> filterList,
+                                                                    List<Pair<String, List<String>>> filterList,
                                                                     boolean availability,
                                                                     PageRequest pageRequest) {
 
@@ -176,8 +200,8 @@ public class TerminologyEsService {
       filterList.forEach(f -> {
         f.getSecond().forEach(s -> fieldValues.add(new FieldValue.Builder().stringValue(s).build()));
         filterTerms.add(new TermsQuery.Builder()
-                .field(f.getFirst())
-                .terms(new TermsQueryField.Builder().value(fieldValues).build())
+            .field(f.getFirst())
+            .terms(new TermsQueryField.Builder().value(fieldValues).build())
             .build()._toQuery());
       });
     }
@@ -269,7 +293,6 @@ public class TerminologyEsService {
     return RelationEntry.of(ontologyItemRelationsDocument);
   }
 
-
   private TermFilter getFilter(String termApi) {
     final var termElastic = termApi.equalsIgnoreCase("context") ? "context.code" : termApi;
     var aggregationQuery = NativeQuery.builder()
@@ -295,27 +318,5 @@ public class TerminologyEsService {
         .type("selectable-concept")
         .values(termFilterValues)
         .build();
-  }
-
-  public static String createContextualizedTermcodeHash(Criterion criterion) {
-    String contextualizedTermcode = MessageFormat.format("{0}{1}{2}{3}{4}",
-        criterion.context().system(),
-        criterion.context().code(),
-        (criterion.context().version() == null || criterion.context().version().isBlank()) ? "" : criterion.context().version(),
-        criterion.termCodes().get(0).system(),
-        criterion.termCodes().get(0).code()
-    );
-    return createUuidV3(NAMESPACE_UUID, contextualizedTermcode).toString();
-  }
-
-  public static UUID createUuidV3(UUID namespace, String subject) {
-    final byte[] nameBytes = subject.getBytes(StandardCharsets.UTF_8);
-
-    ByteBuffer buffer = ByteBuffer.allocate(nameBytes.length + 16);
-    buffer.putLong(namespace.getMostSignificantBits());
-    buffer.putLong(namespace.getLeastSignificantBits());
-    buffer.put(nameBytes);
-
-    return UUID.nameUUIDFromBytes(buffer.array());
   }
 }

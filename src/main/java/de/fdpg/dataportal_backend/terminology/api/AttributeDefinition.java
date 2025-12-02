@@ -2,9 +2,9 @@ package de.fdpg.dataportal_backend.terminology.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.fdpg.dataportal_backend.common.api.Comparator;
 import de.fdpg.dataportal_backend.common.api.DisplayEntry;
 import de.fdpg.dataportal_backend.common.api.TermCode;
-import de.fdpg.dataportal_backend.common.api.Comparator;
 import lombok.Builder;
 
 import java.util.List;
@@ -25,10 +25,10 @@ public record AttributeDefinition(
     @JsonProperty("referencedCriteriaSet") List<String> referencedCriteriaSets,
     @JsonProperty("referencedValueSet") List<String> referencedValueSets
 ) {
-    public AttributeDefinition {
-        selectableConcepts = (selectableConcepts == null) ? List.of() : selectableConcepts;
-        allowedUnits = (allowedUnits == null) ? List.of() : allowedUnits;
-        referencedCriteriaSets = (referencedCriteriaSets == null) ? List.of() : referencedCriteriaSets;
-        referencedValueSets = (referencedValueSets == null) ? List.of() : referencedValueSets;
-    }
+  public AttributeDefinition {
+    selectableConcepts = (selectableConcepts == null) ? List.of() : selectableConcepts;
+    allowedUnits = (allowedUnits == null) ? List.of() : allowedUnits;
+    referencedCriteriaSets = (referencedCriteriaSets == null) ? List.of() : referencedCriteriaSets;
+    referencedValueSets = (referencedValueSets == null) ? List.of() : referencedValueSets;
+  }
 }

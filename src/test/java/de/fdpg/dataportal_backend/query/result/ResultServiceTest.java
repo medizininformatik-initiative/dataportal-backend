@@ -1,13 +1,6 @@
 package de.fdpg.dataportal_backend.query.result;
 
-import static de.fdpg.dataportal_backend.query.persistence.ResultType.ERROR;
-import static de.fdpg.dataportal_backend.query.persistence.ResultType.SUCCESS;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import de.fdpg.dataportal_backend.query.persistence.QueryDispatchRepository;
-import java.net.URI;
-import java.time.Duration;
-
 import org.aktin.broker.client2.BrokerAdmin2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -16,6 +9,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.threeten.extra.PeriodDuration;
+
+import java.net.URI;
+import java.time.Duration;
+
+import static de.fdpg.dataportal_backend.query.persistence.ResultType.ERROR;
+import static de.fdpg.dataportal_backend.query.persistence.ResultType.SUCCESS;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("query")
 @Tag("result")
@@ -44,10 +44,10 @@ class ResultServiceTest {
   @Test
   void findSuccessfulByQuery_withSuccessResultLine() {
     var resultLine = ResultLine.builder()
-            .siteName(SITE_NAME)
-            .type(SUCCESS)
-            .result(0L)
-            .build();
+        .siteName(SITE_NAME)
+        .type(SUCCESS)
+        .result(0L)
+        .build();
     resultService.addResultLine(QUERY_ID, resultLine);
 
     var resultLines = resultService.findSuccessfulByQuery(QUERY_ID);
@@ -58,11 +58,11 @@ class ResultServiceTest {
   @Test
   void findSuccessfulByQuery_withErrorResultLine() {
     resultService.addResultLine(QUERY_ID,
-            ResultLine.builder()
-                    .siteName(SITE_NAME)
-                    .type(ERROR)
-                    .result(0L)
-                    .build()
+        ResultLine.builder()
+            .siteName(SITE_NAME)
+            .type(ERROR)
+            .result(0L)
+            .build()
     );
 
     var resultLines = resultService.findSuccessfulByQuery(QUERY_ID);
@@ -73,11 +73,11 @@ class ResultServiceTest {
   @Test
   void testResultExpiry() throws Exception {
     resultService.addResultLine(QUERY_ID,
-            ResultLine.builder()
-                    .siteName(SITE_NAME)
-                    .type(SUCCESS)
-                    .result(0L)
-                    .build()
+        ResultLine.builder()
+            .siteName(SITE_NAME)
+            .type(SUCCESS)
+            .result(0L)
+            .build()
     );
     Thread.sleep(expiryTime.getDuration().plusMillis(250).toMillis());
 
@@ -89,20 +89,20 @@ class ResultServiceTest {
   @Test
   void testKeepsFirstResultPerSite() {
     ResultLine resultLine = ResultLine.builder()
+        .siteName(SITE_NAME)
+        .type(SUCCESS)
+        .result(0L)
+        .build();
+    resultService.addResultLine(
+        QUERY_ID,
+        resultLine);
+    resultService.addResultLine(
+        QUERY_ID,
+        ResultLine.builder()
             .siteName(SITE_NAME)
-            .type(SUCCESS)
+            .type(ERROR)
             .result(0L)
-            .build();
-    resultService.addResultLine(
-            QUERY_ID,
-            resultLine);
-    resultService.addResultLine(
-            QUERY_ID,
-            ResultLine.builder()
-                    .siteName(SITE_NAME)
-                    .type(ERROR)
-                    .result(0L)
-                    .build());
+            .build());
 
     var resultLines = resultService.findSuccessfulByQuery(QUERY_ID);
 
@@ -112,16 +112,16 @@ class ResultServiceTest {
   @Test
   void testStoresResultsFromMultipleSitesPerQuery() {
     ResultLine resultLine1 = ResultLine.builder()
-            .siteName(SITE_NAME_1)
-            .type(SUCCESS)
-            .result(0L)
-            .build();
+        .siteName(SITE_NAME_1)
+        .type(SUCCESS)
+        .result(0L)
+        .build();
     resultService.addResultLine(QUERY_ID, resultLine1);
     ResultLine resultLine2 = ResultLine.builder()
-            .siteName(SITE_NAME_2)
-            .type(SUCCESS)
-            .result(0L)
-            .build();
+        .siteName(SITE_NAME_2)
+        .type(SUCCESS)
+        .result(0L)
+        .build();
     resultService.addResultLine(QUERY_ID, resultLine2);
 
     var resultLines = resultService.findSuccessfulByQuery(QUERY_ID);
@@ -132,10 +132,10 @@ class ResultServiceTest {
   @Test
   void testStoresResultsFromMultipleQueries() {
     ResultLine resultLine = ResultLine.builder()
-            .siteName(SITE_NAME)
-            .type(SUCCESS)
-            .result(0L)
-            .build();
+        .siteName(SITE_NAME)
+        .type(SUCCESS)
+        .result(0L)
+        .build();
     resultService.addResultLine(QUERY_ID_1, resultLine);
     resultService.addResultLine(QUERY_ID_2, resultLine);
 

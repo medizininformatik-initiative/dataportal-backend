@@ -43,43 +43,20 @@ public class DataqueryCsvExportService {
   private static final String FILTERTYPE_DATE = "date";
   private static final String FILTER_DELIMITER = "or";
   private static final String REFERENCING_GROUPS_DELIMITER = ", ";
-
-  @Value("${app.export.csv.delimiter:;}")
-  private char csvDelimiter;
-
-  @Value("${app.export.csv.textwrapper:\"}")
-  private char csvTextWrapper;
-
-  @NonNull
-  private ObjectMapper jsonUtil;
-
   @NonNull
   private final DseProfileRepository dseProfileRepository;
-
   @NonNull
   private final UiProfileRepository uiProfileRepository;
-
   @NonNull
   private final TerminologyEsService terminologyEsService;
-
   @NonNull
   private final CodeableConceptService codeableConceptService;
-
-  @Builder
-  record FieldsAndLinks(
-      String fields,
-      String links
-  ) {
-  }
-
-  @Getter
-  @RequiredArgsConstructor
-  public enum SUPPORTED_LANGUAGES {
-    DE("de-DE", "de"),
-    EN("en-US", "en");
-    private final String jsonKey;
-    private final String language;
-  };
+  @Value("${app.export.csv.delimiter:;}")
+  private char csvDelimiter;
+  @Value("${app.export.csv.textwrapper:\"}")
+  private char csvTextWrapper;
+  @NonNull
+  private ObjectMapper jsonUtil;
 
   public String jsonToCsv(DataExtraction in, SUPPORTED_LANGUAGES lang) throws IOException {
     Map<String, String> idMap = new HashMap<>();
@@ -98,7 +75,7 @@ public class DataqueryCsvExportService {
 
     // Fill the id map before doing anything else. This is not the most performant way, but it should not be an issue
     for (int i = 0; i < in.attributeGroups().size(); ++i) {
-      idMap.put(in.attributeGroups().get(i).id(), String.valueOf(i+1)); // start with 1 instead of 0;
+      idMap.put(in.attributeGroups().get(i).id(), String.valueOf(i + 1)); // start with 1 instead of 0;
     }
 
     for (AttributeGroup attributeGroup : in.attributeGroups()) {
@@ -138,6 +115,8 @@ public class DataqueryCsvExportService {
     csvWriter.close();
     return stringWriter.toString();
   }
+
+  ;
 
   private String[] getRow(AttributeGroup attributeGroup, Map<String, String> idMap, Optional<DseProfile> dseProfileOptional, DataExtraction dataExtraction, SUPPORTED_LANGUAGES lang) {
     String id = idMap.get(attributeGroup.id());
@@ -203,13 +182,13 @@ public class DataqueryCsvExportService {
         .toList();
     return referencingGroups.stream()
         .map(ag -> MessageFormat.format(" [{0} {1}: {2} - {3}]",
-            MultiMessageBundle.getEntry("criterion", lang),
-            idMap.get(ag.id()),
-            ag.name(),
-            ag.attributes().stream()
-                .filter(attribute -> attribute.linkedGroups().contains(attributeGroup.id()))
-                .map(attr -> attr.attributeRef().split("\\.", 2)[1])
-                .collect(Collectors.joining(", "))
+                MultiMessageBundle.getEntry("criterion", lang),
+                idMap.get(ag.id()),
+                ag.name(),
+                ag.attributes().stream()
+                    .filter(attribute -> attribute.linkedGroups().contains(attributeGroup.id()))
+                    .map(attr -> attr.attributeRef().split("\\.", 2)[1])
+                    .collect(Collectors.joining(", "))
             )
         )
         .collect(Collectors.joining(REFERENCING_GROUPS_DELIMITER));
@@ -338,11 +317,11 @@ public class DataqueryCsvExportService {
         return MessageFormat.format("{0}: {1}",
             MultiMessageBundle.getEntry("value", lang),
             filter.selectedConcepts().stream()
-              .map(tc -> {
-                CodeableConceptEntry ccEntry = codeableConceptService.getSearchResultEntryByTermCode(tc);
-                return ccEntry == null ? "" : getLocalizedDisplayEntry(ccEntry.display(), lang);
-              })
-              .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
+                .map(tc -> {
+                  CodeableConceptEntry ccEntry = codeableConceptService.getSearchResultEntryByTermCode(tc);
+                  return ccEntry == null ? "" : getLocalizedDisplayEntry(ccEntry.display(), lang);
+                })
+                .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
       case REFERENCE:
       default:
         return MessageFormat.format("{0}: {1}", MultiMessageBundle.getEntry("filtertypeUnimplemented", lang), filter.type());
@@ -399,7 +378,7 @@ public class DataqueryCsvExportService {
     zos.closeEntry();
   }
 
-  private String getLocalizedDisplayEntry(DisplayEntry displayEntry , SUPPORTED_LANGUAGES lang, boolean fallbackToOriginal) {
+  private String getLocalizedDisplayEntry(DisplayEntry displayEntry, SUPPORTED_LANGUAGES lang, boolean fallbackToOriginal) {
     Optional<LocalizedValue> localizedValueOptional = displayEntry.translations().stream()
         .filter(lv -> lv.language().equalsIgnoreCase(lang.getJsonKey()))
         .findFirst();
@@ -414,7 +393,7 @@ public class DataqueryCsvExportService {
     return fallbackToOriginal ? displayEntry.original() : "";
   }
 
-  private String getLocalizedDisplayEntry(DisplayEntry displayEntry , SUPPORTED_LANGUAGES lang) {
+  private String getLocalizedDisplayEntry(DisplayEntry displayEntry, SUPPORTED_LANGUAGES lang) {
     return getLocalizedDisplayEntry(displayEntry, lang, true);
   }
 
@@ -437,5 +416,21 @@ public class DataqueryCsvExportService {
       filterAcEntryString = filter.attributeCode().display();
     }
     return filterAcEntryString;
+  }
+
+  @Getter
+  @RequiredArgsConstructor
+  public enum SUPPORTED_LANGUAGES {
+    DE("de-DE", "de"),
+    EN("en-US", "en");
+    private final String jsonKey;
+    private final String language;
+  }
+
+  @Builder
+  record FieldsAndLinks(
+      String fields,
+      String links
+  ) {
   }
 }

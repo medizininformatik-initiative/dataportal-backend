@@ -19,31 +19,31 @@ public record CriteriaProfileData(
     @JsonProperty("termCodes") List<TermCode> termCodes,
     @JsonProperty("uiProfileId") String uiProfileId
 ) {
-    public CriteriaProfileData {
-        termCodes = termCodes == null ? List.of() : termCodes;
-    }
+  public CriteriaProfileData {
+    termCodes = termCodes == null ? List.of() : termCodes;
+  }
 
-    public CriteriaProfileData addDisplay(DisplayEntry newDisplay) {
-        return CriteriaProfileData.builder()
-            .id(id)
-            .display(newDisplay)
-            .context(context)
-            .termCodes(termCodes)
-            .uiProfileId(uiProfileId)
-            .build();
-    }
+  public CriteriaProfileData addDisplay(DisplayEntry newDisplay) {
+    return CriteriaProfileData.builder()
+        .id(id)
+        .display(newDisplay)
+        .context(context)
+        .termCodes(termCodes)
+        .uiProfileId(uiProfileId)
+        .build();
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CriteriaProfileData that = (CriteriaProfileData) o;
-        return Objects.equals(termCodes, that.termCodes);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CriteriaProfileData that = (CriteriaProfileData) o;
+    return Objects.equals(termCodes, that.termCodes);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(termCodes);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(termCodes);
+  }
 
 }

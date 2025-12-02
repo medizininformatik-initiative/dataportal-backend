@@ -31,19 +31,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Tag("elasticsearch")
 @Import({CodeableConceptService.class})
 @Testcontainers
-@DataElasticsearchTest(        properties = {
+@DataElasticsearchTest(properties = {
     "app.elastic.filter=context,terminology"
 })
 public class CodeableConceptServiceIT {
-
-  @Autowired
-  private ElasticsearchOperations operations;
-
-  @Autowired
-  private CodeableConceptEsRepository repo;
-
-  @Autowired
-  private CodeableConceptService codeableConceptService;
 
   @Container
   @ServiceConnection
@@ -55,6 +46,12 @@ public class CodeableConceptServiceIT {
       .withStartupAttempts(3)
       .withImagePullPolicy(PullPolicy.alwaysPull())
       .waitingFor(Wait.forHttp("/health").forStatusCodeMatching(c -> c >= 200 && c <= 500));
+  @Autowired
+  private ElasticsearchOperations operations;
+  @Autowired
+  private CodeableConceptEsRepository repo;
+  @Autowired
+  private CodeableConceptService codeableConceptService;
 
   @BeforeAll
   static void setUp() throws InterruptedException {
@@ -85,7 +82,7 @@ public class CodeableConceptServiceIT {
 
   @Test
   void testPerformCodeableConceptSearchWithRepoAndPaging_findsOne() {
-    var page = assertDoesNotThrow (() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("foo", List.of(), 20, 0));
+    var page = assertDoesNotThrow(() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("foo", List.of(), 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isOne();
@@ -94,7 +91,7 @@ public class CodeableConceptServiceIT {
 
   @Test
   void testPerformCodeableConceptSearchWithRepoAndPaging_findsNone() {
-    var page = assertDoesNotThrow (() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("something-not-found", List.of(), 20, 0));
+    var page = assertDoesNotThrow(() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("something-not-found", List.of(), 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isZero();
@@ -102,7 +99,7 @@ public class CodeableConceptServiceIT {
 
   @Test
   void testPerformCodeableConceptSearchWithRepoAndPaging_findsAllWithNoKeyword() {
-    var page = assertDoesNotThrow (() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("", List.of(), 20, 0));
+    var page = assertDoesNotThrow(() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("", List.of(), 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(3L);
@@ -110,8 +107,8 @@ public class CodeableConceptServiceIT {
 
   @Test
   void testPerformCodeableConceptSearchWithRepoAndPaging_findsTwoOrOneDependingOnFilter() {
-    var pageNoFilter = assertDoesNotThrow (() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("ba", List.of(), 20, 0));
-    var pageOneFilter = assertDoesNotThrow (() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("ba", List.of("some-value-set"), 20, 0));
+    var pageNoFilter = assertDoesNotThrow(() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("ba", List.of(), 20, 0));
+    var pageOneFilter = assertDoesNotThrow(() -> codeableConceptService.performCodeableConceptSearchWithRepoAndPaging("ba", List.of("some-value-set"), 20, 0));
 
     assertNotNull(pageNoFilter);
     assertNotNull(pageOneFilter);
@@ -130,7 +127,7 @@ public class CodeableConceptServiceIT {
         .valueSet("some-value-set")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> codeableConceptService.performExactSearch(request)
     );
 
@@ -153,7 +150,7 @@ public class CodeableConceptServiceIT {
         .valueSet("some-value-set")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> codeableConceptService.performExactSearch(request)
     );
 
@@ -176,7 +173,7 @@ public class CodeableConceptServiceIT {
         .valueSet("does not exist")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> codeableConceptService.performExactSearch(request)
     );
 
@@ -194,7 +191,7 @@ public class CodeableConceptServiceIT {
         .valueSet("some-value-set")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> codeableConceptService.performExactSearch(request)
     );
 

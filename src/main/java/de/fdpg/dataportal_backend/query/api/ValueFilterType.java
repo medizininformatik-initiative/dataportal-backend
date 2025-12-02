@@ -6,12 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public enum ValueFilterType {
-    @JsonProperty("concept")
-    CONCEPT,
-    @JsonProperty("quantity-comparator")
-    QUANTITY_COMPARATOR,
-    @JsonProperty("quantity-range")
-    QUANTITY_RANGE,
-    @JsonProperty("reference")
-    REFERENCE
+  @JsonProperty("concept")
+  CONCEPT,
+  @JsonProperty("quantity-comparator")
+  QUANTITY_COMPARATOR,
+  @JsonProperty("quantity-range")
+  QUANTITY_RANGE,
+  @JsonProperty("reference")
+  REFERENCE
 }

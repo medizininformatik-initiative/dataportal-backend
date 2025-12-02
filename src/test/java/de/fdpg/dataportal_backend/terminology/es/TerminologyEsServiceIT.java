@@ -40,19 +40,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Tag("elasticsearch")
 @Import({TerminologyEsService.class})
 @Testcontainers
-@DataElasticsearchTest(        properties = {
+@DataElasticsearchTest(properties = {
     "app.elastic.filter=context,terminology"
 })
 public class TerminologyEsServiceIT {
-
-  @Autowired
-  private OntologyListItemEsRepository ontologyListItemEsRepository;
-
-  @Autowired
-  private OntologyItemEsRepository ontologyItemEsRepository;
-
-  @Autowired
-  private TerminologyEsService terminologyEsService;
 
   @Container
   @ServiceConnection
@@ -64,6 +55,12 @@ public class TerminologyEsServiceIT {
       .withStartupAttempts(3)
       .withImagePullPolicy(PullPolicy.alwaysPull())
       .waitingFor(Wait.forHttp("/health").forStatusCodeMatching(c -> c >= 200 && c <= 500));
+  @Autowired
+  private OntologyListItemEsRepository ontologyListItemEsRepository;
+  @Autowired
+  private OntologyItemEsRepository ontologyItemEsRepository;
+  @Autowired
+  private TerminologyEsService terminologyEsService;
 
   @BeforeAll
   static void setUp() throws IOException, InterruptedException {
@@ -111,7 +108,7 @@ public class TerminologyEsServiceIT {
 
   @Test
   void testPerformOntologySearchWithPaging_zeroResults() {
-    var page = terminologyEsService.performOntologySearchWithPaging("random searchterm that is not found", null,null, null, null, false, 20, 0);
+    var page = terminologyEsService.performOntologySearchWithPaging("random searchterm that is not found", null, null, null, null, false, 20, 0);
     assertThat(page).isNotNull();
     assertThat(page.totalHits()).isZero();
   }
@@ -174,7 +171,7 @@ public class TerminologyEsServiceIT {
         .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> terminologyEsService.performExactSearch(request)
     );
 
@@ -199,7 +196,7 @@ public class TerminologyEsServiceIT {
         .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> terminologyEsService.performExactSearch(request)
     );
 
@@ -225,7 +222,7 @@ public class TerminologyEsServiceIT {
         .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> terminologyEsService.performExactSearch(request)
     );
 
@@ -247,7 +244,7 @@ public class TerminologyEsServiceIT {
         .terminology("some invalid terminology")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> terminologyEsService.performExactSearch(request)
     );
 
@@ -266,7 +263,7 @@ public class TerminologyEsServiceIT {
         .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
         .build();
 
-    var exactResult =  assertDoesNotThrow(
+    var exactResult = assertDoesNotThrow(
         () -> terminologyEsService.performExactSearch(request)
     );
 

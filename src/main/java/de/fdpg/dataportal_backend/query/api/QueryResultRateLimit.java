@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @Builder
 public class QueryResultRateLimit {
-    private long limit;
-    private long remaining;
+  private long limit;
+  private long remaining;
 }

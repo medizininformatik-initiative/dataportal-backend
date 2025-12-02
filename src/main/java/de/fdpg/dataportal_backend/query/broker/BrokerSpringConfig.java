@@ -10,29 +10,25 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.context.annotation.Lazy;
 
 @Configuration
 @Slf4j
 public class BrokerSpringConfig {
 
+  private final ApplicationContext ctx;
   @Value("${app.broker.mock.enabled:false}")
   private boolean mockClientEnabled;
-
   @Value("${app.broker.direct.enabled:false}")
   private boolean directClientEnabled;
-
   @Value("${app.broker.aktin.enabled:false}")
   private boolean aktinClientEnabled;
-
   @Value("${app.broker.dsf.enabled:false}")
   private boolean dsfClientEnabled;
-
-  private final ApplicationContext ctx;
 
   public BrokerSpringConfig(ApplicationContext ctx) {
     this.ctx = ctx;

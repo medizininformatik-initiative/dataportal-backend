@@ -1,10 +1,5 @@
 package de.fdpg.dataportal_backend.config;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +17,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 
 @Configuration
@@ -58,10 +58,6 @@ public class WebSecurityConfig {
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
 
-  public interface Jwt2AuthoritiesConverter extends
-      Converter<Jwt, Collection<? extends GrantedAuthority>> {
-  }
-
   @SuppressWarnings("unchecked")
   @Bean
   public Jwt2AuthoritiesConverter authoritiesConverter() {
@@ -81,9 +77,6 @@ public class WebSecurityConfig {
       return Stream.concat(realmRoles.stream(), Stream.concat(confidentialClientRoles.stream(), publicClientRoles.stream()))
           .map(SimpleGrantedAuthority::new).toList();
     };
-  }
-
-  public interface Jwt2AuthenticationConverter extends Converter<Jwt, JwtAuthenticationToken> {
   }
 
   @Bean
@@ -129,5 +122,12 @@ public class WebSecurityConfig {
       http.redirectToHttps(Customizer.withDefaults());
     }
     return http.build();
+  }
+
+  public interface Jwt2AuthoritiesConverter extends
+      Converter<Jwt, Collection<? extends GrantedAuthority>> {
+  }
+
+  public interface Jwt2AuthenticationConverter extends Converter<Jwt, JwtAuthenticationToken> {
   }
 }

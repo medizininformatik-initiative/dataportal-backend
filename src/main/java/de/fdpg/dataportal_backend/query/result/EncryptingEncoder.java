@@ -1,11 +1,14 @@
 package de.fdpg.dataportal_backend.query.result;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.crypto.Cipher.ENCRYPT_MODE;
-import static org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgorithm.GCM;
-
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import lombok.Setter;
+import org.bouncycastle.util.Arrays;
+import org.springframework.security.crypto.encrypt.AesBytesEncryptor;
+import org.springframework.security.crypto.encrypt.BytesEncryptor;
+import org.springframework.security.crypto.keygen.KeyGenerators;
+
+import javax.crypto.*;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -13,18 +16,10 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 
-import lombok.Setter;
-import org.bouncycastle.util.Arrays;
-import org.springframework.security.crypto.encrypt.AesBytesEncryptor;
-import org.springframework.security.crypto.encrypt.BytesEncryptor;
-import org.springframework.security.crypto.keygen.KeyGenerators;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.crypto.Cipher.ENCRYPT_MODE;
+import static org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgorithm.GCM;
 
 /**
  * A {@code PatternLayoutEncoder} that encrypts the bytes the {@code PatternLayoutEncoder} outputs.

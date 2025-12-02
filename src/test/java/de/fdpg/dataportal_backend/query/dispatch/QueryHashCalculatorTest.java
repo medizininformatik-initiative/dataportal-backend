@@ -14,28 +14,28 @@ import static org.junit.jupiter.api.Assertions.*;
 @Tag("dispatch")
 public class QueryHashCalculatorTest {
 
-    public static QueryHashCalculator queryHashCalculator;
+  public static QueryHashCalculator queryHashCalculator;
 
-    @BeforeAll
-    public static void setUp() throws NoSuchAlgorithmException {
-        queryHashCalculator = new QueryHashCalculator(Hashing.sha256());
-    }
+  @BeforeAll
+  public static void setUp() throws NoSuchAlgorithmException {
+    queryHashCalculator = new QueryHashCalculator(Hashing.sha256());
+  }
 
-    @Test
-    public void testCalculateSerializedQueryBodyHash_EmptyStringIsAccepted() {
-        assertDoesNotThrow(() -> queryHashCalculator.calculateSerializedQueryBodyHash(""));
-    }
+  @Test
+  public void testCalculateSerializedQueryBodyHash_EmptyStringIsAccepted() {
+    assertDoesNotThrow(() -> queryHashCalculator.calculateSerializedQueryBodyHash(""));
+  }
 
-    @Test
-    public void testCalculateSerializedQueryBodyHash_NullYieldsError() {
-        assertThrows(IllegalArgumentException.class, () -> queryHashCalculator.calculateSerializedQueryBodyHash(null));
-    }
+  @Test
+  public void testCalculateSerializedQueryBodyHash_NullYieldsError() {
+    assertThrows(IllegalArgumentException.class, () -> queryHashCalculator.calculateSerializedQueryBodyHash(null));
+  }
 
-    @Test
-    public void testCalculateSerializedQueryBodyHash_ReturnsHashInHexFormat() {
-        var hashValue = assertDoesNotThrow(() -> queryHashCalculator.calculateSerializedQueryBodyHash("foo"));
+  @Test
+  public void testCalculateSerializedQueryBodyHash_ReturnsHashInHexFormat() {
+    var hashValue = assertDoesNotThrow(() -> queryHashCalculator.calculateSerializedQueryBodyHash("foo"));
 
-        System.out.println(hashValue);
-        assertTrue(matches("^[a-f0-9]*$", hashValue));
-    }
+    System.out.println(hashValue);
+    assertTrue(matches("^[a-f0-9]*$", hashValue));
+  }
 }

@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.ALWAYS)
 public enum ValueDefinitonType {
-    @JsonProperty("concept")
-    CONCEPT,
-    @JsonProperty("quantity")
-    QUANTITY,
-    @JsonProperty("reference")
-    REFERENCE
+  @JsonProperty("concept")
+  CONCEPT,
+  @JsonProperty("quantity")
+  QUANTITY,
+  @JsonProperty("reference")
+  REFERENCE
 }

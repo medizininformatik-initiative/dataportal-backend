@@ -9,33 +9,9 @@ import java.util.List;
 
 import static de.fdpg.dataportal_backend.common.api.Comparator.GREATER_EQUAL;
 import static de.fdpg.dataportal_backend.query.api.ValueFilterType.QUANTITY_COMPARATOR;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MutableCriterionTest {
-
-  @Test
-  void createMutableCriterion() {
-    var immutableCriterion = Criterion.builder()
-        .attributeFilters(List.of())
-        .context(createTermCode())
-        .validationIssues(List.of())
-        .termCodes(List.of(createTermCode()))
-        .timeRestriction(createTimeRestriction())
-        .valueFilter(createValueFilter())
-        .build();
-    var mutableCriterion = MutableCriterion.builder()
-        .attributeFilters(List.of())
-        .context(createTermCode())
-        .validationIssues(List.of())
-        .termCodes(List.of(createTermCode()))
-        .timeRestriction(createTimeRestriction())
-        .valueFilter(createValueFilter())
-        .build();
-
-    var createdMutableCriterion = MutableCriterion.createMutableCriterion(immutableCriterion);
-
-    assertEquals(mutableCriterion, createdMutableCriterion);
-  }
 
   @NotNull
   private static TermCode createTermCode() {
@@ -70,5 +46,29 @@ class MutableCriterionTest {
         .code("kg")
         .display("kilogram")
         .build();
+  }
+
+  @Test
+  void createMutableCriterion() {
+    var immutableCriterion = Criterion.builder()
+        .attributeFilters(List.of())
+        .context(createTermCode())
+        .validationIssues(List.of())
+        .termCodes(List.of(createTermCode()))
+        .timeRestriction(createTimeRestriction())
+        .valueFilter(createValueFilter())
+        .build();
+    var mutableCriterion = MutableCriterion.builder()
+        .attributeFilters(List.of())
+        .context(createTermCode())
+        .validationIssues(List.of())
+        .termCodes(List.of(createTermCode()))
+        .timeRestriction(createTimeRestriction())
+        .valueFilter(createValueFilter())
+        .build();
+
+    var createdMutableCriterion = MutableCriterion.createMutableCriterion(immutableCriterion);
+
+    assertEquals(mutableCriterion, createdMutableCriterion);
   }
 }

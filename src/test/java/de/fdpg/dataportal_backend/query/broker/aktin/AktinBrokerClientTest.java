@@ -17,25 +17,25 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class AktinBrokerClientTest {
 
-    @Mock
-    private BrokerAdmin2 delegate;
+  @Mock
+  private BrokerAdmin2 delegate;
 
-    @InjectMocks
-    private AktinBrokerClient client;
+  @InjectMocks
+  private AktinBrokerClient client;
 
-    @Test
-    public void testGetResultFeasibility_ReturnsActualPeerResultIfParsable() throws IOException {
-        when(delegate.getResultString(anyInt(), anyInt())).thenReturn("5");
+  @Test
+  public void testGetResultFeasibility_ReturnsActualPeerResultIfParsable() throws IOException {
+    when(delegate.getResultString(anyInt(), anyInt())).thenReturn("5");
 
-        var result = assertDoesNotThrow(() -> client.getResultFeasibility("1", "1"));
-        assertEquals(5, result);
-    }
+    var result = assertDoesNotThrow(() -> client.getResultFeasibility("1", "1"));
+    assertEquals(5, result);
+  }
 
-    @Test
-    public void testGetResultFeasibility_ReturnsZeroIfPeerSendsNonNumberResult() throws IOException {
-        when(delegate.getResultString(anyInt(), anyInt())).thenReturn("no integer");
+  @Test
+  public void testGetResultFeasibility_ReturnsZeroIfPeerSendsNonNumberResult() throws IOException {
+    when(delegate.getResultString(anyInt(), anyInt())).thenReturn("no integer");
 
-        var result = assertDoesNotThrow(() -> client.getResultFeasibility("1", "1"));
-        assertEquals(0, result);
-    }
+    var result = assertDoesNotThrow(() -> client.getResultFeasibility("1", "1"));
+    assertEquals(0, result);
+  }
 }

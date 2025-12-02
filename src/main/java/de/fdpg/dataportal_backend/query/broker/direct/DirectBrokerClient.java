@@ -1,7 +1,5 @@
 package de.fdpg.dataportal_backend.query.broker.direct;
 
-import static de.fdpg.dataportal_backend.query.persistence.BrokerClientType.DIRECT;
-
 import de.fdpg.dataportal_backend.query.QueryMediaType;
 import de.fdpg.dataportal_backend.query.broker.BrokerClient;
 import de.fdpg.dataportal_backend.query.broker.QueryDefinitionNotFoundException;
@@ -11,15 +9,13 @@ import de.fdpg.dataportal_backend.query.collect.QueryStatus;
 import de.fdpg.dataportal_backend.query.collect.QueryStatusListener;
 import de.fdpg.dataportal_backend.query.collect.QueryStatusUpdate;
 import de.fdpg.dataportal_backend.query.persistence.BrokerClientType;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static de.fdpg.dataportal_backend.query.persistence.BrokerClientType.DIRECT;
 
 public abstract class DirectBrokerClient implements BrokerClient {
 
@@ -83,7 +79,7 @@ public abstract class DirectBrokerClient implements BrokerClient {
     if (SITE_ID_LOCAL.equals(siteId)) {
       return SITE_NAME_LOCAL;
     } else {
-      throw new SiteNotFoundException("No site with id " + siteId + " found." );
+      throw new SiteNotFoundException("No site with id " + siteId + " found.");
     }
   }
 
@@ -103,6 +99,7 @@ public abstract class DirectBrokerClient implements BrokerClient {
 
   /**
    * "Obfuscates" a number by adding or subtracting a random number <=5.
+   *
    * @param resultCount the precise result
    * @return The obfuscated result, or 0 if the obfuscated result is < 5
    */
@@ -118,16 +115,17 @@ public abstract class DirectBrokerClient implements BrokerClient {
 
   /**
    * Updates a query status in all registered listeners.
-   * @param query the query to update
+   *
+   * @param query       the query to update
    * @param queryStatus the {@link QueryStatus} to publish to the listeners
    */
   protected void updateQueryStatus(DirectQuery query, QueryStatus queryStatus) {
     var statusUpdate = QueryStatusUpdate.builder()
-            .source(this)
-            .brokerQueryId(query.getQueryId())
-            .brokerSiteId(SITE_ID_LOCAL)
-            .status(queryStatus)
-            .build();
+        .source(this)
+        .brokerQueryId(query.getQueryId())
+        .brokerSiteId(SITE_ID_LOCAL)
+        .status(queryStatus)
+        .build();
     listeners.forEach(
         l -> l.onClientUpdate(query.getBackendQueryId(), statusUpdate)
     );
@@ -169,7 +167,7 @@ public abstract class DirectBrokerClient implements BrokerClient {
      * this mime type gets overwritten.
      *
      * @param queryMediaType The {@link QueryMediaType} defining the format of the query.
-     * @param content The actual query in its string representation.
+     * @param content        The actual query in its string representation.
      */
     public void addQueryDefinition(QueryMediaType queryMediaType, String content) {
       queryDefinitions.put(queryMediaType, content);

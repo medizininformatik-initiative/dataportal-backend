@@ -1,15 +1,5 @@
 package de.fdpg.dataportal_backend.query.ratelimiting;
 
-import static de.fdpg.dataportal_backend.config.WebSecurityConfig.*;
-import static de.fdpg.dataportal_backend.query.persistence.ResultType.SUCCESS;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import de.fdpg.dataportal_backend.config.WebSecurityConfig;
 import de.fdpg.dataportal_backend.query.QueryHandlerService;
 import de.fdpg.dataportal_backend.query.QueryHandlerService.ResultDetail;
@@ -20,10 +10,6 @@ import de.fdpg.dataportal_backend.query.persistence.UserBlacklistRepository;
 import de.fdpg.dataportal_backend.query.result.ResultLine;
 import de.fdpg.dataportal_backend.query.v5.FeasibilityQueryHandlerRestController;
 import de.fdpg.dataportal_backend.terminology.validation.StructuredQueryValidation;
-
-import java.net.URI;
-import java.util.List;
-import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -38,6 +24,20 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.net.URI;
+import java.util.List;
+import java.util.UUID;
+
+import static de.fdpg.dataportal_backend.config.WebSecurityConfig.*;
+import static de.fdpg.dataportal_backend.query.persistence.ResultType.SUCCESS;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Tag("query")
 @Tag("rate-limiting")
@@ -58,20 +58,56 @@ import org.springframework.test.web.servlet.MockMvc;
 @SuppressWarnings("NewClassNamingConvention")
 public class RateLimitingInterceptorIT {
 
-  @Autowired
-  private MockMvc mockMvc;
-
-  @MockitoBean
-  private QueryHandlerService queryHandlerService;
-
-  @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
-
   @MockitoBean
   AuthenticationHelper authenticationHelper;
-
+  @Autowired
+  private MockMvc mockMvc;
+  @MockitoBean
+  private QueryHandlerService queryHandlerService;
+  @MockitoBean
+  private StructuredQueryValidation structuredQueryValidation;
   @MockitoBean
   private UserBlacklistRepository userBlacklistRepository;
+
+  @NotNull
+  private static QueryResult createTestQueryResult(ResultDetail resultDetail) {
+    List<QueryResultLine> queryResultLines;
+
+    if (resultDetail == ResultDetail.SUMMARY) {
+      queryResultLines = List.of();
+    } else {
+      var resultLines = List.of(
+          ResultLine.builder()
+              .siteName("A")
+              .type(SUCCESS)
+              .result(123L)
+              .build(),
+          ResultLine.builder()
+              .siteName("B")
+              .type(SUCCESS)
+              .result(456L)
+              .build(),
+          ResultLine.builder()
+              .siteName("C")
+              .type(SUCCESS)
+              .result(789L)
+              .build()
+      );
+      queryResultLines = resultLines.stream()
+          .map(ssr -> QueryResultLine.builder()
+              .siteName(resultDetail == ResultDetail.DETAILED_OBFUSCATED ? "foobar" + ssr.siteName()
+                  : ssr.siteName())
+              .numberOfPatients(ssr.result())
+              .build())
+          .toList();
+    }
+
+    return QueryResult.builder()
+        .queryId(1L)
+        .totalNumberOfPatients(123L)
+        .resultLines(queryResultLines)
+        .build();
+  }
 
   @BeforeEach
   void setupMockBehaviour() throws InvalidAuthenticationException {
@@ -94,7 +130,7 @@ public class RateLimitingInterceptorIT {
 
     switch (resultDetail) {
       case SUMMARY -> requestUri = requestUri + WebSecurityConfig.PATH_SUMMARY_RESULT;
-      case DETAILED_OBFUSCATED -> requestUri = requestUri +  WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
+      case DETAILED_OBFUSCATED -> requestUri = requestUri + WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
       case DETAILED -> {
         requestUri = requestUri + WebSecurityConfig.PATH_DETAILED_RESULT;
         isAdmin = true;
@@ -113,7 +149,6 @@ public class RateLimitingInterceptorIT {
         .andExpect(status().isOk());
   }
 
-
   @ParameterizedTest
   @EnumSource
   public void testGetResult_FailsOnImmediateSecondCall(ResultDetail resultDetail) throws Exception {
@@ -122,7 +157,7 @@ public class RateLimitingInterceptorIT {
 
     switch (resultDetail) {
       case SUMMARY -> requestUri = requestUri + WebSecurityConfig.PATH_SUMMARY_RESULT;
-      case DETAILED_OBFUSCATED -> requestUri = requestUri +  WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
+      case DETAILED_OBFUSCATED -> requestUri = requestUri + WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
       case DETAILED -> {
         // This endpoint is only available for admin users, which are not affected by rate limiting
         return;
@@ -156,7 +191,7 @@ public class RateLimitingInterceptorIT {
 
     switch (resultDetail) {
       case SUMMARY -> requestUri = requestUri + WebSecurityConfig.PATH_SUMMARY_RESULT;
-      case DETAILED_OBFUSCATED -> requestUri = requestUri +  WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
+      case DETAILED_OBFUSCATED -> requestUri = requestUri + WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
       case DETAILED -> {
         // This endpoint is only available for admin users, which are not affected by rate limiting
         return;
@@ -194,8 +229,8 @@ public class RateLimitingInterceptorIT {
 
     switch (resultDetail) {
       case SUMMARY -> requestUri = requestUri + WebSecurityConfig.PATH_SUMMARY_RESULT;
-      case DETAILED_OBFUSCATED -> requestUri = requestUri +  WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
-      case DETAILED -> requestUri = requestUri +  WebSecurityConfig.PATH_DETAILED_RESULT;
+      case DETAILED_OBFUSCATED -> requestUri = requestUri + WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
+      case DETAILED -> requestUri = requestUri + WebSecurityConfig.PATH_DETAILED_RESULT;
     }
 
     doReturn(true).when(authenticationHelper)
@@ -221,7 +256,7 @@ public class RateLimitingInterceptorIT {
 
     switch (resultDetail) {
       case SUMMARY -> requestUri = requestUri + WebSecurityConfig.PATH_SUMMARY_RESULT;
-      case DETAILED_OBFUSCATED -> requestUri = requestUri +  WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
+      case DETAILED_OBFUSCATED -> requestUri = requestUri + WebSecurityConfig.PATH_DETAILED_OBFUSCATED_RESULT;
       case DETAILED -> {
         // This endpoint is only available for admin users, which are not affected by rate limiting
         return;
@@ -284,46 +319,6 @@ public class RateLimitingInterceptorIT {
                 .with(user(authorName).password("pass").roles("DATAPORTAL_TEST_USER"))
         )
         .andExpect(status().isOk());
-  }
-
-  @NotNull
-  private static QueryResult createTestQueryResult(ResultDetail resultDetail) {
-    List<QueryResultLine> queryResultLines;
-
-    if (resultDetail == ResultDetail.SUMMARY) {
-      queryResultLines = List.of();
-    } else {
-      var resultLines = List.of(
-              ResultLine.builder()
-                      .siteName("A")
-                      .type(SUCCESS)
-                      .result(123L)
-                      .build(),
-              ResultLine.builder()
-                      .siteName("B")
-                      .type(SUCCESS)
-                      .result(456L)
-                      .build(),
-              ResultLine.builder()
-                      .siteName("C")
-                      .type(SUCCESS)
-                      .result(789L)
-                      .build()
-      );
-      queryResultLines = resultLines.stream()
-          .map(ssr -> QueryResultLine.builder()
-              .siteName(resultDetail == ResultDetail.DETAILED_OBFUSCATED ? "foobar" + ssr.siteName()
-                  : ssr.siteName())
-              .numberOfPatients(ssr.result())
-              .build())
-          .toList();
-    }
-
-    return QueryResult.builder()
-        .queryId(1L)
-        .totalNumberOfPatients(123L)
-        .resultLines(queryResultLines)
-        .build();
   }
 
 }

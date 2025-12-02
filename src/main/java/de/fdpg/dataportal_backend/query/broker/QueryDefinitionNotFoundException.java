@@ -7,13 +7,13 @@ import de.fdpg.dataportal_backend.query.QueryMediaType;
  */
 public class QueryDefinitionNotFoundException extends Exception {
 
-    public QueryDefinitionNotFoundException(String queryId) {
-        super("Query with ID '" + queryId
-            + "' does not contain any query definitions of a known type." );
-    }
+  public QueryDefinitionNotFoundException(String queryId) {
+    super("Query with ID '" + queryId
+        + "' does not contain any query definitions of a known type.");
+  }
 
-    public QueryDefinitionNotFoundException(String queryId, QueryMediaType queryMediaType) {
-        super("Query with ID '" + queryId
-            + "' does not contain a query definition for the mandatory type: " + queryMediaType);
-    }
+  public QueryDefinitionNotFoundException(String queryId, QueryMediaType queryMediaType) {
+    super("Query with ID '" + queryId
+        + "' does not contain a query definition for the mandatory type: " + queryMediaType);
+  }
 }

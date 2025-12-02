@@ -8,9 +8,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class QueryCollectSpringConfig {
 
-    @Bean
-    public QueryStatusListener createQueryStatusListener(QueryRepository queryRepository,
-                                                         ResultService resultService) {
-        return new QueryStatusListenerImpl(queryRepository, resultService);
-    }
+  @Bean
+  public QueryStatusListener createQueryStatusListener(QueryRepository queryRepository,
+                                                       ResultService resultService) {
+    return new QueryStatusListenerImpl(queryRepository, resultService);
+  }
 }

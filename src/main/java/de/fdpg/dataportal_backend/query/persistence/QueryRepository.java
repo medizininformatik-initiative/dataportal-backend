@@ -1,11 +1,12 @@
 package de.fdpg.dataportal_backend.query.persistence;
 
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.NativeQuery;
+
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
 
 public interface QueryRepository extends JpaRepository<Query, Long> {
 

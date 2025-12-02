@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
 class OntologyInfoContributorTest {
@@ -40,7 +40,7 @@ class OntologyInfoContributorTest {
     Info info = builder.build();
 
     Map<String, Object> details = info.getDetails();
-    Map<String, String> terminologyObject = (Map<String, String>)details.get(OntologyInfoContributor.CATEGORY_TERMINOLOGY);
+    Map<String, String> terminologyObject = (Map<String, String>) details.get(OntologyInfoContributor.CATEGORY_TERMINOLOGY);
     assertEquals(expectedValue, terminologyObject.get(OntologyInfoContributor.KEY_ONTOLOGY_TAG_INFO));
   }
 }

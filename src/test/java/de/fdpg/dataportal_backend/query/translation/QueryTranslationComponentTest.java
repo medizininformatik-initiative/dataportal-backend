@@ -23,65 +23,63 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class QueryTranslationComponentTest {
 
-    @Mock
-    private QueryTranslator firstQueryTranslator;
+  private static StructuredQuery testQuery;
+  @Mock
+  private QueryTranslator firstQueryTranslator;
+  @Mock
+  private QueryTranslator secondQueryTranslator;
 
-    @Mock
-    private QueryTranslator secondQueryTranslator;
+  @BeforeAll
+  public static void setUp() {
+    testQuery = StructuredQuery.builder().build();
+  }
 
-    private static StructuredQuery testQuery;
+  @AfterEach
+  public void resetMocks() {
+    clearInvocations(firstQueryTranslator, secondQueryTranslator);
+  }
 
-    @BeforeAll
-    public static void setUp() {
-        testQuery = StructuredQuery.builder().build();
-    }
+  private QueryTranslationComponent setUpComponent(Map<QueryMediaType, QueryTranslator> translators) {
+    return new QueryTranslationComponent(translators);
+  }
 
-    @AfterEach
-    public void resetMocks() {
-        clearInvocations(firstQueryTranslator, secondQueryTranslator);
-    }
+  @Test
+  public void testTranslate_NoTranslatorsYieldEmptyResultMap() {
+    var queryTranslationComponent = setUpComponent(Map.of());
+    var translationResult = assertDoesNotThrow(() -> queryTranslationComponent.translate(testQuery));
+    assertTrue(translationResult.isEmpty());
+  }
 
-    private QueryTranslationComponent setUpComponent(Map<QueryMediaType, QueryTranslator> translators) {
-        return new QueryTranslationComponent(translators);
-    }
+  @Test
+  public void testTranslate_TranslationStopsOnFirstException() throws QueryTranslationException {
+    var translators = new LinkedHashMap<QueryMediaType, QueryTranslator>();
+    translators.put(STRUCTURED_QUERY, firstQueryTranslator);
+    translators.put(CQL, secondQueryTranslator);
+    var queryTranslationComponent = setUpComponent(translators);
+    doThrow(QueryTranslationException.class).when(firstQueryTranslator).translate(testQuery);
 
-    @Test
-    public void testTranslate_NoTranslatorsYieldEmptyResultMap() {
-        var queryTranslationComponent = setUpComponent(Map.of());
-        var translationResult = assertDoesNotThrow(() -> queryTranslationComponent.translate(testQuery));
-        assertTrue(translationResult.isEmpty());
-    }
+    assertThrows(QueryTranslationException.class, () -> queryTranslationComponent.translate(testQuery));
+    verify(firstQueryTranslator).translate(testQuery);
+    verifyNoInteractions(secondQueryTranslator);
+  }
 
-    @Test
-    public void testTranslate_TranslationStopsOnFirstException() throws QueryTranslationException {
-        var translators = new LinkedHashMap<QueryMediaType, QueryTranslator>();
-        translators.put(STRUCTURED_QUERY, firstQueryTranslator);
-        translators.put(CQL, secondQueryTranslator);
-        var queryTranslationComponent = setUpComponent(translators);
-        doThrow(QueryTranslationException.class).when(firstQueryTranslator).translate(testQuery);
+  @Test
+  public void testTranslate_MultipleTranslatorsYieldMultipleTranslationResults() throws QueryTranslationException {
+    var queryTranslationComponent = setUpComponent(Map.of(
+        STRUCTURED_QUERY, firstQueryTranslator,
+        CQL, secondQueryTranslator
+    ));
+    doReturn("foo").when(firstQueryTranslator).translate(testQuery);
+    doReturn("bar").when(secondQueryTranslator).translate(testQuery);
 
-        assertThrows(QueryTranslationException.class, () -> queryTranslationComponent.translate(testQuery));
-        verify(firstQueryTranslator).translate(testQuery);
-        verifyNoInteractions(secondQueryTranslator);
-    }
+    var translationsResults = assertDoesNotThrow(() -> queryTranslationComponent.translate(testQuery));
+    verify(firstQueryTranslator).translate(testQuery);
+    verify(secondQueryTranslator).translate(testQuery);
 
-    @Test
-    public void testTranslate_MultipleTranslatorsYieldMultipleTranslationResults() throws QueryTranslationException {
-        var queryTranslationComponent = setUpComponent(Map.of(
-                STRUCTURED_QUERY, firstQueryTranslator,
-                CQL, secondQueryTranslator
-        ));
-        doReturn("foo").when(firstQueryTranslator).translate(testQuery);
-        doReturn("bar").when(secondQueryTranslator).translate(testQuery);
-
-        var translationsResults = assertDoesNotThrow(() -> queryTranslationComponent.translate(testQuery));
-        verify(firstQueryTranslator).translate(testQuery);
-        verify(secondQueryTranslator).translate(testQuery);
-
-        assertEquals(2, translationsResults.size());
-        assertTrue(translationsResults.containsKey(STRUCTURED_QUERY));
-        assertEquals("foo", translationsResults.get(STRUCTURED_QUERY));
-        assertTrue(translationsResults.containsKey(CQL));
-        assertEquals("bar", translationsResults.get(CQL));
-    }
+    assertEquals(2, translationsResults.size());
+    assertTrue(translationsResults.containsKey(STRUCTURED_QUERY));
+    assertEquals("foo", translationsResults.get(STRUCTURED_QUERY));
+    assertTrue(translationsResults.containsKey(CQL));
+    assertEquals("bar", translationsResults.get(CQL));
+  }
 }

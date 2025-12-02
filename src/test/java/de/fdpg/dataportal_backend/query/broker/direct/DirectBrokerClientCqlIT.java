@@ -30,9 +30,7 @@ import static de.fdpg.dataportal_backend.query.collect.QueryStatus.COMPLETED;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @Testcontainers
 @TestInstance(Lifecycle.PER_CLASS)
@@ -40,84 +38,83 @@ import static org.mockito.Mockito.verify;
 @SuppressWarnings("NewClassNamingConvention")
 class DirectBrokerClientCqlIT {
 
-    private static final int ASYNC_TIMEOUT_WAIT_MS = 2000;
-    private static final Long TEST_BACKEND_QUERY_ID = 1L;
+  private static final int ASYNC_TIMEOUT_WAIT_MS = 2000;
+  private static final Long TEST_BACKEND_QUERY_ID = 1L;
 
-    private final GenericContainer<?> blaze = new GenericContainer<>(DockerImageName.parse("samply/blaze:1.1.2"))
-            .withImagePullPolicy(PullPolicy.alwaysPull())
-            .withExposedPorts(8080)
-            .waitingFor(Wait.forHttp("/health").forStatusCodeMatching(c -> c >= 200 && c <= 500))
-            .withStartupAttempts(3);
+  private final GenericContainer<?> blaze = new GenericContainer<>(DockerImageName.parse("samply/blaze:1.1.2"))
+      .withImagePullPolicy(PullPolicy.alwaysPull())
+      .withExposedPorts(8080)
+      .waitingFor(Wait.forHttp("/health").forStatusCodeMatching(c -> c >= 200 && c <= 500))
+      .withStartupAttempts(3);
+  private final FhirContext fhirContext = FhirContext.forR4();
+  DirectBrokerClientCql client;
 
-    DirectBrokerClientCql client;
-    private final FhirContext fhirContext = FhirContext.forR4();
+  @BeforeAll
+  void setUp() {
+    blaze.start();
+    fhirContext.getRestfulClientFactory().setSocketTimeout(200 * 1000);
+    IGenericClient fhirClient = fhirContext.newRestfulGenericClient(
+        format("http://localhost:%d/fhir", blaze.getFirstMappedPort()));
+    FhirConnector fhirConnector = new FhirConnector(fhirClient);
+    FhirHelper fhirHelper = new FhirHelper(fhirContext);
+    client = new DirectBrokerClientCql(fhirConnector, false, fhirHelper);
 
-    @BeforeAll
-    void setUp() {
-        blaze.start();
-        fhirContext.getRestfulClientFactory().setSocketTimeout(200 * 1000);
-        IGenericClient fhirClient = fhirContext.newRestfulGenericClient(
-            format("http://localhost:%d/fhir", blaze.getFirstMappedPort()));
-        FhirConnector fhirConnector = new FhirConnector(fhirClient);
-        FhirHelper fhirHelper = new FhirHelper(fhirContext);
-        client = new DirectBrokerClientCql(fhirConnector, false, fhirHelper);
-
-        Stream.of(
+    Stream.of(
             new Patient().setGender(AdministrativeGender.MALE),
             new Patient().setGender(AdministrativeGender.MALE),
             new Patient().setGender(AdministrativeGender.FEMALE))
-            .forEach( (patient) -> fhirClient.create().resource(patient).execute());
-    }
+        .forEach((patient) -> fhirClient.create().resource(patient).execute());
+  }
 
-    @AfterAll
-    void tearDown() {
-        blaze.stop();
-    }
+  @AfterAll
+  void tearDown() {
+    blaze.stop();
+  }
 
-    @Test
-    void testExecuteQueryMale()
-        throws QueryNotFoundException, IOException, SiteNotFoundException, QueryDefinitionNotFoundException {
-        var brokerQueryId = client.createQuery(TEST_BACKEND_QUERY_ID);
-        var cqlString = FhirHelper.getResourceFileAsString("gender-male.cql");
-        client.addQueryDefinition(brokerQueryId, CQL, cqlString);
+  @Test
+  void testExecuteQueryMale()
+      throws QueryNotFoundException, IOException, SiteNotFoundException, QueryDefinitionNotFoundException {
+    var brokerQueryId = client.createQuery(TEST_BACKEND_QUERY_ID);
+    var cqlString = FhirHelper.getResourceFileAsString("gender-male.cql");
+    client.addQueryDefinition(brokerQueryId, CQL, cqlString);
 
-        var statusListener = mock(QueryStatusListener.class);
-        client.addQueryStatusListener(statusListener);
-        client.publishQuery(brokerQueryId);
+    var statusListener = mock(QueryStatusListener.class);
+    client.addQueryStatusListener(statusListener);
+    client.publishQuery(brokerQueryId);
 
-        var statusUpdate = QueryStatusUpdate.builder()
-                .source(client)
-                .brokerQueryId(brokerQueryId)
-                .brokerSiteId("1")
-                .status(COMPLETED)
-                .build();
-        verify(statusListener, timeout(ASYNC_TIMEOUT_WAIT_MS)).onClientUpdate(TEST_BACKEND_QUERY_ID, statusUpdate);
+    var statusUpdate = QueryStatusUpdate.builder()
+        .source(client)
+        .brokerQueryId(brokerQueryId)
+        .brokerSiteId("1")
+        .status(COMPLETED)
+        .build();
+    verify(statusListener, timeout(ASYNC_TIMEOUT_WAIT_MS)).onClientUpdate(TEST_BACKEND_QUERY_ID, statusUpdate);
 
-        assertThat(client.getResultSiteIds(brokerQueryId)).containsExactly("1");
-        assertEquals(2, client.getResultFeasibility(brokerQueryId, "1"));
-    }
+    assertThat(client.getResultSiteIds(brokerQueryId)).containsExactly("1");
+    assertEquals(2, client.getResultFeasibility(brokerQueryId, "1"));
+  }
 
-    @Test
-    void testExecuteQueryFemale()
-        throws QueryNotFoundException, IOException, SiteNotFoundException, QueryDefinitionNotFoundException {
-        var brokerQueryId = client.createQuery(TEST_BACKEND_QUERY_ID);
-        var cqlString = FhirHelper.getResourceFileAsString("gender-female.cql");
-        client.addQueryDefinition(brokerQueryId, CQL, cqlString);
+  @Test
+  void testExecuteQueryFemale()
+      throws QueryNotFoundException, IOException, SiteNotFoundException, QueryDefinitionNotFoundException {
+    var brokerQueryId = client.createQuery(TEST_BACKEND_QUERY_ID);
+    var cqlString = FhirHelper.getResourceFileAsString("gender-female.cql");
+    client.addQueryDefinition(brokerQueryId, CQL, cqlString);
 
-        var statusListener = mock(QueryStatusListener.class);
-        client.addQueryStatusListener(statusListener);
-        client.publishQuery(brokerQueryId);
+    var statusListener = mock(QueryStatusListener.class);
+    client.addQueryStatusListener(statusListener);
+    client.publishQuery(brokerQueryId);
 
-        var statusUpdate = QueryStatusUpdate.builder()
-                .source(client)
-                .brokerQueryId(brokerQueryId)
-                .brokerSiteId("1")
-                .status(COMPLETED)
-                .build();
-        verify(statusListener, timeout(ASYNC_TIMEOUT_WAIT_MS)).onClientUpdate(TEST_BACKEND_QUERY_ID, statusUpdate);
+    var statusUpdate = QueryStatusUpdate.builder()
+        .source(client)
+        .brokerQueryId(brokerQueryId)
+        .brokerSiteId("1")
+        .status(COMPLETED)
+        .build();
+    verify(statusListener, timeout(ASYNC_TIMEOUT_WAIT_MS)).onClientUpdate(TEST_BACKEND_QUERY_ID, statusUpdate);
 
-        assertThat(client.getResultSiteIds(brokerQueryId)).containsExactly("1");
-        assertEquals(1, client.getResultFeasibility(brokerQueryId, "1"));
-    }
+    assertThat(client.getResultSiteIds(brokerQueryId)).containsExactly("1");
+    assertEquals(1, client.getResultFeasibility(brokerQueryId, "1"));
+  }
 
 }

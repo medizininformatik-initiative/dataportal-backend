@@ -3,7 +3,9 @@ package de.fdpg.dataportal_backend.query.dataquery;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fdpg.dataportal_backend.query.api.*;
+import de.fdpg.dataportal_backend.query.api.Crtdl;
+import de.fdpg.dataportal_backend.query.api.DataExtraction;
+import de.fdpg.dataportal_backend.query.api.Dataquery;
 import de.fdpg.dataportal_backend.query.api.status.IssueWrapper;
 import de.fdpg.dataportal_backend.query.api.status.SavedQuerySlots;
 import de.fdpg.dataportal_backend.query.api.validation.JsonSchemaValidator;
@@ -20,7 +22,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
 @Slf4j
@@ -28,17 +33,13 @@ import java.util.zip.ZipOutputStream;
 @RequiredArgsConstructor
 public class DataqueryHandler {
   @NonNull
-  private ObjectMapper jsonUtil;
-
-  @NonNull
-  private DataqueryRepository dataqueryRepository;
-
+  final JsonSchemaValidator jsonSchemaValidator;
   @NonNull
   private final DataqueryCsvExportService csvExportHandler;
-
   @NonNull
-  final JsonSchemaValidator jsonSchemaValidator;
-
+  private ObjectMapper jsonUtil;
+  @NonNull
+  private DataqueryRepository dataqueryRepository;
   @NonNull
   private Integer maxDataqueriesPerUser;
 
@@ -98,7 +99,7 @@ public class DataqueryHandler {
     }
   }
 
-  public void updateDataquery(Long queryId, Dataquery dataquery, String userId) throws DataqueryException,  DataqueryStorageFullException, JsonProcessingException {
+  public void updateDataquery(Long queryId, Dataquery dataquery, String userId) throws DataqueryException, DataqueryStorageFullException, JsonProcessingException {
     var usedSlots = dataqueryRepository.countByCreatedByWhereResultIsNotNull(userId);
     var existingDataquery = dataqueryRepository.findById(queryId).orElseThrow(DataqueryException::new);
 
@@ -170,7 +171,7 @@ public class DataqueryHandler {
     files.put("Datendefinition.json", jsonUtil.writeValueAsString(dataquery.content()));
 
     for (DataqueryCsvExportService.SUPPORTED_LANGUAGES lang : DataqueryCsvExportService.SUPPORTED_LANGUAGES.values()) {
-    if (dataquery.content().cohortDefinition().inclusionCriteria() == null) {
+      if (dataquery.content().cohortDefinition().inclusionCriteria() == null) {
         // Call with empty lists to just write the headers to the file
         files.put(MultiMessageBundle.getEntry("filenameInclusion", lang) + ".csv", csvExportHandler.jsonToCsv(List.of(List.of()), lang));
       } else {

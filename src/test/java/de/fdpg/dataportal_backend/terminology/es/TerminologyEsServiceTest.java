@@ -12,7 +12,9 @@ import de.fdpg.dataportal_backend.terminology.es.model.*;
 import de.fdpg.dataportal_backend.terminology.es.repository.OntologyItemEsRepository;
 import de.fdpg.dataportal_backend.terminology.es.repository.OntologyItemNotFoundException;
 import de.fdpg.dataportal_backend.terminology.es.repository.OntologyListItemEsRepository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -34,7 +36,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +46,7 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class TerminologyEsServiceTest {
 
-  private String[] filterFields = new String[] {"foo", "bar", "baz"};
+  private String[] filterFields = new String[]{"foo", "bar", "baz"};
   @Mock
   private ElasticsearchOperations operations;
   @Mock
@@ -60,6 +62,44 @@ public class TerminologyEsServiceTest {
 
   @InjectMocks
   private TerminologyEsService terminologyEsService;
+
+  private static Stream<Arguments> generateArgumentsForTestPerformOntologySearchWithPaging() {
+    var booleanList = List.of(true, false);
+    var list = new ArrayList<Arguments>();
+
+    for (boolean availability : booleanList) {
+      list.add(Arguments.of(null, null, null, null, availability, 20, 0));
+      list.add(Arguments.of(null, List.of("foo"), null, null, availability, 20, 0));
+      list.add(Arguments.of(null, null, List.of("bar"), null, availability, 20, 0));
+      list.add(Arguments.of(null, null, null, List.of("baz"), availability, 20, 0));
+      list.add(Arguments.of(null, List.of("foo"), List.of("bar"), null, availability, 20, 0));
+      list.add(Arguments.of(null, List.of("foo"), null, List.of("baz"), availability, 20, 0));
+      list.add(Arguments.of(null, null, List.of("bar"), List.of("baz"), availability, 20, 0));
+      list.add(Arguments.of(null, List.of("foo"), List.of("bar"), List.of("baz"), availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), null, null, null, availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), List.of("foo"), null, null, availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), null, List.of("bar"), null, availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), null, null, List.of("baz"), availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), List.of("foo"), List.of("bar"), null, availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), List.of("foo"), null, List.of("baz"), availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), null, List.of("bar"), List.of("baz"), availability, 20, 0));
+      list.add(Arguments.of(List.of("foobar"), List.of("foo"), List.of("bar"), List.of("baz"), availability, 20, 0));
+    }
+
+    return list.stream();
+  }
+
+  private static Stream<Arguments> generateArgumentsForTestPerformExactSearch() {
+    var list = new ArrayList<Arguments>();
+
+    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of(), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of(), List.of("unavailable-term-0", "unavailable-term-1"), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of("unavailable-term-0", "unavailable-term-1"), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of(), List.of(), "valid-terminology", "valid-context"));
+    list.add(Arguments.of(List.of(), List.of(), "", ""));
+
+    return list.stream();
+  }
 
   private TerminologyEsService createTerminologyEsService() {
     return new TerminologyEsService(filterFields, operations, ontologyItemEsRepository, ontologyListItemEsRepository);
@@ -137,44 +177,6 @@ public class TerminologyEsServiceTest {
     assertThat(filters).containsAll(expectedTermFiltersList);
   }
 
-  private static Stream<Arguments> generateArgumentsForTestPerformOntologySearchWithPaging() {
-    var booleanList = List.of(true, false);
-    var list = new ArrayList<Arguments>();
-
-    for (boolean availability : booleanList) {
-      list.add(Arguments.of(null, null, null, null, availability, 20, 0));
-      list.add(Arguments.of(null, List.of("foo"), null, null, availability, 20, 0));
-      list.add(Arguments.of(null, null, List.of("bar"), null, availability, 20, 0));
-      list.add(Arguments.of(null, null, null, List.of("baz"), availability, 20, 0));
-      list.add(Arguments.of(null, List.of("foo"), List.of("bar"), null, availability, 20, 0));
-      list.add(Arguments.of(null, List.of("foo"), null, List.of("baz"), availability, 20, 0));
-      list.add(Arguments.of(null, null, List.of("bar"), List.of("baz"), availability, 20, 0));
-      list.add(Arguments.of(null, List.of("foo"), List.of("bar"), List.of("baz"), availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), null, null, null, availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), List.of("foo"), null, null, availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), null, List.of("bar"), null, availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), null, null, List.of("baz"), availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), List.of("foo"), List.of("bar"), null, availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), List.of("foo"), null, List.of("baz"), availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), null, List.of("bar"), List.of("baz"), availability, 20, 0));
-      list.add(Arguments.of(List.of("foobar"), List.of("foo"), List.of("bar"), List.of("baz"), availability, 20, 0));
-    }
-
-    return list.stream();
-  }
-
-  private static Stream<Arguments> generateArgumentsForTestPerformExactSearch() {
-    var list = new ArrayList<Arguments>();
-
-    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of(), "valid-terminology", "valid-context"));
-    list.add(Arguments.of(List.of(), List.of("unavailable-term-0", "unavailable-term-1"), "valid-terminology", "valid-context"));
-    list.add(Arguments.of(List.of("available-term-0", "available-term-1"), List.of("unavailable-term-0", "unavailable-term-1"), "valid-terminology", "valid-context"));
-    list.add(Arguments.of(List.of(), List.of(), "valid-terminology", "valid-context"));
-    list.add(Arguments.of(List.of(), List.of(), "", ""));
-
-    return list.stream();
-  }
-
   @ParameterizedTest
   @MethodSource("generateArgumentsForTestPerformOntologySearchWithPaging")
   void testPerformOntologySearchWithPaging(List<String> criteriaSets, List<String> context, List<String> kdsModule, List<String> terminology, Boolean availability, Integer pageSize, Integer page) {
@@ -212,7 +214,7 @@ public class TerminologyEsServiceTest {
   @Test
   void testPerformOntologySearchWithRepoAndPaging_throwsOnInvalidPageSize() {
     assertThrows(IllegalArgumentException.class, () -> terminologyEsService.performOntologySearchWithPaging(
-            "foobar", null, null, null, null, false, 0, 0)
+        "foobar", null, null, null, null, false, 0, 0)
     );
   }
 

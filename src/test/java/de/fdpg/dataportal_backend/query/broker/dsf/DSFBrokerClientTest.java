@@ -14,17 +14,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 public class DSFBrokerClientTest {
 
-    @InjectMocks
-    private DSFBrokerClient client;
+  @InjectMocks
+  private DSFBrokerClient client;
 
-    @ParameterizedTest
-    @ValueSource(strings = {"my-site", "something", "identity", "Site 1"})
-    public void testGetSiteName_IsIdentity(String siteId) throws SiteNotFoundException {
-        assertEquals(siteId, client.getSiteName(siteId));
-    }
+  @ParameterizedTest
+  @ValueSource(strings = {"my-site", "something", "identity", "Site 1"})
+  public void testGetSiteName_IsIdentity(String siteId) throws SiteNotFoundException {
+    assertEquals(siteId, client.getSiteName(siteId));
+  }
 
-    @Test
-    public void testGetSiteName_NullRaisesError() {
-        assertThrows(SiteNotFoundException.class, () -> client.getSiteName(null));
-    }
+  @Test
+  public void testGetSiteName_NullRaisesError() {
+    assertThrows(SiteNotFoundException.class, () -> client.getSiteName(null));
+  }
 }

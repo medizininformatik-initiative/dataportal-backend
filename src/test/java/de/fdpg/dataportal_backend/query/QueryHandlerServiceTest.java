@@ -66,7 +66,7 @@ class QueryHandlerServiceTest {
 
   private QueryHandlerService createQueryHandlerService() {
     return new QueryHandlerService(queryDispatcher, queryRepository, queryContentRepository,
-        resultService, structuredQueryValidation, queryTranslator, jsonSchemaValidator,jsonUtil);
+        resultService, structuredQueryValidation, queryTranslator, jsonSchemaValidator, jsonUtil);
   }
 
   @BeforeEach

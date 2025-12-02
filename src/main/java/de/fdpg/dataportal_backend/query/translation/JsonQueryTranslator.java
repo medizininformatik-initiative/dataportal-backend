@@ -13,15 +13,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class JsonQueryTranslator implements QueryTranslator {
 
-    @NonNull
-    private ObjectMapper jsonUtil;
+  @NonNull
+  private ObjectMapper jsonUtil;
 
-    @Override
-    public String translate(StructuredQuery query) throws QueryTranslationException {
-        try {
-            return jsonUtil.writeValueAsString(query);
-        } catch (JsonProcessingException e) {
-            throw new QueryTranslationException("cannot encode structured query as JSON", e);
-        }
+  @Override
+  public String translate(StructuredQuery query) throws QueryTranslationException {
+    try {
+      return jsonUtil.writeValueAsString(query);
+    } catch (JsonProcessingException e) {
+      throw new QueryTranslationException("cannot encode structured query as JSON", e);
     }
+  }
 }

@@ -1,7 +1,8 @@
 package de.fdpg.dataportal_backend.query.result;
 
-import static java.util.Objects.requireNonNull;
-import static org.assertj.core.api.Assertions.assertThat;
+import lombok.NonNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -10,9 +11,9 @@ import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import lombok.NonNull;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Example Key Pair:
@@ -27,6 +28,11 @@ class DecryptorTest {
   private static final String PRIVATE_KEY = "MIIG/QIBADANBgkqhkiG9w0BAQEFAASCBucwggbjAgEAAoIBgQDWVY59fMT+ZQQ+K00vGwMy2MREkZWFLyA/Vaa4c++M/FQ5DKh3gRslxsmWQGouqloizwG7LeBxsm8g8RF0bU3UFJnw04o61G5uKgp/fQnCct1kBp7e8kDNELeHjY48zd+iFkJczFuuO74ozRlQissRcoQMwdBZ968JALF6LG9dVil9eWQkgEZpbPhwOAQ6KLCFTzsAzMZnCMAge+vihMX+4eDr4Lcx3HSbxYu3KBOISLEl6Axv+3FH7iA1VivOmbkHANRTtDHLedNQNhkuVMZ4/0wEVZb5bzsgfOA/44WvdkowSQA9TRHWWpcVkJhyBkcYDkd7ZbvTWKyeqQohBPx484fjdk5ejdLfg+rDmhDhDaQ+5unXCBlbDRW0SJkO2XCpQn6vcKKBTs0AUzkmcL+ySIgEp61tag2bUk8R8Y5OuCMcPa6jzaNI7y1Xjks0fURpHb7lRZIVnIO9NrItmzGxWVEVckqBAkMjfjhHqWEZstduGoK4/N5BoevVcYIoC10CAwEAAQKCAYB20JLeyY3CoGkLtaFh3Y2WYEfc4v+KByfPNEHpuosvEqn1viidprpP5LTXT/oMyG6TIUIKa1IidRHZpwlQC0+7o3f64qmcFyrocvHC3qPMYTSNQIZNfOmjRAMZZ8VTu6SfC8vZ+YdRPNkbcSb5WRddIqhFEiPX28/yI6o+2ecaTKtPXT3AZkOiKcBHJSZivy+rltJUjS/m6hjnaQrIVWYU905iM/4Z6+XQfGAJNnQtdm6NXueWJEMV5tF//7blHp1JqO4gfx8WpUTMT/fPscHL5wjmOIXWaWEjWJ+lZ4drCZCdGrcJhqfD2aC1EZpaixSQTZzskc1/U92tGa+ih9lnq0hkU6gr4/6LOZqUnjQoB6hYyYbSHnkMB5LJvrF/3PEmS14TtBFhenUCfmwZNxwtT4xYP5sBFGMFv9hkfnceEtwQ7N6OWTT7/his3XgY5GG4DCfxEZH8oML7474bYbewREcFTlefwrZWmkmWfdPbcyCOptLqZkr5Tt/1f2RuW9kCgcEA64woU91S7dm/KEqAmJHXuXydOcQYTj3vYTbZOw4IT08YBg2u+RNTtQDCacVb/ooF4/YIw/OjKaOnoIejuNw60hAVhjLVE/342GakhOhLSpMUE1kvPiC7BbvDZUmycWcvt2uT6BJna1ujgZjkb9mkpDWS2ygtxjiA033IxJzEGYIxXKFqD69hc266h+iUjCJRyj/T8inoDxLuGr+JAnV8TQWbbfpPkfcb8MdqeVJlco/+4zXYY+NZYyCksMcJIAr/AoHBAOjx3J/XxoO8xqzlk9Lto1pNcp6IG8HYeHzIxo6gm1yRCYB4wxghb+ypTCWcpgyYmiKIlgWLTu1fTHAFUk8FV1LGwL0KHJOMcCb94/yXsbqkjskvZJNtM6uMb6B8PEv4qnqNa1eNjC4mE6iA7QFRLimD352DI9FrqzwT1/gFH+r7nL2lGAIA1epIB4OZq9iB/sejjv9/0ODuk/P123Oda95fd9vxCGfuZxKT2hNX6SPEmw5it24ppVeivWxnbsX1owKBwENrHGfUo1Xcyy/3ExOYOsymdEICdIqAg7Gph0e13n8EvnWNGRXFiGH4U6z+hjQ2wTTcSOn9JChY5TO3Xw8cSeGyJNcCWaadPMqDpnc8HcC8lDRthG4d5Cnh8i1diKuYwzmWmwEDs4Iw+n2vi0LQYqV1iBEeUOu5ZHYkPIC59g7vCr3enYLbyeLGQLGBynLJp+thlYJsqDUYT/pr9AU2J1vMTQ6PZJL8zYx/J2SORuche+0Ajm0Yt4792uWWMnBvdQKBwQCKrpuDyimUeonpm1BTjkjnVR59BVlJIcAxwjJ77WAxTuPSSZMUxatlwTDlX4p4C04QazKtoE9gAJF4S6LCCtL/I/bRVLjImx6WCCd4VTNpg9jCK+X741KUuiom6G/ZZvTPu2wBlvKy8tZXRlJTq2oJK0qw8scbQbeTL9ku/pYPBrc9LJHLd4XjUfivP4jQgCwX3Ocgc47+qusIngGFpl326O1p0ukHPya8J6v4Qik5sy4A9YJxIngeYXPWmwmW73MCgcBzxKY/PNTV5MYlpcVWi2Sv2OlhlEUVuH63mzIxFrYNCzHh468CEGG1kGNXqURC1+OLWMUuuI/bRH083OjRmXAsR+IMqlfleSLyy0VA8cBVwlN5s8yJCo0Qx1VhVMfYFVYCQUqV4L7GZoycXhGXodSWA2qY4yYeL//X90qF+M+rEBLsoQyaBAsqH8OOTjTv/vhZ+K/JZp1LQZEBY9XXwYwKfK0jbNkM4xBAMCbZYgUBo/7Oh1z96uy3xZWwss/cDAA=";
 
   private Decryptor decryptor;
+
+  @NonNull
+  private static Path resultLogPath() throws URISyntaxException {
+    return Paths.get(requireNonNull(DecryptorTest.class.getResource("result.log")).toURI());
+  }
 
   @BeforeEach
   void setUp() throws Exception {
@@ -47,10 +53,5 @@ class DecryptorTest {
         "2023-05-16T11:13:55.489;0;site-name-142848;0",
         "2023-05-16T11:14:23.860;0;site-name-142848;0"
     );
-  }
-
-  @NonNull
-  private static Path resultLogPath() throws URISyntaxException {
-    return Paths.get(requireNonNull(DecryptorTest.class.getResource("result.log")).toURI());
   }
 }

@@ -3,7 +3,10 @@ package de.fdpg.dataportal_backend.terminology.es;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.fdpg.dataportal_backend.common.api.TermCode;
-import de.fdpg.dataportal_backend.terminology.api.*;
+import de.fdpg.dataportal_backend.terminology.api.CcSearchResult;
+import de.fdpg.dataportal_backend.terminology.api.CodeableConceptBulkSearchRequest;
+import de.fdpg.dataportal_backend.terminology.api.CodeableConceptBulkSearchResult;
+import de.fdpg.dataportal_backend.terminology.api.CodeableConceptEntry;
 import de.fdpg.dataportal_backend.terminology.es.model.CodeableConceptDocument;
 import de.fdpg.dataportal_backend.terminology.es.repository.CodeableConceptEsRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -102,7 +105,7 @@ public class CodeableConceptService {
   }
 
   private SearchHits<CodeableConceptDocument> findByCodeOrDisplay(String keyword,
-                                                                  List<Pair<String,List<String>>> filterList,
+                                                                  List<Pair<String, List<String>>> filterList,
                                                                   PageRequest pageRequest) {
     List<Query> filterTerms = new ArrayList<>();
 

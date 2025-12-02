@@ -11,7 +11,7 @@ import java.security.KeyStore;
 @Data
 @AllArgsConstructor
 class FhirSecurityContext {
-    KeyStore keyStore;
-    KeyStore trustStore;
-    private char[] keyStorePassword;
+  KeyStore keyStore;
+  KeyStore trustStore;
+  private char[] keyStorePassword;
 }

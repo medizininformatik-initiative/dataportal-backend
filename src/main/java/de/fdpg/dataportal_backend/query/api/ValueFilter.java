@@ -8,9 +8,8 @@ import de.fdpg.dataportal_backend.common.api.TermCode;
 import de.fdpg.dataportal_backend.common.api.Unit;
 import lombok.Builder;
 
-import java.util.Objects;
-
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @Builder
@@ -21,10 +20,10 @@ public record ValueFilter(
     @JsonProperty("unit") Unit quantityUnit,
     @JsonProperty(value = "value") Double value,
     @JsonProperty(value = "minValue") Double minValue,
-    @JsonProperty(value = "maxValue")Double maxValue
+    @JsonProperty(value = "maxValue") Double maxValue
 ) {
-    public ValueFilter {
-        Objects.requireNonNull(type);
-        selectedConcepts = selectedConcepts == null ? List.of() : selectedConcepts;
-    }
+  public ValueFilter {
+    Objects.requireNonNull(type);
+    selectedConcepts = selectedConcepts == null ? List.of() : selectedConcepts;
+  }
 }

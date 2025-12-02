@@ -79,35 +79,35 @@ public class DataqueryHandlerRestController {
 
   @GetMapping(path = "/{dataqueryId}")
   public ResponseEntity<Object> getDataquery(@PathVariable(value = "dataqueryId") Long dataqueryId,
-                                                 @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation,
-      Authentication authentication) {
+                                             @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation,
+                                             Authentication authentication) {
 
     try {
       var dataquery = dataqueryHandler.getDataqueryById(dataqueryId, authentication);
       var dataqueryWithInvalidCriteria = Dataquery.builder()
-              .id(dataquery.id())
-              .content(
-                  Crtdl.builder()
-                      .display(dataquery.content().display())
-                      .version(dataquery.content().version())
-                      .dataExtraction(dataquery.content().dataExtraction())
-                      .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : structuredQueryValidation.annotateStructuredQuery(dataquery.content().cohortDefinition(), skipValidation))
-                      .build()
-              )
-              .label(dataquery.label())
-              .comment(dataquery.comment())
-              .lastModified(dataquery.lastModified())
-              .createdBy(dataquery.createdBy())
-              .resultSize(dataquery.resultSize())
-              .ccdl(CrtdlSectionInfo.builder()
-                  .exists(dataquery.content().cohortDefinition() != null)
-                  .isValid(skipValidation || (dataquery.content().cohortDefinition() != null && structuredQueryValidation.isValid(dataquery.content().cohortDefinition())))
-                  .build())
-              .dataExtraction(CrtdlSectionInfo.builder()
-                  .exists(dataquery.content().dataExtraction() != null)
-                  .isValid(true) // TODO: Add validation for that
-                  .build())
-              .build();
+          .id(dataquery.id())
+          .content(
+              Crtdl.builder()
+                  .display(dataquery.content().display())
+                  .version(dataquery.content().version())
+                  .dataExtraction(dataquery.content().dataExtraction())
+                  .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : structuredQueryValidation.annotateStructuredQuery(dataquery.content().cohortDefinition(), skipValidation))
+                  .build()
+          )
+          .label(dataquery.label())
+          .comment(dataquery.comment())
+          .lastModified(dataquery.lastModified())
+          .createdBy(dataquery.createdBy())
+          .resultSize(dataquery.resultSize())
+          .ccdl(CrtdlSectionInfo.builder()
+              .exists(dataquery.content().cohortDefinition() != null)
+              .isValid(skipValidation || (dataquery.content().cohortDefinition() != null && structuredQueryValidation.isValid(dataquery.content().cohortDefinition())))
+              .build())
+          .dataExtraction(CrtdlSectionInfo.builder()
+              .exists(dataquery.content().dataExtraction() != null)
+              .isValid(true) // TODO: Add validation for that
+              .build())
+          .build();
       return new ResponseEntity<>(dataqueryWithInvalidCriteria, HttpStatus.OK);
     } catch (JsonProcessingException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -118,8 +118,8 @@ public class DataqueryHandlerRestController {
 
   @GetMapping(path = "/{dataqueryId}" + PATH_CRTDL)
   public ResponseEntity<Object> getDataqueryCrtdl(@PathVariable(value = "dataqueryId") Long dataqueryId,
-                                             @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation,
-                                             Authentication authentication) {
+                                                  @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation,
+                                                  Authentication authentication) {
 
     try {
       var dataquery = dataqueryHandler.getDataqueryById(dataqueryId, authentication);
@@ -144,7 +144,7 @@ public class DataqueryHandlerRestController {
       var dataquery = dataqueryHandler.getDataqueryById(dataqueryId, authentication);
       var zipByteArrayOutputStream = dataqueryHandler.createCsvExportZipfile(dataquery);
       HttpHeaders headers = new HttpHeaders();
-      String headerValue = "attachment; filename=" + dataquery.label().toUpperCase() +  "_dataquery.zip";
+      String headerValue = "attachment; filename=" + dataquery.label().toUpperCase() + "_dataquery.zip";
       headers.add(HttpHeaders.CONTENT_DISPOSITION, headerValue);
       headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
       return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
@@ -159,7 +159,7 @@ public class DataqueryHandlerRestController {
 
   @PostMapping(path = "/convert" + PATH_CRTDL)
   public ResponseEntity<Object> convertCrtdlToCsv(@RequestBody JsonNode crtdlNode,
-                                                     Authentication authentication) {
+                                                  Authentication authentication) {
     var validationErrors = dataqueryHandler.validateCrtdl(crtdlNode);
     if (!validationErrors.isEmpty()) {
       return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
@@ -226,8 +226,8 @@ public class DataqueryHandlerRestController {
 
   @GetMapping(path = "/by-user/{userId}")
   public ResponseEntity<Object> getDataqueriesByUserId(@PathVariable(value = "userId") String userId,
-     @RequestParam(value = "include-temporary", required = false, defaultValue = "false") boolean includeTemporary,
-     @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation) {
+                                                       @RequestParam(value = "include-temporary", required = false, defaultValue = "false") boolean includeTemporary,
+                                                       @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation) {
 
     try {
       var dataqueries = dataqueryHandler.getDataqueriesByAuthor(userId, includeTemporary);
@@ -290,8 +290,8 @@ public class DataqueryHandlerRestController {
 
   @PutMapping(path = "/{dataqueryId}")
   public ResponseEntity<Object> updateDataquery(@PathVariable(value = "dataqueryId") Long dataqueryId,
-                                                    @RequestBody Dataquery dataquery,
-                                                    Principal principal) {
+                                                @RequestBody Dataquery dataquery,
+                                                Principal principal) {
     try {
       dataqueryHandler.updateDataquery(dataqueryId, dataquery, principal.getName());
       var dataquerySlots = dataqueryHandler.getDataquerySlotsJson(principal.getName());
@@ -307,7 +307,7 @@ public class DataqueryHandlerRestController {
 
   @DeleteMapping(path = "/{dataqueryId}")
   public ResponseEntity<Object> deleteDataquery(@PathVariable(value = "dataqueryId") Long dataqueryId,
-                                                    Principal principal) {
+                                                Principal principal) {
     try {
       dataqueryHandler.deleteDataquery(dataqueryId, principal.getName());
       return new ResponseEntity<>(HttpStatus.OK);

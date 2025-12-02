@@ -28,11 +28,9 @@ import static org.mockito.Mockito.doThrow;
 @ExtendWith(MockitoExtension.class)
 class DseServiceTest {
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
   @Mock
   private DseProfileRepository dseProfileRepository;
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
-
   private DseService dseService;
 
   private DseService createDseService() throws IOException {

@@ -37,14 +37,14 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
 
   @Autowired
   public RateLimitingInterceptor(RateLimitingService rateLimitingService,
-      AuthenticationHelper authenticationHelper) {
+                                 AuthenticationHelper authenticationHelper) {
     this.rateLimitingService = rateLimitingService;
     this.authenticationHelper = authenticationHelper;
   }
 
   @Override
   public boolean preHandle(HttpServletRequest request,
-      HttpServletResponse response, Object handler)
+                           HttpServletResponse response, Object handler)
       throws Exception {
     var authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -77,7 +77,7 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
             summaryResultProbe.getNanosToWaitForRefill() / 1_000_000_000;
         response.addHeader(HEADER_RETRY_AFTER, Long.toString(waitForRefill));
         response.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
-                Integer.toString(FeasibilityIssue.POLLING_LIMIT_EXCEEDED.code()));
+            Integer.toString(FeasibilityIssue.POLLING_LIMIT_EXCEEDED.code()));
         return false;
       }
 
@@ -130,8 +130,8 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
 
   @Override
   public void afterCompletion(HttpServletRequest request,
-      HttpServletResponse response,
-      Object handler, Exception ex) throws Exception {
+                              HttpServletResponse response,
+                              Object handler, Exception ex) throws Exception {
     HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
 
     if (request.getRequestURI()

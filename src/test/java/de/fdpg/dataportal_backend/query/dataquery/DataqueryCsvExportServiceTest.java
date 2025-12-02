@@ -33,7 +33,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -64,6 +63,22 @@ class DataqueryCsvExportServiceTest {
   @InjectMocks
   private DataqueryCsvExportService dataqueryCsvExportService;
 
+  private static Stream<Arguments> provideParamsForCriteriaTest() {
+    List<Arguments> argumentsList = new ArrayList<>();
+    for (DataqueryCsvExportService.SUPPORTED_LANGUAGES language : DataqueryCsvExportService.SUPPORTED_LANGUAGES.values()) {
+      for (ValueFilterType valueFilterType : ValueFilterType.values()) {
+        argumentsList.add(Arguments.of(language, valueFilterType, true, true, true));
+        argumentsList.add(Arguments.of(language, valueFilterType, true, true, false));
+        argumentsList.add(Arguments.of(language, valueFilterType, true, false, true));
+        argumentsList.add(Arguments.of(language, valueFilterType, true, false, false));
+        argumentsList.add(Arguments.of(language, valueFilterType, false, false, false));
+        // When timerestriction is not included, there is no need to check different before/after date settings
+      }
+    }
+    return Stream.of(argumentsList.toArray(Arguments[]::new));
+
+  }
+
   @ParameterizedTest
   @MethodSource("provideParamsForCriteriaTest")
   void testJsonToCsv_criteria(DataqueryCsvExportService.SUPPORTED_LANGUAGES language,
@@ -89,7 +104,7 @@ class DataqueryCsvExportServiceTest {
         break;
       case DE:
         assertTrue(csvResult.contains(displayEntry.translations().get(0).value()));
-         break;
+        break;
     }
   }
 
@@ -143,22 +158,6 @@ class DataqueryCsvExportServiceTest {
     }
   }
 
-  private static Stream<Arguments> provideParamsForCriteriaTest() {
-    List<Arguments> argumentsList = new ArrayList<>();
-    for (DataqueryCsvExportService.SUPPORTED_LANGUAGES language : DataqueryCsvExportService.SUPPORTED_LANGUAGES.values()) {
-      for (ValueFilterType valueFilterType : ValueFilterType.values()) {
-        argumentsList.add(Arguments.of(language, valueFilterType, true, true, true));
-        argumentsList.add(Arguments.of(language, valueFilterType, true, true, false));
-        argumentsList.add(Arguments.of(language, valueFilterType, true, false, true));
-        argumentsList.add(Arguments.of(language, valueFilterType, true, false, false));
-        argumentsList.add(Arguments.of(language, valueFilterType, false, false, false));
-        // When timerestriction is not included, there is no need to check different before/after date settings
-      }
-    }
-    return Stream.of(argumentsList.toArray(Arguments[]::new));
-
-  }
-
   private DataExtraction createValidDataExtraction() {
     return DataExtraction.builder()
         .attributeGroups(createAttributeGroups())
@@ -169,17 +168,17 @@ class DataqueryCsvExportServiceTest {
     var referenceId = "my-referenced-group";
     return List.of(
         AttributeGroup.builder()
-        .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
-        .name("basic testgroup")
-        .id("my-grp")
-        .attributes(List.of(
-            Attribute.builder().attributeRef("Observation.identifier").build(),
-            Attribute.builder().attributeRef("Observation.status").build(),
-            Attribute.builder().attributeRef("Observation.category").build(),
-            Attribute.builder().attributeRef("Observation.code").build(),
-            Attribute.builder().attributeRef("Observation.effective[x]").build()
-        ))
-        .build(),
+            .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
+            .name("basic testgroup")
+            .id("my-grp")
+            .attributes(List.of(
+                Attribute.builder().attributeRef("Observation.identifier").build(),
+                Attribute.builder().attributeRef("Observation.status").build(),
+                Attribute.builder().attributeRef("Observation.category").build(),
+                Attribute.builder().attributeRef("Observation.code").build(),
+                Attribute.builder().attributeRef("Observation.effective[x]").build()
+            ))
+            .build(),
 
         AttributeGroup.builder()
             .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
@@ -231,7 +230,7 @@ class DataqueryCsvExportServiceTest {
                 )
             )
             .build()
-        );
+    );
   }
 
   private StructuredQuery createValidStructuredQuery(ValueFilterType valueFilterType, boolean withTimerestriction, boolean withAfterDate, boolean withBeforeDate) {

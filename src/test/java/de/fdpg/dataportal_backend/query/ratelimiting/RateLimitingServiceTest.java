@@ -1,15 +1,15 @@
 package de.fdpg.dataportal_backend.query.ratelimiting;
 
 import io.github.bucket4j.Bucket;
-
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.threeten.extra.PeriodDuration;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 

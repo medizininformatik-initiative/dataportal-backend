@@ -13,21 +13,21 @@ import java.util.List;
 public record DisplayEntry(
     @JsonProperty String original,
     @JsonProperty List<LocalizedValue> translations
-    ) {
+) {
 
-    public static DisplayEntry of(Display display) {
-        return DisplayEntry.builder()
-            .original(display.original())
-            .translations(List.of(
-                LocalizedValue.builder()
-                    .language("de-DE")
-                    .value(display.deDe())
-                    .build(),
-                LocalizedValue.builder()
-                    .language("en-US")
-                    .value(display.enUs())
-                    .build()
-            ))
-            .build();
-    }
+  public static DisplayEntry of(Display display) {
+    return DisplayEntry.builder()
+        .original(display.original())
+        .translations(List.of(
+            LocalizedValue.builder()
+                .language("de-DE")
+                .value(display.deDe())
+                .build(),
+            LocalizedValue.builder()
+                .language("en-US")
+                .value(display.enUs())
+                .build()
+        ))
+        .build();
+  }
 }
