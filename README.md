@@ -1,7 +1,7 @@
-[![Build](https://github.com/medizininformatik-initiative/feasibility-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/medizininformatik-initiative/feasibility-backend/actions/workflows/ci.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/medizininformatik-initiative/feasibility-backend/badge)](https://scorecard.dev/viewer/?uri=github.com/medizininformatik-initiative/feasibility-backend)
-[![codecov](https://codecov.io/gh/medizininformatik-initiative/feasibility-backend/graph/badge.svg?token=0E6UPL7I5K)](https://codecov.io/gh/medizininformatik-initiative/feasibility-backend)
-[![GitHub Release](https://img.shields.io/github/v/release/medizininformatik-initiative/feasibility-backend?sort=semver&display_name=tag&style=flat&logo=github&label=current)]()
+[![Build](https://github.com/medizininformatik-initiative/dataportal-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/medizininformatik-initiative/dataportal-backend/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/medizininformatik-initiative/dataportal-backend/badge)](https://scorecard.dev/viewer/?uri=github.com/medizininformatik-initiative/dataportal-backend)
+[![codecov](https://codecov.io/gh/medizininformatik-initiative/dataportal-backend/graph/badge.svg?token=0E6UPL7I5K)](https://codecov.io/gh/medizininformatik-initiative/dataportal-backend)
+[![GitHub Release](https://img.shields.io/github/v/release/medizininformatik-initiative/dataportal-backend?sort=semver&display_name=tag&style=flat&logo=github&label=current)]()
 
 # Dataportal Backend
 

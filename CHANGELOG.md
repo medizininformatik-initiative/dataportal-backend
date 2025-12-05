@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [7.7.0] - 2025-12-05
+## [8.0.0] - 2025-12-05
 
 - Based on ontology **[v3.9.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.2)**
 - Known issue: The api documentation does not reflect the changes from ([#734](https://github.com/medizininformatik-initiative/dataportal-backend/issues/734))
@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Search endpoint for exact bulk search for criteria and value sets ([#690](https://github.com/medizininformatik-initiative/dataportal-backend/issues/690))
 ### Changed
 - Project was renamed from `feasibility-backend` to `dataportal-backend`
+- Change base package name to `de.medizininformatikinitiative.dataportal.backend` ([#760](https://github.com/medizininformatik-initiative/dataportal-backend/issues/760))
 - Provide Client Certificate in PEM format Instead of Java Keystore ([#497](https://github.com/medizininformatik-initiative/dataportal-backend/issues/497))
 ### Fixed
 - Reconnect Websocket to DSF after Connection Failure ([#738](https://github.com/medizininformatik-initiative/dataportal-backend/issues/738))
