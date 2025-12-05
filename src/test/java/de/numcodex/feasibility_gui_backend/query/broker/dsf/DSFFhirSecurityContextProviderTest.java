@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.hamcrest.Matchers.not;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DSFFhirSecurityContextProviderTest {
 
@@ -24,25 +24,73 @@ public class DSFFhirSecurityContextProviderTest {
     @Test
     void trustStoreContainsCertificateFromPEM() throws Exception {
         DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
-                getFilePath("test.p12"), PASSWORD, getFilePath("foo.pem"));
+                getFilePath("client.crt"), getFilePath("client.key"), PASSWORD, getFilePath("foo.pem"));
 
         FhirSecurityContext securityContext = securityContextProvider.provideSecurityContext();
 
-        assertThat("trust store does not contain 'foo' certificate", getCertificateAlias(securityContext, "foo.pem"),
-                not(emptyOrNullString()));
+        assertThat(getCertificateAlias(securityContext, "foo.pem")).isNotBlank();
     }
 
     @Test
     void trustStoreContainsMultipleCertificatesFromPEM() throws Exception {
         DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
-                getFilePath("test.p12"), PASSWORD, getFilePath("multiple.pem"));
+                getFilePath("client.crt"), getFilePath("client.key"), PASSWORD, getFilePath("multiple.pem"));
 
         FhirSecurityContext securityContext = securityContextProvider.provideSecurityContext();
 
-        assertThat("trust store does not contain 'foo' certificate", getCertificateAlias(securityContext, "foo.pem"),
-                not(emptyOrNullString()));
-        assertThat("trust store does not contain 'bar' certificate", getCertificateAlias(securityContext, "bar.pem"),
-                not(emptyOrNullString()));
+        assertThat(getCertificateAlias(securityContext, "foo.pem")).isNotBlank();
+        assertThat(getCertificateAlias(securityContext, "bar.pem")).isNotBlank();
+    }
+
+    @Test
+    void keyStoreContainsClientCertificateAndKey() throws Exception {
+        DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+                getFilePath("client.crt"), getFilePath("client.key"), PASSWORD, getFilePath("multiple.pem"));
+
+        FhirSecurityContext securityContext = securityContextProvider.provideSecurityContext();
+
+        var alias = assertThat(Collections.list(securityContext.getKeyStore().aliases()))
+                .hasSize(1)
+                .first()
+                .actual();
+        assertThat(securityContext.getKeyStore().getKey(alias, securityContext.getKeyStorePassword())).isNotNull();
+    }
+
+    @Test
+    void failsOnMissingClientCertificate() throws Exception {
+        DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+                "nonexisting.crt", getFilePath("client.key"), PASSWORD, getFilePath("foo.pem"));
+
+        assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
+                .hasMessageContainingAll("Client certificate file", "not readable");
+    }
+
+    @Test
+    void failsOnMissingClientKey() throws Exception {
+        DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+                getFilePath("client.crt"), "nonexisting.key", PASSWORD, getFilePath("foo.pem"));
+
+        assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
+                .hasMessageContainingAll("Client key file", "not readable");
+    }
+
+    @Test
+    void failsOnMissingCaCertificate() throws Exception {
+        DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+                getFilePath("client.crt"), getFilePath("client.key"), PASSWORD, "nonexisting.pem");
+
+        assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
+                .hasMessageContainingAll("Certificate file", "not readable");
+    }
+
+    @Test
+    void failsOnWrongClientKeyPassword() throws Exception {
+        DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+                getFilePath("client.crt"), getFilePath("client.key"), "WrongPassword".toCharArray(),
+                getFilePath("foo.pem"));
+
+        assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
+                .hasMessageContaining("unable to read encrypted data");
     }
 
     private String getCertificateAlias(FhirSecurityContext securityContext, String fileName) throws Exception {

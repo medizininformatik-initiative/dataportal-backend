@@ -1,7 +1,9 @@
 package de.numcodex.feasibility_gui_backend.terminology.es;
 
 import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.EsSearchResultEntryExtended;
 import de.numcodex.feasibility_gui_backend.terminology.api.RelativeEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.TerminologyBulkSearchRequest;
 import de.numcodex.feasibility_gui_backend.terminology.es.model.TermFilter;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.OntologyItemEsRepository;
 import de.numcodex.feasibility_gui_backend.terminology.es.repository.OntologyItemNotFoundException;
@@ -25,6 +27,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -156,6 +160,119 @@ public class TerminologyEsServiceIT {
     assertThat(page.results().size()).isEqualTo(1);
     assertThat(page.results().get(0).terminology()).isEqualTo("http://fhir.de/CodeSystem/bfarm/icd-10-gm");
     assertThat(page.results().get(0).termcode()).containsIgnoringCase("r03");
+  }
+
+  @Test
+  void testPerformExactSearch_succeeds() {
+    List<String> expectedFoundResults = List.of("R03", "R03.0", "R03.1");
+    List<String> expectedNotFoundResults = List.of();
+    List<String> searchterms =
+        Stream.concat(expectedFoundResults.stream(), expectedNotFoundResults.stream()).collect(Collectors.toList());
+    var request = TerminologyBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .context("Diagnose")
+        .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> terminologyEsService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().size()).isEqualTo(expectedNotFoundResults.size());
+    assertThat(exactResult.found().size()).isEqualTo(expectedFoundResults.size());
+    assertThat(exactResult.found().get(0)).isInstanceOf(EsSearchResultEntryExtended.class);
+    assertThat(exactResult.found().get(0).terminology()).isEqualTo("http://fhir.de/CodeSystem/bfarm/icd-10-gm");
+    assertThat(exactResult.found().get(0).context().code()).isEqualTo("Diagnose");
+    assertThat(exactResult.found().get(0).termcodes().get(0).code()).startsWith("R03");
+  }
+
+  @Test
+  void testPerformExactSearch_succeedsWithMixedResults() {
+    List<String> expectedFoundResults = List.of("R03.1");
+    List<String> expectedNotFoundResults = List.of("foo", "bar");
+    List<String> searchterms =
+        Stream.concat(expectedFoundResults.stream(), expectedNotFoundResults.stream()).collect(Collectors.toList());
+    var request = TerminologyBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .context("Diagnose")
+        .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> terminologyEsService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().size()).isEqualTo(expectedNotFoundResults.size());
+    assertThat(exactResult.found().size()).isEqualTo(expectedFoundResults.size());
+    assertThat(exactResult.found().get(0)).isInstanceOf(EsSearchResultEntryExtended.class);
+    assertThat(exactResult.found().get(0).terminology()).isEqualTo("http://fhir.de/CodeSystem/bfarm/icd-10-gm");
+    assertThat(exactResult.found().get(0).context().code()).isEqualTo("Diagnose");
+    assertThat(exactResult.found().get(0).termcodes().get(0).code()).startsWith("R03");
+    assertThat(exactResult.notFound()).containsAll(expectedNotFoundResults);
+  }
+
+  @Test
+  void testPerformExactSearch_succeedsWithInvalidContext() {
+    List<String> expectedFoundResults = List.of();
+    List<String> expectedNotFoundResults = List.of("R03.1", "foo", "bar");
+    List<String> searchterms =
+        Stream.concat(expectedFoundResults.stream(), expectedNotFoundResults.stream()).collect(Collectors.toList());
+    var request = TerminologyBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .context("some invalid context")
+        .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> terminologyEsService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().size()).isEqualTo(expectedNotFoundResults.size());
+    assertThat(exactResult.found().size()).isEqualTo(expectedFoundResults.size());
+    assertThat(exactResult.notFound()).containsAll(expectedNotFoundResults);
+  }
+
+  @Test
+  void testPerformExactSearch_succeedsWithInvalidTerminology() {
+    List<String> expectedFoundResults = List.of();
+    List<String> expectedNotFoundResults = List.of("R03.1", "foo", "bar");
+    List<String> searchterms =
+        Stream.concat(expectedFoundResults.stream(), expectedNotFoundResults.stream()).collect(Collectors.toList());
+    var request = TerminologyBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .context("Diagnose")
+        .terminology("some invalid terminology")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> terminologyEsService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().size()).isEqualTo(expectedNotFoundResults.size());
+    assertThat(exactResult.found().size()).isEqualTo(expectedFoundResults.size());
+    assertThat(exactResult.notFound()).containsAll(expectedNotFoundResults);
+  }
+
+  @Test
+  void testPerformExactSearch_succeedsWithEmptySearchterms() {
+    List<String> searchterms = List.of();
+    var request = TerminologyBulkSearchRequest.builder()
+        .searchterms(searchterms)
+        .context("Diagnose")
+        .terminology("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
+        .build();
+
+    var exactResult =  assertDoesNotThrow(
+        () -> terminologyEsService.performExactSearch(request)
+    );
+
+    assertThat(exactResult).isNotNull();
+    assertThat(exactResult.notFound().isEmpty());
+    assertThat(exactResult.found().isEmpty());
   }
 
   @Test

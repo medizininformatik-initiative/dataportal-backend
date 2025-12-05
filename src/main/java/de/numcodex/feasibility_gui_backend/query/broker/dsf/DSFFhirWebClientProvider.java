@@ -9,11 +9,14 @@ import dev.dsf.fhir.service.ReferenceCleanerImpl;
 import dev.dsf.fhir.service.ReferenceExtractorImpl;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static org.hl7.fhir.r4.model.Subscription.SubscriptionChannelType.WEBSOCKET;
@@ -24,6 +27,8 @@ import static org.hl7.fhir.r4.model.Task.TaskStatus.COMPLETED;
  * An entity that can provide different kinds of web clients to communicate with a FHIR server.
  */
 class DSFFhirWebClientProvider implements FhirWebClientProvider {
+
+    private static final Logger logger = LoggerFactory.getLogger(DSFFhirWebClientProvider.class);
 
     private static final String QUERY_RESULT_SUBSCRIPTION_REASON = "Waiting for query results";
     private static final String QUERY_RESULT_SUBSCRIPTION_CHANNEL_PAYLOAD = "application/fhir+json";
@@ -96,15 +101,14 @@ class DSFFhirWebClientProvider implements FhirWebClientProvider {
             }
         }
 
-        FhirWebserviceClient fhirClient = provideFhirWebserviceClient();
+        var fhirClient = provideFhirWebserviceClient();
 
-        String subscriptionId = searchForExistingQueryResultSubscription(fhirClient)
+        var subscriptionId = searchForExistingQueryResultSubscription(fhirClient)
                 .orElseGet(createQueryResultSubscription(fhirClient))
                 .getIdElement().getIdPart();
 
-        // TODO: implement reconnector
-        return new WebsocketClientTyrus(() -> {
-        },
+        var wsRef = new AtomicReference<WebsocketClient>();
+        var client = new WebsocketClientTyrus(createReconnector(wsRef),
                 URI.create(websocketUrl),
                 securityContext.getTrustStore(),
                 securityContext.getKeyStore(),
@@ -113,6 +117,37 @@ class DSFFhirWebClientProvider implements FhirWebClientProvider {
                 proxyContext.getUsername(),
                 proxyContext.getPassword(),
                 null, subscriptionId);
+        wsRef.set(client);
+        return client;
+    }
+
+    /**
+     * Package-visible helper that constructs the reconnector Runnable. Extracted for easier testing.
+     *
+     * @param wsRef an AtomicReference holding the WebsocketClient instance used for reconnect attempts
+     * @return a Runnable that attempts reconnection
+     */
+    static Runnable createReconnector(AtomicReference<WebsocketClient> wsRef) {
+        return () -> {
+            var attempt = 0;
+            while (true) {
+                var c = wsRef.get();
+                if (c == null) {
+                    logger.error("Expected websocket client being set but got null.");
+                    return;
+                }
+
+                try {
+                    logger.info("Websocket connection recovery attempt #{} ...", attempt);
+                    c.connect();
+                    logger.info("Websocket connection recovered");
+                    return;
+                } catch (Exception e) {
+                    attempt++;
+                    logger.error("Websocket connection recovery attempt #{} failed: {}", attempt, e.getMessage());
+                }
+            }
+        };
     }
 
     /**

@@ -1,7 +1,6 @@
 package de.numcodex.feasibility_gui_backend.terminology.v5;
 
-import de.numcodex.feasibility_gui_backend.terminology.api.CcSearchResult;
-import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptEntry;
+import de.numcodex.feasibility_gui_backend.terminology.api.*;
 import de.numcodex.feasibility_gui_backend.terminology.es.CodeableConceptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -31,6 +30,11 @@ public class CodeableConceptRestController {
 
     return codeableConceptService
         .performCodeableConceptSearchWithRepoAndPaging(keyword, valueSets, pageSize, page);
+  }
+
+  @PostMapping("entry/bulk-search")
+  public CodeableConceptBulkSearchResult searchOntologyItemsBulk(@RequestBody CodeableConceptBulkSearchRequest bulkSearchRequest) {
+    return codeableConceptService.performExactSearch(bulkSearchRequest);
   }
 
   @GetMapping(value = "/entry",  produces = MediaType.APPLICATION_JSON_VALUE)

@@ -30,13 +30,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static de.numcodex.feasibility_gui_backend.config.WebSecurityConfig.PATH_API;
-import static de.numcodex.feasibility_gui_backend.config.WebSecurityConfig.PATH_TERMINOLOGY;
+import static de.numcodex.feasibility_gui_backend.config.WebSecurityConfig.*;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Tag("terminology")
@@ -166,6 +166,57 @@ public class TerminologyRestControllerIT {
 
     @Test
     @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+    void testSearchOntologyItemsBulk_succeedsWith200() throws Exception {
+      var dummyBulkSearchResult = createDummyBulkSearchResult(false);
+      var dummyBulkSearchRequest = createDummyBulkSearchRequest();
+      doReturn(dummyBulkSearchResult).when(terminologyEsService).performExactSearch(any(TerminologyBulkSearchRequest.class));
+      doReturn(createDummyCriteriaProfileData()).when(terminologyService).getCriteriaProfileData(any(List.class));
+
+      mockMvc.perform(post(URI.create(PATH_API + PATH_TERMINOLOGY + "/entry/bulk-search"))
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(jsonUtil.writeValueAsString(dummyBulkSearchRequest))
+              .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.found.size()").value(dummyBulkSearchResult.found().size()))
+          .andExpect(jsonPath("$.notFound.size()").value(dummyBulkSearchResult.notFound().size()))
+          .andExpect(jsonPath("$.uiProfileId").value("ui-profile-1"));
+    }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  void testSearchOntologyItemsBulk_succeedsWith200OnEmptyResult() throws Exception {
+    var dummyBulkSearchResult = createDummyBulkSearchResult(true);
+    var dummyBulkSearchRequest = createDummyBulkSearchRequest();
+    doReturn(dummyBulkSearchResult).when(terminologyEsService).performExactSearch(any(TerminologyBulkSearchRequest.class));
+    doReturn(createDummyCriteriaProfileData()).when(terminologyService).getCriteriaProfileData(any(List.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_TERMINOLOGY + "/entry/bulk-search"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(dummyBulkSearchRequest))
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.found.size()").value(dummyBulkSearchResult.found().size()))
+        .andExpect(jsonPath("$.notFound.size()").value(dummyBulkSearchResult.notFound().size()))
+        .andExpect(jsonPath("$.uiProfileId").doesNotExist());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  void testSearchOntologyItemsBulk_failsOnInvalidRequest() throws Exception {
+    var dummyBulkSearchResult = createDummyBulkSearchResult(false);
+    doReturn(dummyBulkSearchResult).when(terminologyEsService).performExactSearch(any(TerminologyBulkSearchRequest.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_TERMINOLOGY + "/entry/bulk-search"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{}")
+            .with(csrf()))
+        .andExpect(status().isBadRequest());
+  }
+
+    @Test
+    @WithMockUser(roles = "DATAPORTAL_TEST_USER")
     public void testGetOntologyItemRelationsByHash_succeeds() throws Exception {
         var dummyRelationEntry = createDummyRelationEntry();
         doReturn(dummyRelationEntry).when(terminologyEsService).getRelationEntryByHash(any(String.class));
@@ -278,6 +329,23 @@ public class TerminologyRestControllerIT {
         return criteriaProfileDataList;
     }
 
+  private TerminologyBulkSearchRequest createDummyBulkSearchRequest() {
+    return TerminologyBulkSearchRequest.builder()
+        .terminology("some-terminology")
+        .context("some-context")
+        .searchterms(List.of("term1", "term2"))
+        .build();
+  }
+
+  private EsBulkSearchResult createDummyBulkSearchResult(boolean empty) {
+    var id = UUID.randomUUID();
+    return EsBulkSearchResult.builder()
+        .found(empty ? List.of() : List.of(createDummyEsSearchResultEntryExtended(id.toString())))
+        .notFound(List.of())
+        .uiProfileId("ui-profile-1")
+        .build();
+  }
+
     private EsSearchResult createDummyEsSearchResult(int totalHits) {
         return EsSearchResult.builder()
             .totalHits(totalHits)
@@ -296,6 +364,19 @@ public class TerminologyRestControllerIT {
             .selectable(true)
             .build();
     }
+
+  private EsSearchResultEntryExtended createDummyEsSearchResultEntryExtended(String id) {
+    return EsSearchResultEntryExtended.builder()
+        .terminology("some-terminology")
+        .availability(100)
+        .context(createTermCode())
+        .termcodes(List.of(createTermCode()))
+        .id(id)
+        .kdsModule("some-module")
+        .display(createDummyDisplayEntry())
+        .selectable(true)
+        .build();
+  }
 
     private Display createDummyDisplay() {
         return Display.builder()
@@ -356,5 +437,15 @@ public class TerminologyRestControllerIT {
             .values(List.of())
             .build());
         return termFilters;
+    }
+    private List<CriteriaProfileData> createDummyCriteriaProfileData() {
+      var criteriaProfileData = CriteriaProfileData.builder()
+          .id("some-id")
+          .termCodes(List.of(createTermCode()))
+          .uiProfileId("ui-profile-1")
+          .context(createTermCode())
+          .display(createDummyDisplayEntry())
+          .build();
+      return List.of(criteriaProfileData);
     }
 }

@@ -61,6 +61,11 @@
         "properties": {
           "code": {
             "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            },
             "analyzer": "edge_ngram_analyzer_include_punctuation",
             "search_analyzer": "lowercase_analyzer"
           },
