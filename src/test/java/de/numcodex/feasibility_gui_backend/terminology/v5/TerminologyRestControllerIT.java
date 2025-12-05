@@ -1,6 +1,6 @@
 package de.numcodex.feasibility_gui_backend.terminology.v5;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.Comparator;
 import de.numcodex.feasibility_gui_backend.common.api.DisplayEntry;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;

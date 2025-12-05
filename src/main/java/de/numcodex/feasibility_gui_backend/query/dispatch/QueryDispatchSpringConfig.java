@@ -1,6 +1,6 @@
 package de.numcodex.feasibility_gui_backend.query.dispatch;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;
 import de.numcodex.feasibility_gui_backend.query.broker.BrokerClient;
 import de.numcodex.feasibility_gui_backend.query.persistence.QueryContentRepository;

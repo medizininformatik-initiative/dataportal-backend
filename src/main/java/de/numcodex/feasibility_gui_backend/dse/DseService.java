@@ -1,7 +1,7 @@
 package de.numcodex.feasibility_gui_backend.dse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.dse.api.DseProfile;
 import de.numcodex.feasibility_gui_backend.dse.api.DseProfileTreeNode;
 import de.numcodex.feasibility_gui_backend.dse.persistence.DseProfileRepository;

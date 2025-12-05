@@ -1,6 +1,6 @@
 package de.numcodex.feasibility_gui_backend.terminology.es;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.common.api.TermCode;
 import de.numcodex.feasibility_gui_backend.dse.api.LocalizedValue;
 import de.numcodex.feasibility_gui_backend.terminology.api.CodeableConceptBulkSearchRequest;

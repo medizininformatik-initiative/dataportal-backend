@@ -1,6 +1,6 @@
 package de.numcodex.feasibility_gui_backend.query.translation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.numcodex.feasibility_gui_backend.query.QueryMediaType;
 import de.numcodex.sq2cql.Translator;

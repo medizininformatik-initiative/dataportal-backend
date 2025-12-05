@@ -1,6 +1,6 @@
 package de.numcodex.feasibility_gui_backend.query.api.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;

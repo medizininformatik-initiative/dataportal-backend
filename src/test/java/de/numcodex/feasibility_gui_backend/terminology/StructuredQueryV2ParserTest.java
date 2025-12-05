@@ -1,7 +1,7 @@
 package de.numcodex.feasibility_gui_backend.terminology;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.query.api.StructuredQuery;
 import org.junit.jupiter.api.Test;
 

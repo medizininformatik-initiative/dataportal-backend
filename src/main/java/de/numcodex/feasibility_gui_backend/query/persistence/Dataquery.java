@@ -1,7 +1,7 @@
 package de.numcodex.feasibility_gui_backend.query.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class Dataquery {
   @Column(name = "expires_at")
   private Timestamp expiresAt;
 
-  public static Dataquery of(de.numcodex.feasibility_gui_backend.query.api.Dataquery in) throws JsonProcessingException {
+  public static Dataquery of(de.numcodex.feasibility_gui_backend.query.api.Dataquery in) throws JacksonException {
     var out = new de.numcodex.feasibility_gui_backend.query.persistence.Dataquery();
     out.setId(in.id() > 0 ? in.id() : null);
     out.setLabel(in.label());

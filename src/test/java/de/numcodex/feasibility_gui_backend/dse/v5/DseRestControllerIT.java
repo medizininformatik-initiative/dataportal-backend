@@ -1,6 +1,6 @@
 package de.numcodex.feasibility_gui_backend.dse.v5;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.dse.DseService;
 import de.numcodex.feasibility_gui_backend.common.api.DisplayEntry;
 import de.numcodex.feasibility_gui_backend.dse.api.DseProfile;

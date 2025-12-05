@@ -2,7 +2,7 @@ package de.numcodex.feasibility_gui_backend.query.dataquery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.numcodex.feasibility_gui_backend.query.api.*;
 import de.numcodex.feasibility_gui_backend.query.api.status.IssueWrapper;
 import de.numcodex.feasibility_gui_backend.query.api.status.SavedQuerySlots;
