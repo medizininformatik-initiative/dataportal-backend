@@ -42,7 +42,7 @@ jobs:
           labels: |
             maintainer=medizininformatik-initiative
             org.opencontainers.image.authors=medizininformatik-initiative
-            org.opencontainers.image.source=https://github.com/medizininformatik-initiative/feasibility-backend
+            org.opencontainers.image.source=https://github.com/medizininformatik-initiative/dataportal-backend
             org.opencontainers.image.vendor=medizininformatik-initiative
             org.opencontainers.image.title=dataportal backend
             org.opencontainers.image.description=The backend for the dataportal, including feasibility query execution as well as data selection and extraction.
