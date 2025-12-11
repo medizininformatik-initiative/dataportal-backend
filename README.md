@@ -131,7 +131,7 @@ If the number of total results is below the threshold, no result will be provide
 | PRIVACY_QUOTA_SOFT_CREATE_INTERVAL                     | (see description above)                                                                                                                                |         | `PT1M`  |
 | PRIVACY_QUOTA_HARD_CREATE_AMOUNT                       | Amount of queries a user can create in the interval defined in _PRIVACY_QUOTA_HARD_CREATE_INTERVAL_ before being blacklisted.                          |         | `50`    |
 | PRIVACY_QUOTA_HARD_CREATE_INTERVAL                     | (see description above)                                                                                                                                |         | `P7D`   |
-| PRIVACY_QUOTA_READ_SUMMARY_POLLINGINTERVAL             | Interval in which a user can read the summary query result endpoint.                                                                                   |         | `PT10S` |
+| PRIVACY_QUOTA_READ_SUMMARY_POLLINGINTERVAL             | Interval in which a user can read the summary query result endpoint.                                                                                   |         | `PT5S`  |
 | PRIVACY_QUOTA_READ_DETAILED_OBFUSCATED_POLLINGINTERVAL | Interval in which a user can read the detailed obfuscated query result endpoint.                                                                       |         | `PT10S` |
 | PRIVACY_QUOTA_READ_DETAILED_OBFUSCATED_AMOUNT          | Amount of times a user can create a distinct detailed obfuscated result in the interval defined in _PRIVACY_QUOTA_READ_DETAILED_OBFUSCATED_INTERVAL _. |         | `10`    |
 | PRIVACY_QUOTA_READ_DETAILED_OBFUSCATED_INTERVAL        | (see description above)                                                                                                                                |         | `PT3S`  |
@@ -159,12 +159,13 @@ To configure the location of the external service, use the following parameters.
 There are a few variables that are not used in the backend itself, but are forwarded to the frontend if requested.
 
 
-| EnvVar                     | Description                                                      | Example           | Default                                                                                                         |
-|----------------------------|------------------------------------------------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------|
-| PT_CCDL_VERSION            | The used version of the Clinical Cohort Definition Language      | ``                | `unknown`                                                                                                       |
-| PT_PORTAL_LINK             | URL to the portal page                                           | `https://foo.bar` | `https://antrag.forschen-fuer-gesundheit.de`                                                                    |
-| PT_DSE_PATIENT_PROFILE_URL | URL of the patient profile used in data selection and extraction | `foo,bar,baz`     | `https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert` |  
-| PT_POLLING_TIME_UI         | How long should the UI poll for a result                         | `PT10S`           | `PT1M`                                                                                                          |
+| EnvVar                     | Description                                                                                                        | Example           | Default                                                                                                         |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------|
+| PT_CCDL_VERSION            | The used version of the Clinical Cohort Definition Language                                                        | ``                | `unknown`                                                                                                       |
+| PT_PORTAL_LINK             | URL to the portal page                                                                                             | `https://foo.bar` | `https://antrag.forschen-fuer-gesundheit.de`                                                                    |
+| PT_DSE_PATIENT_PROFILE_URL | URL of the patient profile used in data selection and extraction                                                   | `foo,bar,baz`     | `https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert` |  
+| PT_POLLING_TIME_UI         | How long should the UI poll for a result                                                                           | `PT10S`           | `PT1M`                                                                                                          |
+| PT_POLLING_SUMMARY         | How often should the UI poll for summary results. Must be longer than `PRIVACY_QUOTA_READ_SUMMARY_POLLINGINTERVAL`  | `PT20S`           | `PT10S`                                                                                                         |
 
 ## Support for self-signed certificates
 
