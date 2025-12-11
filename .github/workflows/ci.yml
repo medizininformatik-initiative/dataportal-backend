@@ -165,7 +165,7 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     env:
-      ONTOLOGY_GIT_TAG: v3.9.2
+      ONTOLOGY_GIT_TAG: v3.9.3
       ELASTIC_HOST: http://localhost:9200
       ELASTIC_FILEPATH: https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/TAGPLACEHOLDER/
       ELASTIC_FILENAME: elastic.zip
