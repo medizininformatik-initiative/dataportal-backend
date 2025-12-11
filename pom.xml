@@ -12,7 +12,7 @@
 
   <groupId>de.medizininformatik-initiative</groupId>
   <artifactId>DataportalBackend</artifactId>
-  <version>8.0.0</version>
+  <version>8.1.0</version>
 
   <name>Dataportal Backend</name>
   <description>Backend of the Dataportal</description>
@@ -27,7 +27,7 @@
     <java.version>17</java.version>
     <mockwebserver.version>5.3.2</mockwebserver.version>
     <okhttp3.version>4.10.0</okhttp3.version>
-    <ontology-tag>v3.9.2</ontology-tag>
+    <ontology-tag>v3.9.3</ontology-tag>
   </properties>
 
   <dependencies>
@@ -395,7 +395,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.0</version>
         <configuration>
           <scmCommentPrefix>[ci skip]</scmCommentPrefix>
           <scmReleaseCommitComment>[release] prepare release @{releaseLabel}</scmReleaseCommitComment>
