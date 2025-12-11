@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DSFFhirSecurityContextProviderTest {
 
-  private static final char[] PASSWORD = "password".toCharArray();
+  private static final String PASSWORD = "password";
   static private CertificateFactory cf;
 
   @BeforeAll
@@ -23,10 +23,10 @@ public class DSFFhirSecurityContextProviderTest {
 
   @Test
   void trustStoreContainsCertificateFromPEM() throws Exception {
-    DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
         getFilePath("client.crt"), getFilePath("client.key"), PASSWORD, getFilePath("foo.pem"));
 
-    FhirSecurityContext securityContext = securityContextProvider.provideSecurityContext();
+    var securityContext = securityContextProvider.provideSecurityContext();
 
     assertThat(getCertificateAlias(securityContext, "foo.pem")).isNotBlank();
   }
@@ -44,10 +44,10 @@ public class DSFFhirSecurityContextProviderTest {
 
   @Test
   void keyStoreContainsClientCertificateAndKey() throws Exception {
-    DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
         getFilePath("client.crt"), getFilePath("client.key"), PASSWORD, getFilePath("multiple.pem"));
 
-    FhirSecurityContext securityContext = securityContextProvider.provideSecurityContext();
+    var securityContext = securityContextProvider.provideSecurityContext();
 
     var alias = assertThat(Collections.list(securityContext.getKeyStore().aliases()))
         .hasSize(1)
@@ -58,7 +58,7 @@ public class DSFFhirSecurityContextProviderTest {
 
   @Test
   void failsOnMissingClientCertificate() throws Exception {
-    DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
         "nonexisting.crt", getFilePath("client.key"), PASSWORD, getFilePath("foo.pem"));
 
     assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
@@ -67,7 +67,7 @@ public class DSFFhirSecurityContextProviderTest {
 
   @Test
   void failsOnMissingClientKey() throws Exception {
-    DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
         getFilePath("client.crt"), "nonexisting.key", PASSWORD, getFilePath("foo.pem"));
 
     assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
@@ -76,7 +76,7 @@ public class DSFFhirSecurityContextProviderTest {
 
   @Test
   void failsOnMissingCaCertificate() throws Exception {
-    DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
         getFilePath("client.crt"), getFilePath("client.key"), PASSWORD, "nonexisting.pem");
 
     assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
@@ -85,12 +85,45 @@ public class DSFFhirSecurityContextProviderTest {
 
   @Test
   void failsOnWrongClientKeyPassword() throws Exception {
-    DSFFhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
-        getFilePath("client.crt"), getFilePath("client.key"), "WrongPassword".toCharArray(),
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
+        getFilePath("client.crt"), getFilePath("client.key"), "WrongPassword",
         getFilePath("foo.pem"));
 
     assertThatThrownBy(() -> securityContextProvider.provideSecurityContext()).cause()
         .hasMessageContaining("unable to read encrypted data");
+  }
+
+  @Test
+  void unencryptedClientKeyWithEmptyPassword() throws Exception {
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
+        getFilePath("client.crt"), getFilePath("unencryptedClient.key"), "",
+        getFilePath("foo.pem"));
+
+    var securityContext = securityContextProvider.provideSecurityContext();
+
+    assertThat(getCertificateAlias(securityContext, "foo.pem")).isNotBlank();
+  }
+
+  @Test
+  void unencryptedClientKeyWithNullPassword() throws Exception {
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
+        getFilePath("client.crt"), getFilePath("unencryptedClient.key"), null,
+        getFilePath("foo.pem"));
+
+    var securityContext = securityContextProvider.provideSecurityContext();
+
+    assertThat(getCertificateAlias(securityContext, "foo.pem")).isNotBlank();
+  }
+
+  @Test
+  void unencryptedClientKeyWithPassword() throws Exception {
+    var securityContextProvider = new DSFFhirSecurityContextProvider(
+        getFilePath("client.crt"), getFilePath("unencryptedClient.key"), "foobar",
+        getFilePath("foo.pem"));
+
+    var securityContext = securityContextProvider.provideSecurityContext();
+
+    assertThat(getCertificateAlias(securityContext, "foo.pem")).isNotBlank();
   }
 
   private String getCertificateAlias(FhirSecurityContext securityContext, String fileName) throws Exception {

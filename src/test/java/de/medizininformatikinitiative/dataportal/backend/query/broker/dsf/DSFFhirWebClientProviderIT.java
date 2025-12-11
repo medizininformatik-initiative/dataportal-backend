@@ -87,7 +87,7 @@ public class DSFFhirWebClientProviderIT {
     String webserviceBaseUrl = format("https://%s:%s/fhir", tlsProxy.getHost(), tlsProxy.getFirstMappedPort());
     String websocketBaseUrl = format("wss://%s:%s/fhir/ws", tlsProxy.getHost(), tlsProxy.getFirstMappedPort());
     FhirSecurityContextProvider securityContextProvider = new DSFFhirSecurityContextProvider(
-        getResource("client.crt"), getResource("client.key"), "password".toCharArray(),
+        getResource("client.crt"), getResource("client.key"), "password",
         getResource("server.crt"));
     FhirProxyContext proxyContext = new FhirProxyContext(null, null, null);
     DSFFhirWebClientProvider clientProvider = new DSFFhirWebClientProvider(FhirContext.forR4(), webserviceBaseUrl,
