@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.1.0] - 2025-12-11
+
+- Based on ontology **[v3.9.3](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.3)**
+
+### Added
+- Add extra variable for internal polling limit vs external (ui) polling limit ([#771](https://github.com/medizininformatik-initiative/dataportal-backend/issues/771))
+### Changed
+- Update ontology to [v3.9.3](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.3) ([#772](https://github.com/medizininformatik-initiative/dataportal-backend/issues/772))
+
 ## [8.0.0] - 2025-12-05
 
 - Based on ontology **[v3.9.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.2)**
