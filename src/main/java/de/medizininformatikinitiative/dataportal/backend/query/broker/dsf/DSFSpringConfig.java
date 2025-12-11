@@ -23,8 +23,8 @@ public class DSFSpringConfig {
   @Value("${app.broker.dsf.security.client.key.file}")
   private String clientKeyFile;
 
-  @Value("${app.broker.dsf.security.client.key.password}")
-  private char[] keyStorePassword;
+  @Value("${app.broker.dsf.security.client.key.password:#{null}}")
+  private String keyStorePassword;
 
   @Value("${app.broker.dsf.security.certificate}")
   private String certificateFile;
