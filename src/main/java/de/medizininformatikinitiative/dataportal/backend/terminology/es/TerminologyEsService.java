@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.TermsInclude;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.*;
@@ -318,5 +319,49 @@ public class TerminologyEsService {
         .type("selectable-concept")
         .values(termFilterValues)
         .build();
+  }
+
+  public List<String> availableCodesInReferencedCriteriaSets(List<String> codes, List<String> criteriaSetUrls) {
+    if (codes == null || codes.isEmpty() || criteriaSetUrls == null || criteriaSetUrls.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
+    var codesFound = new ArrayList<String>();
+
+    var termsQueryField = new TermsQueryField.Builder()
+        .value(criteriaSetUrls.stream().map(FieldValue::of).distinct().toList())
+        .build();
+
+    var termsQuery = new TermsQuery.Builder()
+        .field("criteria_sets")
+        .terms(termsQueryField)
+        .build();
+
+    var termsInclude = new TermsInclude.Builder()
+        .terms(codes)
+        .build();
+
+    var aggregationQuery = NativeQuery.builder()
+        .withQuery(termsQuery._toQuery())
+        .withAggregation("existing_codes",
+            Aggregation.of(a ->
+                a.terms(ta ->
+                    ta.field("termcode.keyword")
+                        .include(termsInclude)
+                        .size(1000)
+                )))
+        .withMaxResults(0)
+        .build();
+
+    var searchHits = operations.search(aggregationQuery, OntologyItemDocument.class);
+    var aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
+    assert aggregations != null;
+    List<StringTermsBucket> buckets = aggregations.aggregationsAsMap().get("existing_codes").aggregation().getAggregate().sterms().buckets().array();
+    buckets.forEach(bucket -> {
+      if (bucket.docCount() > 0 ) {
+        codesFound.add(bucket.key().stringValue());
+      }
+    });
+
+    return codesFound;
   }
 }

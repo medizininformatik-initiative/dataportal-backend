@@ -2,7 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +27,7 @@ public class JsonQueryTranslatorTest {
 
   @Test
   public void testTranslate_TranslationFails() throws JsonProcessingException {
-    var testQuery = StructuredQuery.builder().build();
+    var testQuery = Ccdl.builder().build();
     doThrow(JsonProcessingException.class).when(jsonUtil).writeValueAsString(testQuery);
 
     assertThrows(QueryTranslationException.class, () -> jsonQueryTranslator.translate(testQuery));
@@ -35,7 +35,7 @@ public class JsonQueryTranslatorTest {
 
   @Test
   public void testTranslate_TranslationSucceeds() {
-    var testQuery = StructuredQuery.builder().build();
+    var testQuery = Ccdl.builder().build();
     assertDoesNotThrow(() -> jsonQueryTranslator.translate(testQuery));
   }
 }

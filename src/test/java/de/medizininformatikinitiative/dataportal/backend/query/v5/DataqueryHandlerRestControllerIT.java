@@ -8,7 +8,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.CrtdlSectionInfo;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
@@ -18,7 +18,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.dataquery.Dataque
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryStorageFullException;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
+import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
@@ -69,7 +69,7 @@ public class DataqueryHandlerRestControllerIT {
   private DataqueryHandler dataqueryHandler;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private AuthenticationHelper authenticationHelper;
@@ -117,10 +117,10 @@ public class DataqueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
   public void testGetDataquery_succeeds() throws Exception {
     long dataqueryId = 1L;
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+    var annotatedQuery = createValidAnnotatedCcdl(false);
 
     doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId)).with(csrf()))
         .andExpect(status().isOk())
@@ -153,10 +153,10 @@ public class DataqueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
   public void testGetDataqueryCrtdl_succeeds() throws Exception {
     long dataqueryId = 1L;
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+    var annotatedQuery = createValidAnnotatedCcdl(false);
 
     doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl")).with(csrf()))
         .andExpect(status().isOk())
@@ -510,19 +510,19 @@ public class DataqueryHandlerRestControllerIT {
   @NotNull
   private Crtdl createCrtdl() {
     return Crtdl.builder()
-        .cohortDefinition(createValidStructuredQuery())
+        .cohortDefinition(createValidCcdl())
         .display("foo")
         .build();
   }
 
   @NotNull
-  private StructuredQuery createValidStructuredQuery() {
+  private Ccdl createValidCcdl() {
     var inclusionCriterion = Criterion.builder()
         .termCodes(List.of(createTermCode()))
         .attributeFilters(List.of())
         .context(createTermCode())
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(inclusionCriterion)))
         .exclusionCriteria(List.of())
@@ -531,7 +531,7 @@ public class DataqueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private StructuredQuery createValidAnnotatedStructuredQuery(boolean withIssues) {
+  private Ccdl createValidAnnotatedCcdl(boolean withIssues) {
     var termCode = TermCode.builder()
         .code("LL2191-6")
         .system("http://loinc.org")
@@ -543,7 +543,7 @@ public class DataqueryHandlerRestControllerIT {
         .context(termCode)
         .validationIssues(withIssues ? List.of(ValidationIssue.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(inclusionCriterion)))
         .exclusionCriteria(List.of())
