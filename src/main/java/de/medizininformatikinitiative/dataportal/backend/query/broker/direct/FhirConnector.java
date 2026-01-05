@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -48,48 +49,61 @@ public class FhirConnector {
    */
   public MeasureReport evaluateMeasure(String measureUri) throws IOException {
     try {
-      return Optional
-          .of(client.operation()
-              .onType(Measure.class)
-              .named("evaluate-measure")
-              .withSearchParameter(Parameters.class, "measure", new StringParam(measureUri))
-              .andSearchParameter("periodStart", new DateParam("1900"))
-              .andSearchParameter("periodEnd", new DateParam("2100"))
-              .useHttpGet()
-              .preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class))
-              .execute())
+      var response = client.operation()
+          .onType(Measure.class)
+          .named("evaluate-measure")
+          .withSearchParameter(Parameters.class, "measure", new StringParam(measureUri))
+          .andSearchParameter("periodStart", new DateParam("1900"))
+          .andSearchParameter("periodEnd", new DateParam("2100"))
+          .useHttpGet()
+          .preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class))
+          .execute();
+
+      var result = Optional.of(response)
           .filter(Parameters::hasParameter)
           .map(Parameters::getParameterFirstRep)
           .filter(ParametersParameterComponent::hasResource)
           .map(ParametersParameterComponent::getResource)
-          .flatMap(this::toMeasureReport)
+          .map(this::extractResult)
           .orElseThrow(() -> new IOException("An error occurred while trying to evaluate a measure report"));
+
+      if (result.hasReport()) {
+        return result.report();
+      }
+
+      if (result.outcome() != null) {
+        String diagnostics = result.outcome().getIssue().stream()
+            .map(OperationOutcome.OperationOutcomeIssueComponent::getDiagnostics)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse("No diagnostics provided");
+
+        throw new IOException("Measure evaluation failed: " + diagnostics);
+      }
+
+      throw new IOException("Measure evaluation failed with unknown error");
+
     } catch (BaseServerResponseException e) {
       throw new IOException("An error occurred while trying to evaluate a measure report", e);
     }
   }
 
-  private Optional<MeasureReport> toMeasureReport(Resource r) {
-    if (r instanceof MeasureReport) {
-      return Optional.of((MeasureReport) r);
-    } else if (r instanceof Bundle) {
-      var report = Optional.of((Bundle) r)
-          .filter(Bundle::hasEntry)
-          .map(Bundle::getEntryFirstRep)
-          .filter(Bundle.BundleEntryComponent::hasResource)
+  private MeasureEvaluationResult extractResult(Resource r) {
+    if (r instanceof MeasureReport mr) {
+      return new MeasureEvaluationResult(mr, null);
+    } else if (r instanceof Bundle bundle) {
+      return bundle.getEntry().stream()
           .map(Bundle.BundleEntryComponent::getResource)
-          .filter(MeasureReport.class::isInstance)
-          .map(MeasureReport.class::cast);
-      if (report.isEmpty()) {
-        log.error("Failed to extract MeasureReport from Bundle");
-      }
-      return report;
-    } else if (r instanceof OperationOutcome) {
-      log.error("Operation failed: {}", ((OperationOutcome) r).getIssueFirstRep().getDiagnostics());
-      return Optional.empty();
+          .filter(Objects::nonNull)
+          .findFirst()
+          .map(this::extractResult)
+          .orElse(new MeasureEvaluationResult(null, null));
+    } else if (r instanceof OperationOutcome outcome) {
+      log.error("Operation failed: {}", outcome.getIssueFirstRep().getDiagnostics());
+      return new MeasureEvaluationResult(null, outcome);
     } else {
       log.error("Response contains unexpected resource type: {}", r.getClass().getSimpleName());
-      return Optional.empty();
+      return new MeasureEvaluationResult(null, null);
     }
   }
 }
