@@ -127,7 +127,7 @@ public class FhirConnectorTest {
     var issueMessage = "foobar-042104";
     var outcome = new OperationOutcome()
         .setIssue(List.of(new OperationOutcome.OperationOutcomeIssueComponent().setDiagnostics(issueMessage)));
-    var paramerters = new Parameters()
+    var parameters = new Parameters()
         .addParameter(new ParametersParameterComponent()
             .setResource(outcome));
 
@@ -142,7 +142,7 @@ public class FhirConnectorTest {
     when(operation.preferResponseTypes(List.of(MeasureReport.class, Bundle.class, OperationOutcome.class)))
         .thenReturn(operation);
     when(operation
-        .execute()).thenReturn(paramerters);
+        .execute()).thenReturn(parameters);
 
     assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
         .isInstanceOf(IOException.class);
@@ -175,7 +175,7 @@ public class FhirConnectorTest {
 
     assertThatThrownBy(() -> fhirConnector.evaluateMeasure(MEASURE_URI))
         .isInstanceOf(IOException.class);
-    assertThat(output.getOut()).contains("Failed to extract MeasureReport from Bundle");
+    assertThat(output.getOut()).contains("Response contains unexpected resource type");
 
   }
 
