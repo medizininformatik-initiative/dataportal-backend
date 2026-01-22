@@ -38,8 +38,7 @@ public class ValidationRestController {
   }
 
   @PostMapping(path = PATH_CRTDL)
-  public ResponseEntity<Object> validateCrtdl(@RequestBody JsonNode crtdlNode,
-                                                  Authentication authentication) {
+  public ResponseEntity<Object> validateCrtdl(@RequestBody JsonNode crtdlNode) {
     var validationErrors = dataqueryHandler.validateCrtdl(crtdlNode);
     if (!validationErrors.isEmpty()) {
       return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
