@@ -216,6 +216,14 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
                                           String jsonPointerBase) {
     var hasErrors = false;
     if (valueDefinition.type() == ValueDefinitonType.QUANTITY) {
+      if (valueDefinition.max() != null && valueDefinition.min() != null && (valueDefinition.max() < valueDefinition.min())) {
+        ValidationErrorBuilder.addError(
+            ctx,
+            MessageFormat.format("{0}/value", jsonPointerBase),
+            ValidationIssue.VALUEFILTER_MIN_MAX_ERROR
+        );
+        hasErrors = true;
+      }
       if (valueDefinition.max() != null && criterion.valueFilter().value() > valueDefinition.max()) {
         ValidationErrorBuilder.addError(
             ctx,
