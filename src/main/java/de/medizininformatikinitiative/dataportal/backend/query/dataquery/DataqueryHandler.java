@@ -8,6 +8,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtractio
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import jakarta.transaction.Transactional;
@@ -205,7 +206,14 @@ public class DataqueryHandler {
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAQUERY, dataqueryNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .map(e -> IssueWrapper.builder()
+              .path(e.getInstanceLocation().toString())
+              .value(Map.of(
+                  "message", e.getMessage(),
+                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
+              ))
+              .build()
+          )
           .toList();
     }
     return issues;
@@ -220,7 +228,14 @@ public class DataqueryHandler {
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CRTDL, crtdlNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .map(e -> IssueWrapper.builder()
+              .path(e.getInstanceLocation().toString())
+              .value(Map.of(
+                  "message", e.getMessage(),
+                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
+              ))
+              .build()
+          )
           .toList();
     }
     return issues;
@@ -235,7 +250,14 @@ public class DataqueryHandler {
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAEXTRACTION, dataExtractionNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .map(e -> IssueWrapper.builder()
+              .path(e.getInstanceLocation().toString())
+              .value(Map.of(
+                  "message", e.getMessage(),
+                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
+              ))
+              .build()
+          )
           .toList();
     }
     return issues;

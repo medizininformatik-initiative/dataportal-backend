@@ -8,6 +8,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.QueryQuota;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.QueryQuotaEntry;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatcher;
@@ -27,6 +28,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class QueryHandlerService {
@@ -176,7 +178,14 @@ public class QueryHandlerService {
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CCDL, ccdlNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
+          .map(e -> IssueWrapper.builder()
+              .path(e.getInstanceLocation().toString())
+              .value(Map.of(
+                  "message", e.getMessage(),
+                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
+              ))
+              .build()
+          )
           .toList();
     }
     return issues;

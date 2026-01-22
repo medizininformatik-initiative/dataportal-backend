@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @JsonSerialize(using = ValidationIssueSerializer.class)
 public enum ValidationIssue {
-  JSON_ERROR(00001, "Could not process JSON."),
+  JSON_ERROR(10000, "JSON Schema validation failed."),
   CONTEXT_MISSING(10001, "Context missing."),
   CCDL_FILTER_CODE_NOT_FOUND(1000001, "code filter not found in value set"),
   TERMCODE_CONTEXT_COMBINATION_INVALID(20001, "The combination of context and termcode(s) is not found."),
