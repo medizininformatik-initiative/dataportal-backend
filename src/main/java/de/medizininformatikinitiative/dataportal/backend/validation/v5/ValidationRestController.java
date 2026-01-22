@@ -37,26 +37,34 @@ public class ValidationRestController {
     this.validator = validator;
   }
 
-  @PostMapping(path = PATH_CRTDL)
-  public ResponseEntity<Object> validateCrtdl(@RequestBody JsonNode crtdlNode) {
-    var validationErrors = dataqueryHandler.validateCrtdl(crtdlNode);
-    if (!validationErrors.isEmpty()) {
-      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
-    }
-
-    return new ResponseEntity<>(HttpStatus.OK);
-  }
-
   @PostMapping(PATH_CCDL)
   public ResponseEntity<?> validateCcdl(
       @RequestBody JsonNode queryNode) {
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
-    if (!validationErrors.isEmpty()) {
-      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
+    var schemaValidationErrors = queryHandlerService.validateCcdl(queryNode);
+    if (!schemaValidationErrors.isEmpty()) {
+      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
     }
 
     var query = queryHandlerService.ccdlFromJsonNode(queryNode);
     return new ResponseEntity<>(ccdlValidation.annotateCcdl(query, false), HttpStatus.OK);
+  }
+
+  @PostMapping(path = PATH_CRTDL)
+  public ResponseEntity<Object> validateCrtdl(@RequestBody JsonNode crtdlNode) throws NoSuchMethodException, MethodArgumentNotValidException {
+    var schemaValidationErrors = dataqueryHandler.validateCrtdl(crtdlNode);
+    if (!schemaValidationErrors.isEmpty()) {
+      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
+    }
+
+    var crtdl = dataqueryHandler.crtdlFromJsonNode(crtdlNode);
+    var bindingResult = new BeanPropertyBindingResult(crtdl, "crtdl");
+    validator.validate(crtdl, bindingResult);
+    if (bindingResult.hasErrors()) {
+      var methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("validateCcdl", JsonNode.class), 0);
+      throw new MethodArgumentNotValidException(methodParameter, bindingResult);
+    }
+
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 
   @PostMapping("/dataquery")
