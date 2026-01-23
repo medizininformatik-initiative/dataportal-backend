@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.validation.v5;
+package de.medizininformatikinitiative.dataportal.backend.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
@@ -13,7 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@RestControllerAdvice("de.medizininformatikinitiative.dataportal.backend.validation.v5")
+@RestControllerAdvice({
+    "de.medizininformatikinitiative.dataportal.backend.validation.v5",
+    "de.medizininformatikinitiative.dataportal.backend.query.v5"
+})
 public class ValidationRestControllerAdvice {
 
   private final ObjectMapper jsonUtil = new ObjectMapper();
