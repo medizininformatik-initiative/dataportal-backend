@@ -8,7 +8,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.Attribute;
 import de.medizininformatikinitiative.dataportal.backend.query.api.AttributeGroup;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Filter;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -80,7 +80,7 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("/attributeGroups/{0}/groupReference", i),
-            ValidationIssue.ATTRIBUTE_GROUP_PROFILE_NOT_FOUND
+            ValidationIssueType.ATTRIBUTE_GROUP_PROFILE_NOT_FOUND
         );
         hasErrors = true;
       } else {
@@ -114,7 +114,7 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
             ValidationErrorBuilder.addError(
                 ctx,
                 MessageFormat.format("{0}/{1}/linkedGroups", jsonPointerBase, i),
-                ValidationIssue.LINKED_GROUP_MISSING
+                ValidationIssueType.LINKED_GROUP_MISSING
             );
             hasErrors = true;
           }
@@ -123,7 +123,7 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
           ValidationErrorBuilder.addError(
               ctx,
               MessageFormat.format("{0}/{1}/attributeRef", jsonPointerBase, i),
-              ValidationIssue.ATTRIBUTE_REF_NOT_FOUND
+              ValidationIssueType.ATTRIBUTE_REF_NOT_FOUND
           );
           hasErrors = true;
         }
@@ -147,7 +147,7 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/linkedGroups/{1}", jsonPointerBase, i),
-            ValidationIssue.LINKED_GROUP_NOT_FOUND
+            ValidationIssueType.LINKED_GROUP_NOT_FOUND
         );
         hasErrors = true;
       }
@@ -178,7 +178,7 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
       ValidationErrorBuilder.addError(
           ctx,
           MessageFormat.format("{0}/type", jsonPointerBase),
-          ValidationIssue.FILTER_TYPE_NOT_SUPPORTED
+          ValidationIssueType.FILTER_TYPE_NOT_SUPPORTED
       );
       return true;
     }
@@ -204,7 +204,7 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
           ValidationErrorBuilder.addError(
               ctx,
               MessageFormat.format("{0}/codes/{1}", jsonPointerBase, codes.indexOf(code)),
-              ValidationIssue.FILTER_CODE_NOT_FOUND
+              ValidationIssueType.FILTER_CODE_NOT_FOUND
           );
         }
         return true;

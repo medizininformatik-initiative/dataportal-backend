@@ -6,7 +6,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.MutableCcdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,24 +87,24 @@ public class CcdlValidation {
   private void annotateCriteria(List<MutableCriterion> criteria, boolean skipValidation) {
     for (MutableCriterion criterion : criteria) {
       if (skipValidation) {
-        criterion.setValidationIssues(List.of());
+        criterion.setValidationIssueTypes(List.of());
         continue;
       }
       if (criterion.getContext() == null) {
-        criterion.setValidationIssues(List.of(ValidationIssue.TERMCODE_CONTEXT_COMBINATION_INVALID));
+        criterion.setValidationIssueTypes(List.of(ValidationIssueType.TERMCODE_CONTEXT_COMBINATION_INVALID));
         continue;
       }
       if (isTimeRestrictionInvalid(criterion.getTimeRestriction())) {
-        criterion.setValidationIssues(List.of(ValidationIssue.TIMERESTRICTION_INVALID));
+        criterion.setValidationIssueTypes(List.of(ValidationIssueType.TIMERESTRICTION_INVALID));
         continue;
       }
       for (TermCode termCode : criterion.getTermCodes()) {
         if (terminologyService.isExistingTermCode(termCode.system(), termCode.code())) {
           log.trace("termcode ok: {} - {}", termCode.system(), termCode.code());
-          criterion.setValidationIssues(List.of()); // empty list is expected
+          criterion.setValidationIssueTypes(List.of()); // empty list is expected
         } else {
           log.debug("termcode invalid: {} - {}", termCode.system(), termCode.code());
-          criterion.setValidationIssues(List.of(ValidationIssue.TERMCODE_CONTEXT_COMBINATION_INVALID));
+          criterion.setValidationIssueTypes(List.of(ValidationIssueType.TERMCODE_CONTEXT_COMBINATION_INVALID));
         }
       }
     }

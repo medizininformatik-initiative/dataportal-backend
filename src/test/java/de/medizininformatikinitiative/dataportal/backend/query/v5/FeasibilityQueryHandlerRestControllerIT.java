@@ -177,7 +177,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
         .termCodes(List.of(termCode))
         .attributeFilters(List.of())
         .context(termCode)
-        .validationIssues(withIssues ? List.of(ValidationIssue.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
+        .validationIssueTypes(withIssues ? List.of(ValidationIssueType.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
         .build();
     return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
@@ -361,7 +361,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
   public void testRunQueryEndpoint_FailsOnInvalidCcdlWith400() throws Exception {
     var testQuery = Ccdl.builder().build();
 
-    doReturn(List.of(IssueWrapper.builder()
+    doReturn(List.of(ValidationIssue.builder()
         .path("foo")
         .value("bar").build()))
         .when(queryHandlerService).validateCcdl(any(JsonNode.class));

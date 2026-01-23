@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Query;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.QueryQuota;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.QueryQuotaEntry;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatcher;
@@ -173,17 +170,17 @@ public class QueryHandlerService {
     return queryTranslator.translate(ccdl);
   }
 
-  public List<IssueWrapper> validateCcdl(JsonNode ccdlNode) {
-    List<IssueWrapper> issues = new ArrayList<>();
+  public List<ValidationIssue> validateCcdl(JsonNode ccdlNode) {
+    List<ValidationIssue> issues = new ArrayList<>();
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CCDL, ccdlNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> IssueWrapper.builder()
+          .map(e -> ValidationIssue.builder()
               .path(e.getInstanceLocation().toString())
-              .value(Map.of(
-                  "message", e.getMessage(),
-                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
-              ))
+              .value(ValidationIssueValue.builder()
+                  .message(e.getMessage())
+                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
+                  .build())
               .build()
           )
           .toList();

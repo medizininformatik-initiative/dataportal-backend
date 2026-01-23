@@ -6,9 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueValue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import jakarta.transaction.Transactional;
@@ -201,17 +202,17 @@ public class DataqueryHandler {
     return byteArrayOutputStream;
   }
 
-  public List<IssueWrapper> validateDataquery(JsonNode dataqueryNode) {
-    List<IssueWrapper> issues = new ArrayList<>();
+  public List<ValidationIssue> validateDataquery(JsonNode dataqueryNode) {
+    List<ValidationIssue> issues = new ArrayList<>();
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAQUERY, dataqueryNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> IssueWrapper.builder()
+          .map(e -> ValidationIssue.builder()
               .path(e.getInstanceLocation().toString())
-              .value(Map.of(
-                  "message", e.getMessage(),
-                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
-              ))
+              .value(ValidationIssueValue.builder()
+                  .message(e.getMessage())
+                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
+                  .build())
               .build()
           )
           .toList();
@@ -223,17 +224,17 @@ public class DataqueryHandler {
     return jsonUtil.convertValue(jsonNode, Dataquery.class);
   }
 
-  public List<IssueWrapper> validateCrtdl(JsonNode crtdlNode) {
-    List<IssueWrapper> issues = new ArrayList<>();
+  public List<ValidationIssue> validateCrtdl(JsonNode crtdlNode) {
+    List<ValidationIssue> issues = new ArrayList<>();
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CRTDL, crtdlNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> IssueWrapper.builder()
+          .map(e -> ValidationIssue.builder()
               .path(e.getInstanceLocation().toString())
-              .value(Map.of(
-                  "message", e.getMessage(),
-                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
-              ))
+              .value(ValidationIssueValue.builder()
+                  .message(e.getMessage())
+                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
+                  .build())
               .build()
           )
           .toList();
@@ -245,17 +246,17 @@ public class DataqueryHandler {
     return jsonUtil.convertValue(jsonNode, Crtdl.class);
   }
 
-  public List<IssueWrapper> validateDataExtraction(JsonNode dataExtractionNode) {
-    List<IssueWrapper> issues = new ArrayList<>();
+  public List<ValidationIssue> validateDataExtraction(JsonNode dataExtractionNode) {
+    List<ValidationIssue> issues = new ArrayList<>();
     var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAEXTRACTION, dataExtractionNode);
     if (!validationErrors.isEmpty()) {
       issues = validationErrors.stream()
-          .map(e -> IssueWrapper.builder()
+          .map(e -> ValidationIssue.builder()
               .path(e.getInstanceLocation().toString())
-              .value(Map.of(
-                  "message", e.getMessage(),
-                  "code", "VALIDATION-" + ValidationIssue.JSON_ERROR.code()
-              ))
+              .value(ValidationIssueValue.builder()
+                  .message(e.getMessage())
+                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
+                  .build())
               .build()
           )
           .toList();

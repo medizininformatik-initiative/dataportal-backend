@@ -7,7 +7,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilterType;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.UiProfileNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.AttributeDefinition;
@@ -97,7 +97,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
           ValidationErrorBuilder.addError(
               ctx,
               MessageFormat.format("{0}/{1}/{2}", jsonPointerBase, i, j),
-              ValidationIssue.CONTEXT_MISSING
+              ValidationIssueType.CONTEXT_MISSING
           );
           hasErrors = true;
           continue;
@@ -107,7 +107,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
           ValidationErrorBuilder.addError(
               ctx,
               MessageFormat.format("{0}/{1}/{2}/timeRestriction", jsonPointerBase, i, j),
-              ValidationIssue.TIMERESTRICTION_INVALID
+              ValidationIssueType.TIMERESTRICTION_INVALID
           );
           hasErrors = true;
         }
@@ -134,7 +134,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/{1}", jsonPointerBase, i),
-            ValidationIssue.TERMCODE_NOT_IN_SYSTEM,
+            ValidationIssueType.TERMCODE_NOT_IN_SYSTEM,
             Map.of("termcode", termCode)
         );
         hasErrors = true;
@@ -167,7 +167,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
       ValidationErrorBuilder.addError(
           ctx,
           jsonPointerBase,
-          ValidationIssue.UIPROFILE_NOT_FOUND
+          ValidationIssueType.UIPROFILE_NOT_FOUND
       );
       hasErrors = true;
     }
@@ -196,7 +196,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/unit", jsonPointerBase),
-            ValidationIssue.VALUEFILTER_INVALID_UNIT,
+            ValidationIssueType.VALUEFILTER_INVALID_UNIT,
             Map.of("selected", criterion.valueFilter().quantityUnit().code(),
                 "allowed", valueDefinition.allowedUnits().stream()
                     .map(TermCode::code)
@@ -220,7 +220,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
-            ValidationIssue.VALUEFILTER_MIN_MAX_ERROR
+            ValidationIssueType.VALUEFILTER_MIN_MAX_ERROR
         );
         hasErrors = true;
       }
@@ -228,7 +228,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
-            ValidationIssue.VALUEFILTER_OUT_OF_BOUNDS
+            ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS
         );
         hasErrors = true;
       }
@@ -236,7 +236,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
-            ValidationIssue.VALUEFILTER_OUT_OF_BOUNDS
+            ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS
         );
         hasErrors = true;
       }
@@ -284,7 +284,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
             ValidationErrorBuilder.addError(
                 ctx,
                 MessageFormat.format("{0}/{1}", jsonPointerBase, referenceCodes.indexOf(code)), // TODO: this will probably not be correct...
-                ValidationIssue.CODE_NOT_IN_REFERENCED_CRITERIA_SET,
+                ValidationIssueType.CODE_NOT_IN_REFERENCED_CRITERIA_SET,
                 Map.of("code", code,
                     "criteriaSets", referencedCriteriaSetUrlsTypeReference)
             );
@@ -326,7 +326,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
             ValidationErrorBuilder.addError(
                 ctx,
                 MessageFormat.format("{0}/{1}", jsonPointerBase, selectedConceptCodes.indexOf(code)), // TODO: this will probably not be correct...
-                ValidationIssue.CODE_NOT_IN_REFERENCED_VALUE_SET,
+                ValidationIssueType.CODE_NOT_IN_REFERENCED_VALUE_SET,
                 Map.of("code", code,
                     "valueSets", referencedValueSetUrls)
             );
@@ -375,7 +375,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
       ValidationErrorBuilder.addError(
           ctx,
           MessageFormat.format("{0}/{1}", jsonPointerBase, codes.indexOf(code)),
-          ValidationIssue.CCDL_FILTER_CODE_NOT_FOUND
+          ValidationIssueType.CCDL_FILTER_CODE_NOT_FOUND
       );
     }
     return true;

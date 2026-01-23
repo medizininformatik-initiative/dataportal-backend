@@ -242,7 +242,7 @@ class CcdlValidationTest {
 
     var annotatedCcdl = ccdlValidation.annotateCcdl(createValidCcdl(withExclusionCriteria), skipValidation);
 
-    assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+    assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssueTypes().isEmpty());
   }
 
   @ParameterizedTest
@@ -257,9 +257,9 @@ class CcdlValidationTest {
     var annotatedCcdl = ccdlValidation.annotateCcdl(createValidCcdl(withExclusionCriteria), skipValidation);
 
     if (skipValidation) {
-      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssueTypes().isEmpty());
     } else {
-      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssueTypes().isEmpty());
     }
   }
 
@@ -269,9 +269,9 @@ class CcdlValidationTest {
     var annotatedCcdl = ccdlValidation.annotateCcdl(createCcdlWithoutContext(), skipValidation);
 
     if (skipValidation) {
-      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssueTypes().isEmpty());
     } else {
-      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssueTypes().isEmpty());
     }
   }
 
@@ -281,9 +281,9 @@ class CcdlValidationTest {
     var annotatedCcdl = ccdlValidation.annotateCcdl(createCcdlWithInvalidTimeRestriction(), skipValidation);
 
     if (skipValidation) {
-      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertTrue(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssueTypes().isEmpty());
     } else {
-      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssues().isEmpty());
+      assertFalse(annotatedCcdl.inclusionCriteria().get(0).get(0).validationIssueTypes().isEmpty());
     }
   }
 }

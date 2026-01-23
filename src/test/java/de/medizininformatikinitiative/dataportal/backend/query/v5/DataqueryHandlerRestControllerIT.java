@@ -9,9 +9,9 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.CrtdlSectionInfo;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryCsvExportException;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryException;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryHandler;
@@ -318,7 +318,7 @@ public class DataqueryHandlerRestControllerIT {
     long dataqueryId = 1L;
 
     doReturn(List.of(
-        IssueWrapper.builder()
+        ValidationIssue.builder()
             .path("/foo")
             .value("bar")
             .build()
@@ -541,7 +541,7 @@ public class DataqueryHandlerRestControllerIT {
         .termCodes(List.of(termCode))
         .attributeFilters(List.of())
         .context(termCode)
-        .validationIssues(withIssues ? List.of(ValidationIssue.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
+        .validationIssueTypes(withIssues ? List.of(ValidationIssueType.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
         .build();
     return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))

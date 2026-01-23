@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.Map;
 
@@ -15,14 +15,18 @@ public class ValidationErrorBuilder {
    *
    * @param context ConstraintValidatorContext from validator
    * @param jsonPointer    jsonPointer (RFC 6901)
-   * @param validationIssue    Error Enum
+   * @param validationIssueType    Error Enum
    */
   public static void addError(
       ConstraintValidatorContext context,
       String jsonPointer,
-      ValidationIssue validationIssue
+      ValidationIssueType validationIssueType
   ) {
-    addError(context, jsonPointer, "VALIDATION-" + validationIssue.code(), validationIssue.detail(), null);
+    addError(context,
+        jsonPointer,
+        "VALIDATION-" + validationIssueType.code(),
+        validationIssueType.detail(),
+        null);
   }
 
   /**
@@ -39,7 +43,11 @@ public class ValidationErrorBuilder {
       String code,
       String message
   ) {
-    addError(context, jsonPointer, code, message, null);
+    addError(context,
+        jsonPointer,
+        code,
+        message,
+        null);
   }
 
   /**
@@ -47,16 +55,20 @@ public class ValidationErrorBuilder {
    *
    * @param context ConstraintValidatorContext from validator
    * @param jsonPointer    jsonPointer (RFC 6901)
-   * @param validationIssue    Error Enum
+   * @param validationIssueType    Error Enum
    * @param extra   Optional extra fields (e.g., allowedValues, rejectedValue)
    */
   public static void addError(
       ConstraintValidatorContext context,
       String jsonPointer,
-      ValidationIssue validationIssue,
+      ValidationIssueType validationIssueType,
       Map<String, Object> extra
   ) {
-    addError(context, jsonPointer, "VALIDATION-" + validationIssue.code(), validationIssue.detail(), extra);
+    addError(context,
+        jsonPointer,
+        "VALIDATION-" + validationIssueType.code(),
+        validationIssueType.detail(),
+        extra);
   }
 
   /**
@@ -77,13 +89,10 @@ public class ValidationErrorBuilder {
   ) {
     try {
       Map<String, Object> value = Map.of("code", code, "message", message);
-      Map<String, Object> mergedValue = extra != null
-          ? new java.util.LinkedHashMap<>(value) {{ putAll(extra); }}
-          : value;
-
       Map<String, Object> error = Map.of(
           "path", jsonPointer,
-          "value", mergedValue
+          "value", value,
+          "details", extra == null ? Map.of() : extra
       );
       String jsonMessage = jsonUtil.writeValueAsString(error);
       context.buildConstraintViolationWithTemplate(jsonMessage).addConstraintViolation();
