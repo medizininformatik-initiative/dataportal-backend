@@ -107,7 +107,8 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
           ValidationErrorBuilder.addError(
               ctx,
               MessageFormat.format("{0}/{1}/{2}/timeRestriction", jsonPointerBase, i, j),
-              ValidationIssueType.TIMERESTRICTION_INVALID
+              ValidationIssueType.TIMERESTRICTION_INVALID,
+              Map.of("timeRestriction", criterion.timeRestriction())
           );
           hasErrors = true;
         }
@@ -295,6 +296,16 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
                 }
                 hasErrors = true;
               }
+            }
+            // Criteria can also have time restrictions...so check their validity here as well
+            if (isTimeRestrictionInvalid(criteria.timeRestriction())) {
+              ValidationErrorBuilder.addError(
+                  ctx,
+                  MessageFormat.format("{0}/{1}/criteria/{2}/timeRestriction", jsonPointerBase, i, j),
+                  ValidationIssueType.TIMERESTRICTION_INVALID,
+                  Map.of("timeRestriction", criterion.timeRestriction())
+              );
+              hasErrors = true;
             }
           }
         }
