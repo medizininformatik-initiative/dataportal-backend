@@ -252,89 +252,98 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
         || attributeFiltersContainInvalidReferences(ctx, criterion, uiProfile, jsonPointerBase);
   }
 
-
-  // TODO: this will probably need a rework to correctly get the indices...
   private boolean attributeFiltersContainInvalidReferences(ConstraintValidatorContext ctx,
-                                                                     Criterion criterion,
-                                                                     UiProfile uiProfile,
-                                                                     String jsonPointerBase) {
+                                                           Criterion criterion,
+                                                           UiProfile uiProfile,
+                                                           String jsonPointerBase) {
     var hasErrors = false;
     if (criterion.attributeFilters() != null && !criterion.attributeFilters().isEmpty()) {
-      var referenceCodes = criterion.attributeFilters().stream()
-          .filter(filter -> filter.type() == ValueFilterType.REFERENCE)
-          .flatMap(filter -> filter.criteria().stream())
-          .flatMap(c -> c.termCodes().stream())
-          .map(TermCode::code)
-          .distinct()
-          .toList();
-      // 2 Extract value sets
-      var referencedCriteriaSetUrlsTypeReference = uiProfile.attributeDefinitions().stream()
-          .filter(Objects::nonNull)
-          .filter(f -> f.type() == ValueDefinitonType.REFERENCE)
-          .flatMap(ad -> ad.referencedCriteriaSets().stream())
-          .distinct()
-          .toList();
+      for (int i = 0; i < criterion.attributeFilters().size(); ++i) {
+        var attributeFilter = criterion.attributeFilters().get(i);
+        if (attributeFilter.type() != ValueFilterType.REFERENCE) {
+          continue;
+        }
+        if (attributeFilter.criteria() != null && !attributeFilter.criteria().isEmpty()) {
+          for (int j = 0; j < attributeFilter.criteria().size(); ++j) {
+            var criteria = attributeFilter.criteria().get(j);
+            var referenceCodes = criteria.termCodes().stream()
+                .map(TermCode::code)
+                .distinct()
+                .toList();
+            // 2 Extract value sets
+            var referencedCriteriaSetUrlsTypeReference = uiProfile.attributeDefinitions().stream()
+                .filter(Objects::nonNull)
+                .filter(f -> f.type() == ValueDefinitonType.REFERENCE)
+                .flatMap(ad -> ad.referencedCriteriaSets().stream())
+                .distinct()
+                .toList();
 
-      if (!referenceCodes.isEmpty()) {
-        var availableCodes = terminologyEsService.availableCodesInReferencedCriteriaSets(referenceCodes, referencedCriteriaSetUrlsTypeReference);
-        var unavailableCodes = new ArrayList<>(referenceCodes);
-        unavailableCodes.removeAll(availableCodes);
-        if (!unavailableCodes.isEmpty()) {
-          for (var code : unavailableCodes) {
-            ValidationErrorBuilder.addError(
-                ctx,
-                MessageFormat.format("{0}/{1}", jsonPointerBase, referenceCodes.indexOf(code)), // TODO: this will probably not be correct...
-                ValidationIssueType.CODE_NOT_IN_REFERENCED_CRITERIA_SET,
-                Map.of("code", code,
-                    "criteriaSets", referencedCriteriaSetUrlsTypeReference)
-            );
+            if (!referenceCodes.isEmpty()) {
+              var availableCodes = terminologyEsService.availableCodesInReferencedCriteriaSets(referenceCodes, referencedCriteriaSetUrlsTypeReference);
+              var unavailableCodes = new ArrayList<>(referenceCodes);
+              unavailableCodes.removeAll(availableCodes);
+              if (!unavailableCodes.isEmpty()) {
+                for (var code : unavailableCodes) {
+                  int invalidTermcodeIndex = referenceCodes.indexOf(code);
+                  ValidationErrorBuilder.addError(
+                      ctx,
+                      MessageFormat.format("{0}/{1}/criteria/{2}/termCodes/{3}", jsonPointerBase, i, j, invalidTermcodeIndex),
+                      ValidationIssueType.CODE_NOT_IN_REFERENCED_CRITERIA_SET,
+                      Map.of("termCode", criteria.termCodes().get(invalidTermcodeIndex),
+                          "criteriaSets", referencedCriteriaSetUrlsTypeReference)
+                  );
+                }
+                hasErrors = true;
+              }
+            }
           }
-          hasErrors = true;
         }
       }
     }
     return hasErrors;
   }
 
-  // TODO: this will probably need a rework to correctly get the indices...
   private boolean attributeFiltersContainInvalidConcepts(ConstraintValidatorContext ctx,
                                                                      Criterion criterion,
                                                                      UiProfile uiProfile,
                                                                      String jsonPointerBase) {
     var hasErrors = false;
     if (criterion.attributeFilters() != null && !criterion.attributeFilters().isEmpty()) {
-      var selectedConceptCodes = criterion.attributeFilters().stream()
-          .filter(filter -> filter.type() == ValueFilterType.CONCEPT)
-          .flatMap(filter -> filter.selectedConcepts().stream())
-          .map(TermCode::code)
-          .distinct()
-          .toList();
-      // 2 Extract value sets
-      var referencedValueSetUrls = uiProfile.attributeDefinitions().stream()
-          .filter(Objects::nonNull)
-          .filter(f -> f.type() == ValueDefinitonType.CONCEPT)
-          .flatMap(ad -> ad.referencedValueSets().stream())
-          .distinct()
-          .toList();
-
-      if (!selectedConceptCodes.isEmpty()) {
-        var availableCodes = codeableConceptService.availableCodesInValueSets(selectedConceptCodes, referencedValueSetUrls);
-        var unavailableCodes = new ArrayList<>(selectedConceptCodes);
-        unavailableCodes.removeAll(availableCodes);
-        if (!unavailableCodes.isEmpty()) {
-          for (var code : unavailableCodes) {
-            ValidationErrorBuilder.addError(
-                ctx,
-                MessageFormat.format("{0}/{1}", jsonPointerBase, selectedConceptCodes.indexOf(code)), // TODO: this will probably not be correct...
-                ValidationIssueType.CODE_NOT_IN_REFERENCED_VALUE_SET,
-                Map.of("code", code,
-                    "valueSets", referencedValueSetUrls)
-            );
+      for (int i = 0; i < criterion.attributeFilters().size(); ++i) {
+        var attributeFilter = criterion.attributeFilters().get(i);
+        if (attributeFilter.type() != ValueFilterType.CONCEPT) {
+          continue;
+        }
+        var selectedConceptCodes = attributeFilter.selectedConcepts().stream()
+            .map(TermCode::code)
+            .distinct()
+            .toList();
+        var referencedValueSetUrls = uiProfile.attributeDefinitions().stream()
+            .filter(Objects::nonNull)
+            .filter(f -> f.type() == ValueDefinitonType.CONCEPT)
+            .flatMap(ad -> ad.referencedValueSets().stream())
+            .distinct()
+            .toList();
+        if (!selectedConceptCodes.isEmpty()) {
+          var availableCodes = codeableConceptService.availableCodesInValueSets(selectedConceptCodes, referencedValueSetUrls);
+          var unavailableCodes = new ArrayList<>(selectedConceptCodes);
+          unavailableCodes.removeAll(availableCodes);
+          if (!unavailableCodes.isEmpty()) {
+            for (var code : unavailableCodes) {
+              int invalidSelectedConceptIndex = selectedConceptCodes.indexOf(code);
+              ValidationErrorBuilder.addError(
+                  ctx,
+                  MessageFormat.format("{0}/{1}/selectedConcepts/{2}", jsonPointerBase, i, invalidSelectedConceptIndex),
+                  ValidationIssueType.CODE_NOT_IN_REFERENCED_VALUE_SET,
+                  Map.of(
+                      "selectedConcepts", attributeFilter.selectedConcepts().get(invalidSelectedConceptIndex),
+                      "valueSets", referencedValueSetUrls)
+              );
+            }
+            hasErrors = true;
           }
-          hasErrors = true;
         }
       }
-
     }
     return hasErrors;
   }
