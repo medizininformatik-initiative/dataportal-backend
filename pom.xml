@@ -234,7 +234,7 @@
     <dependency>
       <groupId>dev.dsf</groupId>
       <artifactId>dsf-fhir-rest-adapter</artifactId>
-      <version>1.8.0</version>
+      <version>1.9.0</version>
     </dependency>
 
     <dependency>
