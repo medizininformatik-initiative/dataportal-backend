@@ -392,10 +392,12 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
     }
 
     for (var code : unavailableCodes) {
+      int invalidCodeIndex = codes.indexOf(code);
       ValidationErrorBuilder.addError(
           ctx,
-          MessageFormat.format("{0}/{1}", jsonPointerBase, codes.indexOf(code)),
-          ValidationIssueType.CCDL_FILTER_CODE_NOT_FOUND
+          MessageFormat.format("{0}/{1}", jsonPointerBase, invalidCodeIndex),
+          ValidationIssueType.CCDL_FILTER_CODE_NOT_FOUND,
+          Map.of("termCodes", codes.get(invalidCodeIndex))
       );
     }
     return true;
