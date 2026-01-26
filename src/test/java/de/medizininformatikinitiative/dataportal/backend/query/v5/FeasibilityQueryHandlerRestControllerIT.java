@@ -363,7 +363,11 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
     doReturn(List.of(ValidationIssue.builder()
         .path("foo")
-        .value("bar").build()))
+        .value(ValidationIssueValue.builder()
+            .code("VAL-000")
+            .message("bar")
+            .build())
+        .build()))
         .when(queryHandlerService).validateCcdl(any(JsonNode.class));
 
     var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())

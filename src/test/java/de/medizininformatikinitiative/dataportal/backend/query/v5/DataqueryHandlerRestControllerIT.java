@@ -12,6 +12,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueValue;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryCsvExportException;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryException;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryHandler;
@@ -320,7 +321,10 @@ public class DataqueryHandlerRestControllerIT {
     doReturn(List.of(
         ValidationIssue.builder()
             .path("/foo")
-            .value("bar")
+            .value(ValidationIssueValue.builder()
+                .code("VAL-000")
+                .message("bar")
+                .build())
             .build()
     )).when(dataqueryHandler).validateCrtdl(any(JsonNode.class));
 
