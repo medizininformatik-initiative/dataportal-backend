@@ -380,7 +380,6 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_SucceedsOnValidCcdlWith201() throws Exception {
     Ccdl testQuery = createValidCcdl();
-    var annotatedQuery = createValidAnnotatedCcdl(false);
 
     doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
     doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
@@ -400,7 +399,6 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnDownstreamServiceError() throws Exception {
     Ccdl testQuery = createValidCcdl();
-    var annotatedQuery = createValidAnnotatedCcdl(false);
 
     var dispatchError = new QueryDispatchException("something went wrong");
 
@@ -420,7 +418,6 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnSoftQuotaExceeded() throws Exception {
     Ccdl testQuery = createValidCcdl();
-    var annotatedQuery = createValidAnnotatedCcdl(false);
 
     doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
     doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
@@ -438,7 +435,6 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnBeingBlacklistedWith403() throws Exception {
     Ccdl testQuery = createValidCcdl();
-    var annotatedQuery = createValidAnnotatedCcdl(false);
     UserBlacklist userBlacklistEntry = new UserBlacklist();
     userBlacklistEntry.setId(1L);
     userBlacklistEntry.setUserId("test");
@@ -480,8 +476,6 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER", "DATAPORTAL_TEST_POWER"}, username = "test")
   public void testRunQueryEndpoint_SucceedsOnExceedingHardlimitAsPowerUserWith201() throws Exception {
     Ccdl testQuery = createValidCcdl();
-    var annotatedQuery = createValidAnnotatedCcdl(false);
-
 
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));

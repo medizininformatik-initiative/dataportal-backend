@@ -118,7 +118,6 @@ public class DataqueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
   public void testGetDataquery_succeeds() throws Exception {
     long dataqueryId = 1L;
-    var annotatedQuery = createValidAnnotatedCcdl(false);
 
     doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
 
