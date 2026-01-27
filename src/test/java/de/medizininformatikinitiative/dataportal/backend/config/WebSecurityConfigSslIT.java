@@ -7,7 +7,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.v5.DataqueryHandl
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.v5.TerminologyRestController;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +58,7 @@ class WebSecurityConfigSslIT {
   private DataqueryHandler dataqueryHandler;
 
   @MockitoBean
-  private CcdlValidation ccdlValidation;
+  private ValidationService validationService;
 
   @MockitoBean
   private TerminologyService terminologyService;

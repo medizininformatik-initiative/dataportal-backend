@@ -16,7 +16,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.Terminology
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.v5.TerminologyRestController;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +64,7 @@ class WebSecurityConfigIT {
   private DataqueryHandler dataqueryHandler;
 
   @MockitoBean
-  private CcdlValidation ccdlValidation;
+  private ValidationService validationService;
 
   @MockitoBean
   private QueryHandlerService queryHandlerService;

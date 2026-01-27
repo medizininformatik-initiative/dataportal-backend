@@ -12,7 +12,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.v5.FeasibilityQue
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -68,7 +68,7 @@ public class RateLimitingInterceptorIT {
   @MockitoBean
   private QueryHandlerService queryHandlerService;
   @MockitoBean
-  private CcdlValidation ccdlValidation;
+  private ValidationService validationService;
   @MockitoBean
   private UserBlacklistRepository userBlacklistRepository;
 

@@ -21,7 +21,7 @@ public class ValidationRestControllerAdvice {
 
   private final ObjectMapper jsonUtil = new ObjectMapper();
 
-  @ExceptionHandler(MethodArgumentNotValidException.class)
+  @ExceptionHandler(ContentValidationException.class)
   public ResponseEntity<List<Map<String, Object>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
     List<Map<String, Object>> errors = new ArrayList<>();
 

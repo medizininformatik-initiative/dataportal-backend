@@ -15,20 +15,18 @@ import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.Auth
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.InvalidAuthenticationException;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingService;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationException;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ContentValidationException;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.SmartValidator;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -57,12 +55,11 @@ public class FeasibilityQueryHandlerRestController {
 
   public static final String HEADER_X_DETAILED_OBFUSCATED_RESULT_WAS_EMPTY = "X-Detailed-Obfuscated-Result-Was-Empty";
   private final QueryHandlerService queryHandlerService;
-  private final CcdlValidation ccdlValidation;
+  private final ValidationService validationService;
   private final RateLimitingService rateLimitingService;
   private final UserBlacklistRepository userBlacklistRepository;
   private final AuthenticationHelper authenticationHelper;
   private final String apiBaseUrl;
-  private final SmartValidator validator;
 
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
@@ -92,17 +89,15 @@ public class FeasibilityQueryHandlerRestController {
 
   public FeasibilityQueryHandlerRestController(QueryHandlerService queryHandlerService,
                                                RateLimitingService rateLimitingService,
-                                               CcdlValidation ccdlValidation,
+                                               ValidationService validationService,
                                                UserBlacklistRepository userBlacklistRepository,
                                                AuthenticationHelper authenticationHelper,
-                                               SmartValidator validator,
                                                @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.queryHandlerService = queryHandlerService;
     this.rateLimitingService = rateLimitingService;
-    this.ccdlValidation = ccdlValidation;
+    this.validationService = validationService;
     this.userBlacklistRepository = userBlacklistRepository;
     this.authenticationHelper = authenticationHelper;
-    this.validator = validator;
     this.apiBaseUrl = apiBaseUrl;
   }
 
@@ -111,19 +106,18 @@ public class FeasibilityQueryHandlerRestController {
       @RequestBody JsonNode queryNode,
       @Context HttpServletRequest request,
       Authentication authentication)
-      throws InvalidAuthenticationException, MethodArgumentNotValidException, NoSuchMethodException {
+      throws InvalidAuthenticationException, NoSuchMethodException {
 
-    var schemaValidationErrors = queryHandlerService.validateCcdl(queryNode);
+    var schemaValidationErrors = validationService.validateCcdlSchema(queryNode);
     if (!schemaValidationErrors.isEmpty()) {
       return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
     }
 
-    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
-    var bindingResult = new BeanPropertyBindingResult(query, "ccdl");
-    validator.validate(query, bindingResult);
-    if (bindingResult.hasErrors()) {
-      var methodParameter = new MethodParameter(this.getClass().getDeclaredMethod("runQuery", JsonNode.class, HttpServletRequest.class, Authentication.class), 0);
-      throw new MethodArgumentNotValidException(methodParameter, bindingResult);
+    var query = validationService.ccdlFromJsonNode(queryNode);
+    try {
+      validationService.validateCcdlContent(query);
+    } catch (MethodArgumentNotValidException e) {
+      throw new ContentValidationException(e);
     }
 
     String userId = authentication.getName();
@@ -283,26 +277,14 @@ public class FeasibilityQueryHandlerRestController {
     return new ResponseEntity<>(queryResult, HttpStatus.OK);
   }
 
-  @PostMapping("/validate")
-  public ResponseEntity<?> validateCcdl(
-      @RequestBody JsonNode queryNode) {
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
-    if (!validationErrors.isEmpty()) {
-      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
-    }
-
-    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
-    return new ResponseEntity<>(ccdlValidation.annotateCcdl(query, false), HttpStatus.OK);
-  }
-
   @PostMapping(value = "/cql")
   public ResponseEntity<?> sq2Cql(@RequestBody JsonNode queryNode) {
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
+    var validationErrors = validationService.validateCcdlSchema(queryNode);
     if (!validationErrors.isEmpty()) {
       return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
     }
 
-    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
+    var query = validationService.ccdlFromJsonNode(queryNode);
     try {
       var cql = queryHandlerService.translateQueryToCql(query);
       var sanitizedCql = StringEscapeUtils.escapeHtml4(cql);

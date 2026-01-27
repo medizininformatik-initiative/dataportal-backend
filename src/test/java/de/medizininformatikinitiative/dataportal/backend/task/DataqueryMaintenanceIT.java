@@ -15,7 +15,6 @@ import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDis
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultServiceSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslatorSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -63,9 +62,6 @@ class DataqueryMaintenanceIT {
   private DataqueryRepository dataqueryRepository;
 
   private DataqueryMaintenance dataqueryMaintenance;
-
-  @MockitoBean
-  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private JsonSchemaValidator jsonSchemaValidator;

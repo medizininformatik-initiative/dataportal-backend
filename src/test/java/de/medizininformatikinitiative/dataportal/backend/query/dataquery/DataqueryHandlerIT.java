@@ -16,7 +16,6 @@ import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDis
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultServiceSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslatorSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,9 +75,6 @@ public class DataqueryHandlerIT {
 
   @MockitoBean
   private DataqueryCsvExportService dataqueryCsvExportService;
-
-  @MockitoBean
-  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private JsonSchemaValidator jsonSchemaValidator;

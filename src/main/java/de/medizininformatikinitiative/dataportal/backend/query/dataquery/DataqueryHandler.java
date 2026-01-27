@@ -1,16 +1,10 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueValue;
-import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
@@ -34,8 +28,6 @@ import java.util.zip.ZipOutputStream;
 @Transactional
 @RequiredArgsConstructor
 public class DataqueryHandler {
-  @NonNull
-  final JsonSchemaValidator jsonSchemaValidator;
   @NonNull
   private final DataqueryCsvExportService csvExportHandler;
   @NonNull
@@ -200,72 +192,6 @@ public class DataqueryHandler {
     zipOutputStream.close();
     byteArrayOutputStream.close();
     return byteArrayOutputStream;
-  }
-
-  public List<ValidationIssue> validateDataquery(JsonNode dataqueryNode) {
-    List<ValidationIssue> issues = new ArrayList<>();
-    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAQUERY, dataqueryNode);
-    if (!validationErrors.isEmpty()) {
-      issues = validationErrors.stream()
-          .map(e -> ValidationIssue.builder()
-              .path(e.getInstanceLocation().toString())
-              .value(ValidationIssueValue.builder()
-                  .message(e.getMessage())
-                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
-                  .build())
-              .build()
-          )
-          .toList();
-    }
-    return issues;
-  }
-
-  public Dataquery dataqueryFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, Dataquery.class);
-  }
-
-  public List<ValidationIssue> validateCrtdl(JsonNode crtdlNode) {
-    List<ValidationIssue> issues = new ArrayList<>();
-    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CRTDL, crtdlNode);
-    if (!validationErrors.isEmpty()) {
-      issues = validationErrors.stream()
-          .map(e -> ValidationIssue.builder()
-              .path(e.getInstanceLocation().toString())
-              .value(ValidationIssueValue.builder()
-                  .message(e.getMessage())
-                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
-                  .build())
-              .build()
-          )
-          .toList();
-    }
-    return issues;
-  }
-
-  public Crtdl crtdlFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, Crtdl.class);
-  }
-
-  public List<ValidationIssue> validateDataExtraction(JsonNode dataExtractionNode) {
-    List<ValidationIssue> issues = new ArrayList<>();
-    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAEXTRACTION, dataExtractionNode);
-    if (!validationErrors.isEmpty()) {
-      issues = validationErrors.stream()
-          .map(e -> ValidationIssue.builder()
-              .path(e.getInstanceLocation().toString())
-              .value(ValidationIssueValue.builder()
-                  .message(e.getMessage())
-                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
-                  .build())
-              .build()
-          )
-          .toList();
-    }
-    return issues;
-  }
-
-  public DataExtraction dataExtractionFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, DataExtraction.class);
   }
 
   private boolean hasAccess(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery, Authentication authentication) {

@@ -19,7 +19,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.dataquery.Dataque
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryStorageFullException;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
@@ -70,7 +70,7 @@ public class DataqueryHandlerRestControllerIT {
   private DataqueryHandler dataqueryHandler;
 
   @MockitoBean
-  private CcdlValidation ccdlValidation;
+  private ValidationService validationService;
 
   @MockitoBean
   private AuthenticationHelper authenticationHelper;
@@ -121,7 +121,6 @@ public class DataqueryHandlerRestControllerIT {
     var annotatedQuery = createValidAnnotatedCcdl(false);
 
     doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId)).with(csrf()))
         .andExpect(status().isOk())
@@ -157,7 +156,6 @@ public class DataqueryHandlerRestControllerIT {
     var annotatedQuery = createValidAnnotatedCcdl(false);
 
     doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl")).with(csrf()))
         .andExpect(status().isOk())
@@ -326,7 +324,7 @@ public class DataqueryHandlerRestControllerIT {
                 .message("bar")
                 .build())
             .build()
-    )).when(dataqueryHandler).validateCrtdl(any(JsonNode.class));
+    )).when(validationService).validateCrtdlSchema(any(JsonNode.class));
 
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
             .contentType(APPLICATION_JSON)

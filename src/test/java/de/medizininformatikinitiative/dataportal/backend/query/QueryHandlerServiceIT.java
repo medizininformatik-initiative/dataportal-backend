@@ -22,7 +22,6 @@ import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultService;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultServiceSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslatorSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -104,9 +103,6 @@ public class QueryHandlerServiceIT {
 
   @MockitoBean
   private DataqueryCsvExportService dataqueryCsvExportService;
-
-  @MockitoBean
-  private CcdlValidation ccdlValidation;
 
   @MockitoBean
   private JsonSchemaValidator jsonSchemaValidator;

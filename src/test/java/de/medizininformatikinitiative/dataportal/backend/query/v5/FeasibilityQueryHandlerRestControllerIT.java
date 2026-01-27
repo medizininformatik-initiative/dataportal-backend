@@ -25,7 +25,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.translation.Query
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -90,7 +90,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
   private QueryHandlerService queryHandlerService;
 
   @MockitoBean
-  private CcdlValidation ccdlValidation;
+  private ValidationService validationService;
 
   @MockitoBean
   private JsonSchemaValidator jsonSchemaValidator;
@@ -368,7 +368,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
             .message("bar")
             .build())
         .build()))
-        .when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        .when(validationService).validateCcdlSchema(any(JsonNode.class));
 
     var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -382,12 +382,11 @@ public class FeasibilityQueryHandlerRestControllerIT {
     Ccdl testQuery = createValidCcdl();
     var annotatedQuery = createValidAnnotatedCcdl(false);
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
     doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -405,12 +404,11 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
     var dispatchError = new QueryDispatchException("something went wrong");
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
     doReturn(Mono.error(dispatchError)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -424,56 +422,16 @@ public class FeasibilityQueryHandlerRestControllerIT {
     Ccdl testQuery = createValidCcdl();
     var annotatedQuery = createValidAnnotatedCcdl(false);
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
     doReturn((long) quotaSoftCreateAmount + 1).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), any(String.class));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
         .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()));
-  }
-
-  @Test
-  @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
-  public void testValidateQueryEndpoint_SucceedsOnValidQuery() throws Exception {
-    Ccdl testQuery = createValidCcdl();
-    var annotatedQuery = createValidAnnotatedCcdl(false);
-
-    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
-    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
-
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
-
-    mockMvc.perform(post(URI.create(PATH + "/validate")).with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.inclusionCriteria[0].[0].issues").isArray())
-        .andExpect(jsonPath("$.inclusionCriteria[0].[0].issues").isEmpty());
-  }
-
-  @Test
-  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
-  public void testValidateQueryEndpoint_FailsOnInvalidCriteriaWith400() throws Exception {
-    Ccdl testQuery = createValidCcdl();
-    var annotatedQuery = createValidAnnotatedCcdl(true);
-
-    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
-    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
-
-    mockMvc.perform(post(URI.create(PATH + "/validate")).with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -487,13 +445,12 @@ public class FeasibilityQueryHandlerRestControllerIT {
     userBlacklistEntry.setBlacklistedAt(new Timestamp(System.currentTimeMillis()));
     Optional<UserBlacklist> userBlacklistOptional = Optional.of(userBlacklistEntry);
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
     doReturn(userBlacklistOptional).when(userBlacklistRepository).findByUserId(any(String.class));
     doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -506,8 +463,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
   public void testRunQueryEndpoint_FailsOnExceedingHardLimitWith403() throws Exception {
     Ccdl testQuery = createValidCcdl();
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
     doReturn((long) quotaHardCreateAmount).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaHardCreateInterval));
@@ -529,13 +486,12 @@ public class FeasibilityQueryHandlerRestControllerIT {
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(authenticationHelper).hasAuthority(any(Authentication.class), eq("ROLE_DATAPORTAL_TEST_POWER"));
     doReturn((long) quotaHardCreateAmount).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaHardCreateInterval));
     doReturn((long) (quotaSoftCreateAmount - 1)).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaSoftCreateInterval));
     doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
-    doReturn(annotatedQuery).when(ccdlValidation).annotateCcdl(any(Ccdl.class), any(Boolean.class));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -633,8 +589,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @Test
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
   public void testSq2Cql_succeeds() throws Exception {
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(createValidCcdl()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(createValidCcdl()).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(createDummyCql()).when(queryHandlerService).translateQueryToCql(any(Ccdl.class));
 
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
@@ -650,8 +606,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @Test
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
   public void testSq2Cql_failsWith400() throws Exception {
-    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(createValidCcdl()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(createValidCcdl()).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(Ccdl.class));
 
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
@@ -663,8 +619,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @Test
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
   public void testSq2Cql_failsWith422() throws Exception {
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(createValidCcdl()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(createValidCcdl()).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(Ccdl.class));
 
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));

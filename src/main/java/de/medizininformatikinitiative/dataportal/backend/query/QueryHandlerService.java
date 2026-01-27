@@ -1,12 +1,10 @@
 package de.medizininformatikinitiative.dataportal.backend.query;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Query;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.*;
-import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatcher;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.*;
@@ -15,7 +13,6 @@ import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultService;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationException;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslator;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.CcdlValidation;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -25,7 +22,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class QueryHandlerService {
@@ -40,17 +36,13 @@ public class QueryHandlerService {
                              @NonNull QueryRepository queryRepository,
                              @NonNull QueryContentRepository queryContentRepository,
                              @NonNull ResultService resultService,
-                             @NonNull CcdlValidation ccdlValidation,
                              @NonNull @Qualifier("cql") QueryTranslator queryTranslator,
-                             @NonNull JsonSchemaValidator jsonSchemaValidator,
                              @NonNull ObjectMapper jsonUtil) {
     this.queryDispatcher = queryDispatcher;
     this.queryRepository = queryRepository;
     this.queryContentRepository = queryContentRepository;
     this.resultService = resultService;
-    this.ccdlValidation = ccdlValidation;
     this.queryTranslator = queryTranslator;
-    this.jsonSchemaValidator = jsonSchemaValidator;
     this.jsonUtil = jsonUtil;
   }
 
@@ -62,11 +54,7 @@ public class QueryHandlerService {
 
   private final ResultService resultService;
 
-  private final CcdlValidation ccdlValidation;
-
   private QueryTranslator queryTranslator;
-
-  private final JsonSchemaValidator jsonSchemaValidator;
 
   private ObjectMapper jsonUtil;
 
@@ -168,27 +156,5 @@ public class QueryHandlerService {
 
   public String translateQueryToCql(Ccdl ccdl) throws QueryTranslationException {
     return queryTranslator.translate(ccdl);
-  }
-
-  public List<ValidationIssue> validateCcdl(JsonNode ccdlNode) {
-    List<ValidationIssue> issues = new ArrayList<>();
-    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CCDL, ccdlNode);
-    if (!validationErrors.isEmpty()) {
-      issues = validationErrors.stream()
-          .map(e -> ValidationIssue.builder()
-              .path(e.getInstanceLocation().toString())
-              .value(ValidationIssueValue.builder()
-                  .message(e.getMessage())
-                  .code("VALIDATION-" + ValidationIssueType.JSON_ERROR.code())
-                  .build())
-              .build()
-          )
-          .toList();
-    }
-    return issues;
-  }
-
-  public Ccdl ccdlFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, Ccdl.class);
   }
 }
