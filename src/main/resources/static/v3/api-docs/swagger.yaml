@@ -1446,6 +1446,12 @@ components:
       properties:
         display:
           $ref: "#/components/schemas/DisplayEntry"
+        selectable:
+          type: boolean
+        termcode:
+          type: string
+        terminology:
+          type: string
         parents:
           type: array
           items:
