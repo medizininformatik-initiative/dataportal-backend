@@ -24,6 +24,8 @@ tags:
     description: operations on codeable concepts
   - name: dse
     description: Data Selection and Extraction
+  - name: validation
+    description: Validate CCDL/CRTDL
   - name: intrinsics
     description: Offers intrinsic information about this application.
 paths:
@@ -550,33 +552,6 @@ paths:
       security:
         - dataportal_auth:
             - user
-  /query/validate:
-    post:
-      tags:
-        - dataquery
-      summary: Validates a submitted CRTDL or just CCDL? to check for schema violations or invalid termCodes
-      description: It could be useful to split this in ccdl and dataquery or at least offer a parameter to determine which should be checked.
-      operationId: validateQuery
-      requestBody:
-        description: Query to validate
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CRTDL"
-        required: true
-      responses:
-        200:
-          description: Query adheres to json schema. If invalid termCodes are present, they will be in the response.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CRTDL"
-        400:
-          description: Query does not adhere to json schema
-        401:
-          description: Unauthorized - please login first
   /terminology/search/filter:
     get:
       tags:
@@ -942,6 +917,92 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProfileDataList"
+  /validation/crtdl:
+    post:
+      tags:
+        - validation
+      summary: Validate a submitted CRTDL
+      description: Check if the json matches the schema and if the content does not contain invalid entries
+      operationId: validateCrtdl
+      requestBody:
+        description: CRTDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CRTDL"
+        required: true
+      responses:
+        200:
+          description: CRTDL is valid
+        400:
+          description: CRTDL contains errors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ValidationIssue"
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
+  /validation/ccdl:
+    post:
+      tags:
+        - validation
+      summary: Validate a submitted CCDL
+      description: Check if the json matches the schema and if the content does not contain invalid entries
+      operationId: validateCcdl
+      requestBody:
+        description: CCDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CCDL"
+        required: true
+      responses:
+        200:
+          description: CCDL is valid
+        400:
+          description: CCDL contains errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationIssue"
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
+  /validation/dataquery:
+    post:
+      tags:
+        - validation
+      summary: Validate a submitted dataquery
+      description: Check if the json matches the schema and if the content does not contain invalid entries
+      operationId: validateDataquery
+      requestBody:
+        description: CCDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataquery"
+        required: true
+      responses:
+        201:
+          description: Dataquery is valid
+        400:
+          description: Dataquery contains errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationIssue"
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
   /actuator/health:
     get:
       summary: Offers health information about this application.
@@ -1294,10 +1355,6 @@ components:
           $ref: "#/components/schemas/ValueFilter"
         timeRestriction:
           $ref: "#/components/schemas/TimeRestriction"
-        issues:
-          type: array
-          items:
-            $ref: "#/components/schemas/ValidationIssue"
     CriterionList:
       type: array
       items:
@@ -1319,17 +1376,30 @@ components:
     ValidationIssue:
       type: object
       required:
-        - code
-        - detail
+        - path
+        - value
       properties:
+        path:
+          type: string
+          examples:
+            - /inclusionCriteria/0/0/termCodes/0
+        value:
+          $ref: "#/components/schemas/ValidationIssueValue"
+        details:
+          type: object
+          description: Additional information about the error. Context dependant.
+          additionalProperties: true
+    ValidationIssueValue:
+      type: object
+      properties:
+        message:
+          type: string
+          examples:
+            - The termcode does not exist in the system.
         code:
           type: string
           examples:
-            - VAL-20001
-        detail:
-          type: string
-          examples:
-            - The combination of context and termcode(s) is not found.
+            - VALIDATION-20002
     TranslationEntry:
       type: object
       required:
