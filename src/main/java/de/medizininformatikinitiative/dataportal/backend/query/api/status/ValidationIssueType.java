@@ -17,7 +17,7 @@ public enum ValidationIssueType {
   VALUEFILTER_OUT_OF_BOUNDS(20005, "The selected value in not inside the defined limits."),
   CODE_NOT_IN_REFERENCED_CRITERIA_SET(20006, "The selected code is not part of the referenced criteria sets."),
   CODE_NOT_IN_REFERENCED_VALUE_SET(20007, "The selected code is not part of the referenced value sets."),
-  VALUEFILTER_MIN_MAX_ERROR(20008, "The minimum must not be larger than the maximum."),
+  VALUEFILTER_MIN_MAX_ERROR(20008, "minValue must not be greater than maxValue."),
   ATTRIBUTE_GROUP_PROFILE_NOT_FOUND(2000001, "Attribute group groupReference not found"),
   ATTRIBUTE_REF_NOT_FOUND(2000002, "attributeRef not found in ontology profile of attribute group"),
   FILTER_CODE_NOT_FOUND(2000003, "code filter not found in value set"),

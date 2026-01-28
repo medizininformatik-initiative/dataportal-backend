@@ -6,6 +6,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
+import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilter;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilterType;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
@@ -216,28 +217,43 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
                                           AttributeDefinition valueDefinition,
                                           String jsonPointerBase) {
     var hasErrors = false;
+    var valueFilter = criterion.valueFilter();
     if (valueDefinition.type() == ValueDefinitonType.QUANTITY) {
-      if (valueDefinition.max() != null && valueDefinition.min() != null && (valueDefinition.max() < valueDefinition.min())) {
+      if (valueDefinition.max() != null && valueFilter.value() > valueDefinition.max()) {
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
-            ValidationIssueType.VALUEFILTER_MIN_MAX_ERROR
+            ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS,
+            Map.of(
+                "valueFilter",
+                valueFilter
+            )
         );
         hasErrors = true;
       }
-      if (valueDefinition.max() != null && criterion.valueFilter().value() > valueDefinition.max()) {
+      if (valueDefinition.min() != null && valueFilter.value() < valueDefinition.min()) {
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
-            ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS
+            ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS,
+            Map.of(
+                "valueFilter",
+                valueFilter
+            )
         );
         hasErrors = true;
       }
-      if (valueDefinition.min() != null && criterion.valueFilter().value() < valueDefinition.min()) {
+    }
+    if (valueFilter.type().equals(ValueFilterType.QUANTITY_RANGE)) {
+      if (valueFilter.maxValue() != null && valueFilter.minValue() != null && (valueFilter.maxValue() < valueFilter.minValue())) {
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
-            ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS
+            ValidationIssueType.VALUEFILTER_MIN_MAX_ERROR,
+            Map.of(
+                "valueFilter",
+                valueFilter
+            )
         );
         hasErrors = true;
       }
