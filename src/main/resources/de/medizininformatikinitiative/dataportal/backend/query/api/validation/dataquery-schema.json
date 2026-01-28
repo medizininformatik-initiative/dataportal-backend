@@ -15,10 +15,10 @@
       "$ref": "http://example.com/schema/data-extraction-schema.json",
       "description": "Reference to a CRTDL"
     },
-    "required": [
-      "label",
-      "content"
-    ],
     "additionalProperties": false
-  }
+  },
+  "required": [
+    "label",
+    "content"
+  ]
 }
