@@ -125,7 +125,23 @@ public class ValidationService {
     return validateSchema(dataExtractionNode, JsonSchemaValidator.SCHEMA_DATAEXTRACTION);
   }
 
-  public List<ValidationIssue> validateSchema(JsonNode node, String schemaName) {
+  public Ccdl ccdlFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, Ccdl.class);
+  }
+
+  public Crtdl crtdlFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, Crtdl.class);
+  }
+
+  public Dataquery dataqueryFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, Dataquery.class);
+  }
+
+  public DataExtraction dataExtractionFromJsonNode(JsonNode jsonNode) {
+    return jsonUtil.convertValue(jsonNode, DataExtraction.class);
+  }
+
+  private List<ValidationIssue> validateSchema(JsonNode node, String schemaName) {
     List<ValidationIssue> issues = new ArrayList<>();
     var validationErrors = jsonSchemaValidator.validate(schemaName, node);
     if (!validationErrors.isEmpty()) {
@@ -141,21 +157,5 @@ public class ValidationService {
           .toList();
     }
     return issues;
-  }
-
-  public Ccdl ccdlFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, Ccdl.class);
-  }
-
-  public Crtdl crtdlFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, Crtdl.class);
-  }
-
-  public Dataquery dataqueryFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, Dataquery.class);
-  }
-
-  public DataExtraction dataExtractionFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, DataExtraction.class);
   }
 }

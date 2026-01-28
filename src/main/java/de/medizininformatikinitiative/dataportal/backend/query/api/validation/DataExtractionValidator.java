@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Validator for {@link DataExtraction} that does an actual check based on a JSON schema.
@@ -166,6 +167,8 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
             MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
         hasErrors = codesMissingInValueSets(ctx, dseProfile, attributeFilter,
             MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
+      hasErrors = hasInvalidDateSettings(ctx, attributeFilter,
+          MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
       }
     return hasErrors;
   }
@@ -201,12 +204,42 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
       unavailableCodes.removeAll(availableCodes);
       if (!unavailableCodes.isEmpty()) {
         for (var code : unavailableCodes) {
+          TermCode termCode = attributeFilter.codes().get(codes.indexOf(code));
           ValidationErrorBuilder.addError(
               ctx,
               MessageFormat.format("{0}/codes/{1}", jsonPointerBase, codes.indexOf(code)),
-              ValidationIssueType.FILTER_CODE_NOT_FOUND
+              ValidationIssueType.FILTER_CODE_NOT_FOUND,
+              Map.of(
+                  "code", termCode.code(),
+                  "display", termCode.display(),
+                  "system", termCode.system(),
+                  "version", termCode.version()
+              )
           );
         }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean hasInvalidDateSettings(ConstraintValidatorContext ctx,
+                                          Filter attributeFilter,
+                                          String jsonPointerBase) {
+    // There is no defined set of types in crtdl as of now...so for now just check "date"
+    if (attributeFilter.type().equalsIgnoreCase("date")) {
+      if (attributeFilter.end() != null && attributeFilter.start() != null && attributeFilter.end().isBefore(attributeFilter.start())) {
+        ValidationErrorBuilder.addError(
+            ctx,
+            jsonPointerBase,
+            ValidationIssueType.FILTER_DATE_COMBINATION_INVALID,
+            Map.of(
+                "name", attributeFilter.name(),
+                "type", attributeFilter.type(),
+                "start", attributeFilter.start().toString(),
+                "end", attributeFilter.end().toString()
+                )
+        );
         return true;
       }
     }
