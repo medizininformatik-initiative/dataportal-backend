@@ -4,8 +4,8 @@ import lombok.Builder;
 import lombok.NonNull;
 
 @Builder
-public record IssueWrapper(
-    @NonNull String path,
-    @NonNull Object value
+public record ValidationIssueValue(
+    @NonNull String message,
+    @NonNull String code
 ) {
 }

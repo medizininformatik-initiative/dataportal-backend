@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
 import de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Provides functions for translating {@link StructuredQuery} into different formats.
+ * Provides functions for translating {@link Ccdl} into different formats.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -21,13 +21,13 @@ public class QueryTranslationComponent {
   private final Map<QueryMediaType, QueryTranslator> translators;
 
   /**
-   * Translates a {@link StructuredQuery} into different formats using the configured translators.
+   * Translates a {@link Ccdl} into different formats using the configured translators.
    *
    * @param query The query that shall be translated.
    * @return The query translated into different formats mapped to their corresponding media type.
    * @throws QueryTranslationException If any translation fails.
    */
-  public Map<QueryMediaType, String> translate(StructuredQuery query) throws QueryTranslationException {
+  public Map<QueryMediaType, String> translate(Ccdl query) throws QueryTranslationException {
     var translationResults = new HashMap<QueryMediaType, String>();
     for (Entry<QueryMediaType, QueryTranslator> translatorMapping : translators.entrySet()) {
       var translation = translatorMapping.getValue().translate(query);

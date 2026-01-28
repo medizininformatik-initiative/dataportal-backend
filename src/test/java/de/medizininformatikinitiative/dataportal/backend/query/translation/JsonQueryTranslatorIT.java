@@ -4,7 +4,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
 import de.medizininformatikinitiative.dataportal.backend.query.api.AttributeFilter;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilter;
 import org.json.JSONException;
@@ -69,7 +69,7 @@ public class JsonQueryTranslatorIT {
         .termCodes(List.of(bodyWeightTermCode))
         .valueFilter(bodyWeightValueFilter)
         .build();
-    var testQuery = StructuredQuery.builder()
+    var testQuery = Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasBmiGreaterThanFifty)))
         .build();
@@ -128,7 +128,7 @@ public class JsonQueryTranslatorIT {
         .termCodes(List.of(psychologicalDysfunctionTermCode))
         .timeRestriction(timeRestriction)
         .build();
-    var testQuery = StructuredQuery.builder()
+    var testQuery = Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(hasDementia, hasPsychologicalDysfunction)))
         .build();
@@ -215,7 +215,7 @@ public class JsonQueryTranslatorIT {
         .termCodes(List.of(bodyTemperatureTermCode))
         .attributeFilters(List.of(axillaryMeasured))
         .build();
-    var testQuery = StructuredQuery.builder()
+    var testQuery = Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(olderThanEighteen)))
         .exclusionCriteria(List.of(List.of(bodyTemperatureAxillaryMeasured)))

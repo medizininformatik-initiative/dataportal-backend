@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://medizininformatik-initiative.de/fdpg/Dataquery/v1/schema",
+  "title": "dataquery",
+  "description": "A dataquery, consisting of a CRTDL and additional label and comment",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "content": {
+      "$ref": "http://example.com/schema/data-extraction-schema.json",
+      "description": "Reference to a CRTDL"
+    },
+    "additionalProperties": false
+  },
+  "required": [
+    "label",
+    "content"
+  ]
+}

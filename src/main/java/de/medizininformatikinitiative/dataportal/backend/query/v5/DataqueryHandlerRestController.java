@@ -2,14 +2,13 @@ package de.medizininformatikinitiative.dataportal.backend.query.v5;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.CrtdlSectionInfo;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryCsvExportException;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryException;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryHandler;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryStorageFullException;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
@@ -38,13 +37,14 @@ Rest Interface for the UI to send and receive dataqueries from the backend.
 public class DataqueryHandlerRestController {
   private final static String API_VERSION = "v5";
   private final DataqueryHandler dataqueryHandler;
-  private final StructuredQueryValidation structuredQueryValidation;
+  private final ValidationService validationService;
   private final String apiBaseUrl;
 
   public DataqueryHandlerRestController(DataqueryHandler dataqueryHandler,
-                                        StructuredQueryValidation structuredQueryValidation, @Value("${app.apiBaseUrl}") String apiBaseUrl) {
+                                        ValidationService validationService,
+                                        @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.dataqueryHandler = dataqueryHandler;
-    this.structuredQueryValidation = structuredQueryValidation;
+    this.validationService = validationService;
     this.apiBaseUrl = apiBaseUrl;
   }
 
@@ -86,14 +86,7 @@ public class DataqueryHandlerRestController {
       var dataquery = dataqueryHandler.getDataqueryById(dataqueryId, authentication);
       var dataqueryWithInvalidCriteria = Dataquery.builder()
           .id(dataquery.id())
-          .content(
-              Crtdl.builder()
-                  .display(dataquery.content().display())
-                  .version(dataquery.content().version())
-                  .dataExtraction(dataquery.content().dataExtraction())
-                  .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : structuredQueryValidation.annotateStructuredQuery(dataquery.content().cohortDefinition(), skipValidation))
-                  .build()
-          )
+          .content(dataquery.content())
           .label(dataquery.label())
           .comment(dataquery.comment())
           .lastModified(dataquery.lastModified())
@@ -101,11 +94,11 @@ public class DataqueryHandlerRestController {
           .resultSize(dataquery.resultSize())
           .ccdl(CrtdlSectionInfo.builder()
               .exists(dataquery.content().cohortDefinition() != null)
-              .isValid(skipValidation || (dataquery.content().cohortDefinition() != null && structuredQueryValidation.isValid(dataquery.content().cohortDefinition())))
+              .isValid(skipValidation || (dataquery.content().cohortDefinition() != null && validationService.isValid(dataquery.content().cohortDefinition())))
               .build())
           .dataExtraction(CrtdlSectionInfo.builder()
               .exists(dataquery.content().dataExtraction() != null)
-              .isValid(true) // TODO: Add validation for that
+              .isValid(skipValidation || (dataquery.content().dataExtraction() != null && validationService.isValid(dataquery.content().dataExtraction())))
               .build())
           .build();
       return new ResponseEntity<>(dataqueryWithInvalidCriteria, HttpStatus.OK);
@@ -118,18 +111,11 @@ public class DataqueryHandlerRestController {
 
   @GetMapping(path = "/{dataqueryId}" + PATH_CRTDL)
   public ResponseEntity<Object> getDataqueryCrtdl(@PathVariable(value = "dataqueryId") Long dataqueryId,
-                                                  @RequestParam(value = "skip-validation", required = false, defaultValue = "false") boolean skipValidation,
                                                   Authentication authentication) {
 
     try {
       var dataquery = dataqueryHandler.getDataqueryById(dataqueryId, authentication);
-      var crtdlWithInvalidCritiera = Crtdl.builder()
-          .display(dataquery.content().display())
-          .version(dataquery.content().version())
-          .dataExtraction(dataquery.content().dataExtraction())
-          .cohortDefinition(dataquery.content().cohortDefinition() == null ? null : structuredQueryValidation.annotateStructuredQuery(dataquery.content().cohortDefinition(), skipValidation))
-          .build();
-      return new ResponseEntity<>(crtdlWithInvalidCritiera, HttpStatus.OK);
+      return new ResponseEntity<>(dataquery.content(), HttpStatus.OK);
     } catch (JsonProcessingException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
@@ -160,12 +146,12 @@ public class DataqueryHandlerRestController {
   @PostMapping(path = "/convert" + PATH_CRTDL)
   public ResponseEntity<Object> convertCrtdlToCsv(@RequestBody JsonNode crtdlNode,
                                                   Authentication authentication) {
-    var validationErrors = dataqueryHandler.validateCrtdl(crtdlNode);
+    var validationErrors = validationService.validateCrtdlSchema(crtdlNode);
     if (!validationErrors.isEmpty()) {
       return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
     }
 
-    var crtdl = dataqueryHandler.crtdlFromJsonNode(crtdlNode);
+    var crtdl = validationService.crtdlFromJsonNode(crtdlNode);
     // the csv converter currently works on a dataquery object but just uses the crtdl part of it. So just create a dummy for that
     var dataquery = Dataquery.builder()
         .createdBy(authentication.getName())
@@ -208,11 +194,11 @@ public class DataqueryHandlerRestController {
                 .resultSize(dq.resultSize())
                 .ccdl(CrtdlSectionInfo.builder()
                     .exists(dq.content().cohortDefinition() != null)
-                    .isValid(skipValidation || (dq.content().cohortDefinition() != null && structuredQueryValidation.isValid(dq.content().cohortDefinition())))
+                    .isValid(skipValidation || (dq.content().cohortDefinition() != null && validationService.isValid(dq.content().cohortDefinition())))
                     .build())
                 .dataExtraction(CrtdlSectionInfo.builder()
                     .exists(dq.content().dataExtraction() != null)
-                    .isValid(true) // TODO: Add validation for that
+                    .isValid(skipValidation || (dq.content().dataExtraction() != null && validationService.isValid(dq.content().dataExtraction())))
                     .build())
                 .expiresAt(dq.expiresAt())
                 .build()
@@ -243,7 +229,7 @@ public class DataqueryHandlerRestController {
                 .resultSize(dq.resultSize())
                 .ccdl(CrtdlSectionInfo.builder()
                     .exists(dq.content().cohortDefinition() != null)
-                    .isValid(skipValidation || structuredQueryValidation.isValid(dq.content().cohortDefinition()))
+                    .isValid(skipValidation || validationService.isValid(dq.content().cohortDefinition()))
                     .build())
                 .dataExtraction(CrtdlSectionInfo.builder()
                     .exists(dq.content().dataExtraction() != null)

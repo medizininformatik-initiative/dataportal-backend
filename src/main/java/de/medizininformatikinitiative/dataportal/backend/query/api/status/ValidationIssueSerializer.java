@@ -7,23 +7,23 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import java.io.IOException;
 
 /**
- * Custom Serializer for {@link ValidationIssue} to add prefix to code and replace boolean with yes/no.
+ * Custom Serializer for {@link ValidationIssueType} to add prefix to code and replace boolean with yes/no.
  */
-public class ValidationIssueSerializer extends StdSerializer<ValidationIssue> {
+public class ValidationIssueSerializer extends StdSerializer<ValidationIssueType> {
 
   public ValidationIssueSerializer() {
     this(null);
   }
 
-  public ValidationIssueSerializer(Class<ValidationIssue> t) {
+  public ValidationIssueSerializer(Class<ValidationIssueType> t) {
     super(t);
   }
 
   @Override
-  public void serialize(ValidationIssue validationIssue, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+  public void serialize(ValidationIssueType validationIssueType, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
     jsonGenerator.writeStartObject();
-    jsonGenerator.writeStringField("code", "VAL-" + validationIssue.code());
-    jsonGenerator.writeStringField("detail", validationIssue.detail());
+    jsonGenerator.writeStringField("code", "VAL-" + validationIssueType.code());
+    jsonGenerator.writeStringField("detail", validationIssueType.detail());
     jsonGenerator.writeEndObject();
   }
 }

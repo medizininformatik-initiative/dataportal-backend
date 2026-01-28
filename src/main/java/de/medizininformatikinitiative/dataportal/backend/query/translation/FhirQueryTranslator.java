@@ -2,7 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A translator for translating a {@link StructuredQuery} into its FHIR search query format.
+ * A translator for translating a {@link Ccdl} into its FHIR search query format.
  */
 @RequiredArgsConstructor
 class FhirQueryTranslator implements QueryTranslator {
@@ -34,7 +34,7 @@ class FhirQueryTranslator implements QueryTranslator {
   private final ObjectMapper jsonUtil;
 
   @Override
-  public String translate(StructuredQuery query) throws QueryTranslationException {
+  public String translate(Ccdl query) throws QueryTranslationException {
     HttpHeaders requestHeaders = new HttpHeaders();
     requestHeaders.putAll(Map.of(
         // TODO: Resolve this with the Flare team. This is NOT the header to be used.
@@ -48,9 +48,9 @@ class FhirQueryTranslator implements QueryTranslator {
       HttpEntity<String> request = new HttpEntity<>(jsonUtil.writeValueAsString(query), requestHeaders);
       return client.postForObject(FLARE_QUERY_TRANSLATE_ENDPOINT_PATH, request, String.class);
     } catch (JsonProcessingException e) {
-      throw new QueryTranslationException("cannot encode structured query as JSON", e);
+      throw new QueryTranslationException("cannot encode CCDL as JSON", e);
     } catch (RestClientException e) {
-      throw new QueryTranslationException("cannot translate structured query in FHIR search format using Flare", e);
+      throw new QueryTranslationException("cannot translate CCDL in FHIR search format using Flare", e);
     }
   }
 }

@@ -7,7 +7,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService.ResultDetail;
 import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResultLine;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilter;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.QueryQuota;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
@@ -22,7 +22,6 @@ import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultService;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultServiceSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslatorSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -106,9 +105,6 @@ public class QueryHandlerServiceIT {
   private DataqueryCsvExportService dataqueryCsvExportService;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
-
-  @MockitoBean
   private JsonSchemaValidator jsonSchemaValidator;
 
   @Autowired
@@ -117,9 +113,9 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testRunQuery() {
-    var testStructuredQuery = createValidStructuredQuery();
+    var testCcdl = createValidCcdl();
 
-    queryHandlerService.runQuery(testStructuredQuery, "test").block();
+    queryHandlerService.runQuery(testCcdl, "test").block();
 
     assertThat(queryRepository.count()).isOne();
     assertThat(queryDispatchRepository.count()).isOne();
@@ -295,7 +291,7 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testGetQuery_succeess() throws JsonProcessingException {
-    var queryContentString = jsonUtil.writeValueAsString(createValidStructuredQuery());
+    var queryContentString = jsonUtil.writeValueAsString(createValidCcdl());
     var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
     var queryContent = new QueryContent(queryContentString);
     queryContent.setHash(queryContentHash);
@@ -308,12 +304,12 @@ public class QueryHandlerServiceIT {
 
     assertThat(queryFromDb.label()).isNull();
     assertThat(queryFromDb.comment()).isNull();
-    assertThat(queryFromDb.content().inclusionCriteria()).isEqualTo(createValidStructuredQuery().inclusionCriteria());
+    assertThat(queryFromDb.content().inclusionCriteria()).isEqualTo(createValidCcdl().inclusionCriteria());
   }
 
   @Test
   public void testGetQueryContent_nullIfNotFound() throws JsonProcessingException {
-    var queryContentString = jsonUtil.writeValueAsString(createValidStructuredQuery());
+    var queryContentString = jsonUtil.writeValueAsString(createValidCcdl());
     var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
     var queryContent = new QueryContent(queryContentString);
     queryContent.setHash(queryContentHash);
@@ -433,13 +429,13 @@ public class QueryHandlerServiceIT {
   @Test
   @DisplayName("translateQueryToCql() -> succeeds")
   public void translateQueryToCql_succeeds() {
-    var cql = assertDoesNotThrow(() -> queryHandlerService.translateQueryToCql(createValidStructuredQuery()));
+    var cql = assertDoesNotThrow(() -> queryHandlerService.translateQueryToCql(createValidCcdl()));
 
     assertThat(cql).isInstanceOf(String.class);
     AssertionsForClassTypes.assertThat(cql).containsIgnoringCase("Context Patient");
   }
 
-  private StructuredQuery createValidStructuredQuery() {
+  private Ccdl createValidCcdl() {
     var termCode = TermCode.builder()
         .code("424144002")
         .system("http://snomed.info/sct")
@@ -466,7 +462,7 @@ public class QueryHandlerServiceIT {
         .context(context)
         .valueFilter(valueFilter)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .build();

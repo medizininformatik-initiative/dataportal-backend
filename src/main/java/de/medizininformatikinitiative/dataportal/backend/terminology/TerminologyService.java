@@ -51,6 +51,16 @@ public class TerminologyService {
         .min().orElse(Integer.MAX_VALUE);
   }
 
+  public String getUiProfile(String contextualizedTermCodeHash)
+      throws UiProfileNotFoundException {
+    Optional<de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfile> uiProfile = uiProfileRepository.findByContextualizedTermcodeHash(contextualizedTermCodeHash);
+    if (uiProfile.isPresent()) {
+      return uiProfile.get().getUiProfile();
+    } else {
+      throw new UiProfileNotFoundException();
+    }
+  }
+
   public String getUiProfileName(String contextualizedTermCodeHash) {
     Optional<String> uiProfileName = uiProfileRepository.getUiProfileNameByContextualizedTermcodeHash(contextualizedTermCodeHash);
     return uiProfileName.orElse("undefined");

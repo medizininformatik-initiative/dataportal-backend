@@ -15,7 +15,8 @@ import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.Auth
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.InvalidAuthenticationException;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingService;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationException;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
+import de.medizininformatikinitiative.dataportal.backend.validation.ContentValidationException;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -53,7 +55,7 @@ public class FeasibilityQueryHandlerRestController {
 
   public static final String HEADER_X_DETAILED_OBFUSCATED_RESULT_WAS_EMPTY = "X-Detailed-Obfuscated-Result-Was-Empty";
   private final QueryHandlerService queryHandlerService;
-  private final StructuredQueryValidation structuredQueryValidation;
+  private final ValidationService validationService;
   private final RateLimitingService rateLimitingService;
   private final UserBlacklistRepository userBlacklistRepository;
   private final AuthenticationHelper authenticationHelper;
@@ -87,31 +89,36 @@ public class FeasibilityQueryHandlerRestController {
 
   public FeasibilityQueryHandlerRestController(QueryHandlerService queryHandlerService,
                                                RateLimitingService rateLimitingService,
-                                               StructuredQueryValidation structuredQueryValidation,
+                                               ValidationService validationService,
                                                UserBlacklistRepository userBlacklistRepository,
                                                AuthenticationHelper authenticationHelper,
                                                @Value("${app.apiBaseUrl}") String apiBaseUrl) {
     this.queryHandlerService = queryHandlerService;
     this.rateLimitingService = rateLimitingService;
-    this.structuredQueryValidation = structuredQueryValidation;
+    this.validationService = validationService;
     this.userBlacklistRepository = userBlacklistRepository;
     this.authenticationHelper = authenticationHelper;
     this.apiBaseUrl = apiBaseUrl;
   }
 
   @PostMapping
-  public Mono<ResponseEntity<Object>> runQuery(
+  public ResponseEntity<Object> runQuery(
       @RequestBody JsonNode queryNode,
       @Context HttpServletRequest request,
       Authentication authentication)
-      throws InvalidAuthenticationException {
+      throws InvalidAuthenticationException, NoSuchMethodException {
 
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
-    if (!validationErrors.isEmpty()) {
-      return Mono.just(new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST));
+    var schemaValidationErrors = validationService.validateCcdlSchema(queryNode);
+    if (!schemaValidationErrors.isEmpty()) {
+      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
     }
 
-    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
+    var query = validationService.ccdlFromJsonNode(queryNode);
+    try {
+      validationService.validateCcdlContent(query);
+    } catch (MethodArgumentNotValidException e) {
+      throw new ContentValidationException(e);
+    }
 
     String userId = authentication.getName();
     Optional<UserBlacklist> userBlacklistEntry = userBlacklistRepository.findByUserId(
@@ -121,11 +128,10 @@ public class FeasibilityQueryHandlerRestController {
 
     if (!isPowerUser && userBlacklistEntry.isPresent()) {
       var issues = FeasibilityIssues.builder()
-          .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
-          .build();
-      return Mono.just(
-          new ResponseEntity<>(issues,
-              HttpStatus.FORBIDDEN));
+              .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
+              .build();
+      return new ResponseEntity<>(issues,
+              HttpStatus.FORBIDDEN);
     }
 
     Long amountOfQueriesByUserAndHardInterval = queryHandlerService.getAmountOfQueriesByUserAndInterval(
@@ -147,11 +153,10 @@ public class FeasibilityQueryHandlerRestController {
       userBlacklistRepository.save(userBlacklist);
 
       var issues = FeasibilityIssues.builder()
-          .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
-          .build();
-      return Mono.just(
-          new ResponseEntity<>(issues,
-              HttpStatus.FORBIDDEN));
+              .issues(List.of(FeasibilityIssue.USER_BLACKLISTED_NOT_POWER_USER))
+              .build();
+      return new ResponseEntity<>(issues,
+              HttpStatus.FORBIDDEN);
     }
     Long amountOfQueriesByUserAndSoftInterval = queryHandlerService.getAmountOfQueriesByUserAndInterval(
         userId, quotaSoftCreateInterval);
@@ -161,15 +166,12 @@ public class FeasibilityQueryHandlerRestController {
       HttpHeaders httpHeaders = new HttpHeaders();
       httpHeaders.add(HttpHeaders.RETRY_AFTER, Long.toString(retryAfter));
       var issues = FeasibilityIssues.builder()
-          .issues(List.of(FeasibilityIssue.QUOTA_EXCEEDED))
-          .build();
-      return Mono.just(
-          new ResponseEntity<>(issues, httpHeaders,
-              HttpStatus.TOO_MANY_REQUESTS));
+              .issues(List.of(FeasibilityIssue.QUOTA_EXCEEDED))
+              .build();
+      return new ResponseEntity<>(issues, httpHeaders,
+              HttpStatus.TOO_MANY_REQUESTS);
     }
-    // Note: this is using a ResponseEntity instead of a ServerResponse since this is a
-    //       @Controller annotated class. This can be adjusted as soon as we switch to the new
-    //       functional web framework (if ever).
+
     return queryHandlerService.runQuery(query, userId)
         .map(queryId -> buildResultLocationUri(request, queryId))
         .map(resultLocation -> ResponseEntity.created(resultLocation).build())
@@ -177,7 +179,7 @@ public class FeasibilityQueryHandlerRestController {
           log.error("running a query for '%s' failed".formatted(userId), e);
           return Mono.just(ResponseEntity.internalServerError()
               .body(e.getMessage()));
-        });
+        }).block();
   }
 
   private URI buildResultLocationUri(HttpServletRequest httpServletRequest,
@@ -275,26 +277,14 @@ public class FeasibilityQueryHandlerRestController {
     return new ResponseEntity<>(queryResult, HttpStatus.OK);
   }
 
-  @PostMapping("/validate")
-  public ResponseEntity<?> validateStructuredQuery(
-      @RequestBody JsonNode queryNode) {
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
-    if (!validationErrors.isEmpty()) {
-      return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
-    }
-
-    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
-    return new ResponseEntity<>(structuredQueryValidation.annotateStructuredQuery(query, false), HttpStatus.OK);
-  }
-
   @PostMapping(value = "/cql")
   public ResponseEntity<?> sq2Cql(@RequestBody JsonNode queryNode) {
-    var validationErrors = queryHandlerService.validateCcdl(queryNode);
+    var validationErrors = validationService.validateCcdlSchema(queryNode);
     if (!validationErrors.isEmpty()) {
       return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
     }
 
-    var query = queryHandlerService.ccdlFromJsonNode(queryNode);
+    var query = validationService.ccdlFromJsonNode(queryNode);
     try {
       var cql = queryHandlerService.translateQueryToCql(query);
       var sanitizedCql = StringEscapeUtils.escapeHtml4(cql);
