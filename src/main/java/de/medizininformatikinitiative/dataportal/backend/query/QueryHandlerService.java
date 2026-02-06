@@ -14,6 +14,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.result.ResultServ
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationException;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslator;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class QueryHandlerService {
 
   public enum ResultDetail {
@@ -66,6 +68,13 @@ public class QueryHandlerService {
     } catch (QueryDispatchException e) {
       return Mono.error(e);
     }
+  }
+
+  public Long runQueryAsync(Ccdl ccdl, String userId) throws QueryDispatchException {
+      var queryId = queryDispatcher.enqueueNewQuery(ccdl, userId);
+      queryDispatcher.dispatchEnqueuedQueryAsync(queryId);
+
+      return queryId;
   }
 
   @Transactional

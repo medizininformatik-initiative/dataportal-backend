@@ -9,6 +9,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResult;
 import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResultRateLimit;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.FeasibilityIssue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.FeasibilityIssues;
+import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklist;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
@@ -172,14 +173,25 @@ public class FeasibilityQueryHandlerRestController {
               HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    return queryHandlerService.runQuery(query, userId)
-        .map(queryId -> buildResultLocationUri(request, queryId))
-        .map(resultLocation -> ResponseEntity.created(resultLocation).build())
-        .onErrorResume(e -> {
-          log.error("running a query for '%s' failed".formatted(userId), e);
-          return Mono.just(ResponseEntity.internalServerError()
-              .body(e.getMessage()));
-        }).block();
+//    return queryHandlerService.runQuery(query, userId)
+//        .map(queryId -> buildResultLocationUri(request, queryId))
+//        .map(resultLocation -> ResponseEntity.created(resultLocation).build())
+//        .onErrorResume(e -> {
+//          log.error("running a query for '%s' failed".formatted(userId), e);
+//          return Mono.just(ResponseEntity.internalServerError()
+//              .body(e.getMessage()));
+//        }).block();
+
+    try {
+      var queryId = queryHandlerService.runQueryAsync(query, userId);
+      return ResponseEntity
+          .created(buildResultLocationUri(request, queryId))
+          .build();
+    } catch (QueryDispatchException e) {
+      return ResponseEntity.internalServerError().build();
+    }
+
+
   }
 
   private URI buildResultLocationUri(HttpServletRequest httpServletRequest,
