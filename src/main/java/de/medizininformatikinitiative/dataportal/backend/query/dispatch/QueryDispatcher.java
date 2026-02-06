@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerClient;
+import de.medizininformatikinitiative.dataportal.backend.query.broker.QueryDefinitionNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.QueryNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.UnsupportedMediaTypeException;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.*;
@@ -16,6 +17,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -119,6 +121,33 @@ public class QueryDispatcher {
     }
   }
 
+  @Async
+  public void dispatchEnqueuedQueryAsync(Long queryId) throws QueryDispatchException {
+    try {
+      var enqueuedQuery = getEnqueuedQuery(queryId);
+      var deserializedQueryBody = getCcdlFromEnqueuedQuery(enqueuedQuery);
+      var translatedQueryBodyFormats = translateQueryIntoTargetFormats(deserializedQueryBody);
+
+      var dispatchable = new Dispatchable(enqueuedQuery, translatedQueryBodyFormats);
+
+      // Dispatch to all brokers synchronously
+      boolean allDispatchesFailed = queryBrokerClients.stream()
+          .noneMatch(broker -> dispatchSynchronously(dispatchable, broker));
+
+      if (allDispatchesFailed) {
+        throw new QueryDispatchException(
+            "cannot dispatch query with id '%s'. Dispatch failed for all brokers".formatted(queryId)
+        );
+      }
+
+    } catch (QueryDispatchException e) {
+      log.error("Dispatch of query with id '{}' failed", queryId, e);
+      throw new QueryDispatchException(
+          "Dispatch of query with id '%s' failed".formatted(queryId), e
+      );
+    }
+  }
+
   /**
    * Dispatches a single dispatchable entity (query) using the specified broker.
    * Dispatching happens in an asynchronous fashion.
@@ -148,6 +177,28 @@ public class QueryDispatcher {
         return false;
       }
     });
+  }
+
+  private Boolean dispatchSynchronously(Dispatchable dispatchable, BrokerClient broker) {
+    try {
+      var brokerQueryId = broker.createQuery(dispatchable.query.getId());
+
+      for (var entry : dispatchable.serializedQueryByFormat.entrySet()) {
+        broker.addQueryDefinition(brokerQueryId, entry.getKey(), entry.getValue());
+      }
+
+      broker.publishQuery(brokerQueryId);
+      persistDispatchedQuery(dispatchable.query, brokerQueryId, broker.getBrokerType());
+
+      log.info("Dispatched query '{}' as '{}' with broker type '{}'",
+          dispatchable.query.getId(), brokerQueryId, broker.getBrokerType());
+      return true;
+
+    } catch (UnsupportedMediaTypeException | QueryNotFoundException | IOException | QueryDefinitionNotFoundException e) {
+      log.error("Failed to dispatch query '{}' with broker type '{}': {}",
+          dispatchable.query.getId(), broker.getBrokerType(), e.getMessage());
+      return false;
+    }
   }
 
   private String serializedCcdl(Ccdl query) throws QueryDispatchException {

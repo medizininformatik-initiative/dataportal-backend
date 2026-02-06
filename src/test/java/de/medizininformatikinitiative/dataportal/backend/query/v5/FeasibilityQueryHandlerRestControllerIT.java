@@ -385,7 +385,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
     doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
-    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+//    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+    doReturn(1L).when(queryHandlerService).runQueryAsync(any(Ccdl.class), eq("test"));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -406,7 +407,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
     doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
     doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
-    doReturn(Mono.error(dispatchError)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+//    doReturn(Mono.error(dispatchError)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+    doThrow(dispatchError).when(queryHandlerService).runQueryAsync(any(Ccdl.class), eq("test"));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -485,7 +487,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
     doReturn(true).when(authenticationHelper).hasAuthority(any(Authentication.class), eq("ROLE_DATAPORTAL_TEST_POWER"));
     doReturn((long) quotaHardCreateAmount).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaHardCreateInterval));
     doReturn((long) (quotaSoftCreateAmount - 1)).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaSoftCreateInterval));
-    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+//    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+    doReturn(1L).when(queryHandlerService).runQueryAsync(any(Ccdl.class), eq("test"));
 
     mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
