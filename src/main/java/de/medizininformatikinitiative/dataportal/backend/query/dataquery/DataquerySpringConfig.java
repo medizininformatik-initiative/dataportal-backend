@@ -13,13 +13,12 @@ public class DataquerySpringConfig {
 
   @Bean
   public DataqueryHandler createDataqueryHandler(
-      JsonSchemaValidator jsonSchemaValidator,
       DataqueryCsvExportService dataqueryCsvExportService,
       @Qualifier("translation") ObjectMapper jsonUtil,
       DataqueryRepository dataqueryRepository,
       @Value("${app.maxSavedQueriesPerUser}") Integer maxSavedQueriesPerUser,
       @Value("${app.keycloakAdminRole}") String keycloakAdminRole
   ) {
-    return new DataqueryHandler(jsonSchemaValidator, dataqueryCsvExportService, jsonUtil, dataqueryRepository, maxSavedQueriesPerUser, keycloakAdminRole);
+    return new DataqueryHandler(dataqueryCsvExportService, jsonUtil, dataqueryRepository, maxSavedQueriesPerUser, keycloakAdminRole);
   }
 }

@@ -87,7 +87,7 @@ services:
       POSTGRES_DB: "dataportal"
 
   dataportal-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.5
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.4
     container_name: dataportal-elastic
     ports:
       - '9200:9200'
@@ -105,7 +105,7 @@ services:
       xpack.security.enabled: false
 
   blaze:
-    image: "samply/blaze:1.1.2"
+    image: "samply/blaze:1.4.2"
     environment:
       BASE_URL: "http://blaze:8080"
       JAVA_TOOL_OPTIONS: "-Xmx1g"
@@ -136,7 +136,7 @@ services:
       - "dataportal-auth-db:/var/lib/postgresql/data"
 
   auth:
-    image: keycloak/keycloak:26.4
+    image: keycloak/keycloak:26.5
     command: ["start", "--import-realm"]
     restart: unless-stopped
     environment:

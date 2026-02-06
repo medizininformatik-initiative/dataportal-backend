@@ -13,7 +13,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerServi
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
-import de.medizininformatikinitiative.dataportal.backend.query.api.validation.StructuredQueryValidatorSpringConfig;
+import de.medizininformatikinitiative.dataportal.backend.query.api.validation.CcdlValidatorSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklist;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistRepository;
@@ -22,7 +22,10 @@ import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.Rate
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationException;
-import de.medizininformatikinitiative.dataportal.backend.terminology.validation.StructuredQueryValidation;
+import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -57,19 +60,19 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.any;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 @Tag("query")
 @ExtendWith(SpringExtension.class)
-@Import({StructuredQueryValidatorSpringConfig.class,
+@Import({CcdlValidatorSpringConfig.class,
     RateLimitingServiceSpringConfig.class
 })
 @WebMvcTest(
     controllers = FeasibilityQueryHandlerRestController.class,
     properties = {
-        "app.enableQueryValidation=true"
+        "app.enableQueryValidation=false"
     }
 )
 @SuppressWarnings("NewClassNamingConvention")
@@ -87,7 +90,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
   private QueryHandlerService queryHandlerService;
 
   @MockitoBean
-  private StructuredQueryValidation structuredQueryValidation;
+  private ValidationService validationService;
 
   @MockitoBean
   private JsonSchemaValidator jsonSchemaValidator;
@@ -100,6 +103,15 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
   @MockitoBean
   private AuthenticationHelper authenticationHelper;
+
+  @MockitoBean
+  private TerminologyEsService terminologyEsService;
+
+  @MockitoBean
+  private TerminologyService terminologyService;
+
+  @MockitoBean
+  private CodeableConceptService codeableConceptService;
 
   @Value("${app.privacy.quota.soft.create.amount}")
   private int quotaSoftCreateAmount;
@@ -120,7 +132,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
   private long maxSavedQueriesPerUser;
 
   @NotNull
-  private static StructuredQuery createValidStructuredQuery() {
+  private static Ccdl createValidCcdl() {
     var termCode = TermCode.builder()
         .code("424144002")
         .system("http://snomed.info/sct")
@@ -147,7 +159,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
         .context(context)
         .valueFilter(valueFilter)
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(criterion)))
         .exclusionCriteria(List.of())
@@ -155,7 +167,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private static StructuredQuery createValidAnnotatedStructuredQuery(boolean withIssues) {
+  private static Ccdl createValidAnnotatedCcdl(boolean withIssues) {
     var termCode = TermCode.builder()
         .code("LL2191-6")
         .system("http://loinc.org")
@@ -165,9 +177,9 @@ public class FeasibilityQueryHandlerRestControllerIT {
         .termCodes(List.of(termCode))
         .attributeFilters(List.of())
         .context(termCode)
-        .validationIssues(withIssues ? List.of(ValidationIssue.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
+        .validationIssueTypes(withIssues ? List.of(ValidationIssueType.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
         .build();
-    return StructuredQuery.builder()
+    return Ccdl.builder()
         .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
         .inclusionCriteria(List.of(List.of(inclusionCriterion)))
         .exclusionCriteria(List.of())
@@ -189,7 +201,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
   private static de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContent createValidQueryContent(long id) {
     var queryContent = new de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContent();
     queryContent.setId(id);
-    queryContent.setQueryContent(createValidStructuredQuery().toString());
+    queryContent.setQueryContent(createValidCcdl().toString());
     queryContent.setHash("abc");
     return queryContent;
   }
@@ -233,7 +245,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
   private static Query createValidApiQuery(long id) {
     return Query.builder()
         .id(id)
-        .content(createValidStructuredQuery())
+        .content(createValidCcdl())
         .label("test")
         .comment("test")
         .build();
@@ -346,42 +358,39 @@ public class FeasibilityQueryHandlerRestControllerIT {
 
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
-  public void testRunQueryEndpoint_FailsOnInvalidStructuredQueryWith400() throws Exception {
-    var testQuery = StructuredQuery.builder().build();
+  public void testRunQueryEndpoint_FailsOnInvalidCcdlWith400() throws Exception {
+    var testQuery = Ccdl.builder().build();
 
-    doReturn(List.of(IssueWrapper.builder()
+    doReturn(List.of(ValidationIssue.builder()
         .path("foo")
-        .value("bar").build()))
-        .when(queryHandlerService).validateCcdl(any(JsonNode.class));
+        .value(ValidationIssueValue.builder()
+            .code("VAL-000")
+            .message("bar")
+            .build())
+        .build()))
+        .when(validationService).validateCcdlSchema(any(JsonNode.class));
 
     var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
-  public void testRunQueryEndpoint_SucceedsOnValidStructuredQueryWith201() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+  public void testRunQueryEndpoint_SucceedsOnValidCcdlWith201() throws Exception {
+    Ccdl testQuery = createValidCcdl();
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+//    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+    doReturn(1L).when(queryHandlerService).runQueryAsync(any(Ccdl.class), eq("test"));
 
-    var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+    mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().isCreated())
         .andExpect(header().exists("location"))
         .andExpect(header().string("location", PATH + "/1"));
@@ -390,146 +399,100 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnDownstreamServiceError() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+    Ccdl testQuery = createValidCcdl();
 
     var dispatchError = new QueryDispatchException("something went wrong");
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doReturn(Mono.error(dispatchError)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+//    doReturn(Mono.error(dispatchError)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+    doThrow(dispatchError).when(queryHandlerService).runQueryAsync(any(Ccdl.class), eq("test"));
 
-    var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+    mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().is(HttpStatus.INTERNAL_SERVER_ERROR.value()));
   }
 
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnSoftQuotaExceeded() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+    Ccdl testQuery = createValidCcdl();
 
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
     doReturn((long) quotaSoftCreateAmount + 1).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), any(String.class));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-    var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+    mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()));
   }
 
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
-  public void testValidateQueryEndpoint_SucceedsOnValidQuery() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
-
-
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
-
-    mockMvc.perform(post(URI.create(PATH + "/validate")).with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.inclusionCriteria[0].[0].issues").isArray())
-        .andExpect(jsonPath("$.inclusionCriteria[0].[0].issues").isEmpty());
-  }
-
-  @Test
-  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
-  public void testValidateQueryEndpoint_FailsOnInvalidCriteriaWith400() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(true);
-
-    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
-
-    mockMvc.perform(post(URI.create(PATH + "/validate")).with(csrf())
-            .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnBeingBlacklistedWith403() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+    Ccdl testQuery = createValidCcdl();
     UserBlacklist userBlacklistEntry = new UserBlacklist();
     userBlacklistEntry.setId(1L);
     userBlacklistEntry.setUserId("test");
     userBlacklistEntry.setBlacklistedAt(new Timestamp(System.currentTimeMillis()));
     Optional<UserBlacklist> userBlacklistOptional = Optional.of(userBlacklistEntry);
-    doReturn(userBlacklistOptional).when(userBlacklistRepository).findByUserId(any(String.class));
-    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
 
-    var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+    doReturn(userBlacklistOptional).when(userBlacklistRepository).findByUserId(any(String.class));
+    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+
+    mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().isForbidden());
   }
 
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnExceedingHardLimitWith403() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+    Ccdl testQuery = createValidCcdl();
 
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
     doReturn((long) quotaHardCreateAmount).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaHardCreateInterval));
-    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
 
-    var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+    mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().isForbidden());
   }
 
   @Test
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER", "DATAPORTAL_TEST_POWER"}, username = "test")
   public void testRunQueryEndpoint_SucceedsOnExceedingHardlimitAsPowerUserWith201() throws Exception {
-    StructuredQuery testQuery = createValidStructuredQuery();
-    var annotatedQuery = createValidAnnotatedStructuredQuery(false);
+    Ccdl testQuery = createValidCcdl();
 
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
 
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(testQuery).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
     doReturn(true).when(authenticationHelper).hasAuthority(any(Authentication.class), eq("ROLE_DATAPORTAL_TEST_POWER"));
     doReturn((long) quotaHardCreateAmount).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaHardCreateInterval));
     doReturn((long) (quotaSoftCreateAmount - 1)).when(queryHandlerService).getAmountOfQueriesByUserAndInterval(any(String.class), eq(quotaSoftCreateInterval));
-    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(StructuredQuery.class), eq("test"));
-    doReturn(annotatedQuery).when(structuredQueryValidation).annotateStructuredQuery(any(StructuredQuery.class), any(Boolean.class));
+//    doReturn(Mono.just(1L)).when(queryHandlerService).runQuery(any(Ccdl.class), eq("test"));
+    doReturn(1L).when(queryHandlerService).runQueryAsync(any(Ccdl.class), eq("test"));
 
-    var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+    mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().isCreated())
         .andExpect(header().exists("location"))
         .andExpect(header().string("location", PATH + "/1"));
@@ -623,13 +586,16 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @Test
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
   public void testSq2Cql_succeeds() throws Exception {
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doReturn(createDummyCql()).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(createValidCcdl()).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(createDummyCql()).when(queryHandlerService).translateQueryToCql(any(Ccdl.class));
+
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
 
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
             .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(createValidStructuredQuery())))
+            .content(jsonUtil.writeValueAsString(createValidCcdl())))
         .andExpect(status().isOk())
         .andExpect(content().contentType("text/cql;charset=UTF-8"));
   }
@@ -637,26 +603,29 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @Test
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
   public void testSq2Cql_failsWith400() throws Exception {
-    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
+    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(createValidCcdl()).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(Ccdl.class));
 
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
             .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(createValidStructuredQuery())))
+            .content(jsonUtil.writeValueAsString(createValidCcdl())))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   @WithMockUser(roles = {"DATAPORTAL_TEST_USER"}, username = "test")
   public void testSq2Cql_failsWith422() throws Exception {
-    doReturn(List.of()).when(queryHandlerService).validateCcdl(any(JsonNode.class));
-    doReturn(createValidStructuredQuery()).when(queryHandlerService).ccdlFromJsonNode(any(JsonNode.class));
-    doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(StructuredQuery.class));
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(createValidCcdl()).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doThrow(QueryTranslationException.class).when(queryHandlerService).translateQueryToCql(any(Ccdl.class));
+
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
 
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
             .contentType(APPLICATION_JSON)
-            .content(jsonUtil.writeValueAsString(createValidStructuredQuery())))
+            .content(jsonUtil.writeValueAsString(createValidCcdl())))
         .andExpect(status().isUnprocessableEntity());
   }
 
@@ -675,6 +644,42 @@ public class FeasibilityQueryHandlerRestControllerIT {
         define InInitialPopulation:
           Criterion
         
+        """;
+  }
+
+  @NotNull
+  private String createValidUiProfileString() {
+    return """
+        {
+            "attributeDefinitions": [],
+            "name": "Patient1",
+            "timeRestrictionAllowed": false,
+            "valueDefinition": {
+                "allowedUnits": [],
+                "display": {
+                    "original": "Geschlecht",
+                    "translations": [
+                        {
+                            "language": "en-US",
+                            "value": "Gender"
+                        },
+                        {
+                            "language": "de-DE",
+                            "value": "Geschlecht"
+                        }
+                    ]
+                },
+                "max": null,
+                "min": null,
+                "optional": false,
+                "precision": 1,
+                "referencedCriteriaSet": [],
+                "referencedValueSet": [
+                    "http://hl7.org/fhir/ValueSet/administrative-gender"
+                ],
+                "type": "concept"
+            }
+        }
         """;
   }
 }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.medizininformatikinitiative.dataportal.backend.query.api.AttributeFilter;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilter;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import lombok.Builder;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public record Criterion(
     @JsonProperty("attributeFilters") List<AttributeFilter> attributeFilters,
     @JsonProperty("valueFilter") ValueFilter valueFilter,
     @JsonProperty("timeRestriction") TimeRestriction timeRestriction,
-    @JsonProperty("issues") List<ValidationIssue> validationIssues
+    @JsonProperty("issues") List<ValidationIssueType> validationIssueTypes
 ) {
   public static Criterion createImmutableCriterion(MutableCriterion mutableCriterion) {
     return Criterion.builder()
@@ -28,7 +28,7 @@ public record Criterion(
         .attributeFilters(mutableCriterion.attributeFilters)
         .valueFilter(mutableCriterion.valueFilter)
         .timeRestriction(mutableCriterion.timeRestriction)
-        .validationIssues(mutableCriterion.validationIssues)
+        .validationIssueTypes(mutableCriterion.validationIssueTypes)
         .build();
   }
 }

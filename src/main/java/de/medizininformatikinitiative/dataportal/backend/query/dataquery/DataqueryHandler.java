@@ -1,14 +1,10 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
-import de.medizininformatikinitiative.dataportal.backend.query.api.status.IssueWrapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
-import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
@@ -32,8 +28,6 @@ import java.util.zip.ZipOutputStream;
 @Transactional
 @RequiredArgsConstructor
 public class DataqueryHandler {
-  @NonNull
-  final JsonSchemaValidator jsonSchemaValidator;
   @NonNull
   private final DataqueryCsvExportService csvExportHandler;
   @NonNull
@@ -198,36 +192,6 @@ public class DataqueryHandler {
     zipOutputStream.close();
     byteArrayOutputStream.close();
     return byteArrayOutputStream;
-  }
-
-  public List<IssueWrapper> validateCrtdl(JsonNode crtdlNode) {
-    List<IssueWrapper> issues = new ArrayList<>();
-    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_CRTDL, crtdlNode);
-    if (!validationErrors.isEmpty()) {
-      issues = validationErrors.stream()
-          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
-          .toList();
-    }
-    return issues;
-  }
-
-  public Crtdl crtdlFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, Crtdl.class);
-  }
-
-  public List<IssueWrapper> validateDataExtraction(JsonNode dataExtractionNode) {
-    List<IssueWrapper> issues = new ArrayList<>();
-    var validationErrors = jsonSchemaValidator.validate(JsonSchemaValidator.SCHEMA_DATAEXTRACTION, dataExtractionNode);
-    if (!validationErrors.isEmpty()) {
-      issues = validationErrors.stream()
-          .map(e -> new IssueWrapper(e.getInstanceLocation().toString(), e.getMessage()))
-          .toList();
-    }
-    return issues;
-  }
-
-  public DataExtraction dataExtractionFromJsonNode(JsonNode jsonNode) {
-    return jsonUtil.convertValue(jsonNode, DataExtraction.class);
   }
 
   private boolean hasAccess(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery, Authentication authentication) {

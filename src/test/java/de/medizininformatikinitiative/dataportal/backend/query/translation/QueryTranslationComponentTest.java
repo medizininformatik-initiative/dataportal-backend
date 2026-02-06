@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
 import de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType;
-import de.medizininformatikinitiative.dataportal.backend.query.api.StructuredQuery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class QueryTranslationComponentTest {
 
-  private static StructuredQuery testQuery;
+  private static Ccdl testQuery;
   @Mock
   private QueryTranslator firstQueryTranslator;
   @Mock
@@ -31,7 +31,7 @@ public class QueryTranslationComponentTest {
 
   @BeforeAll
   public static void setUp() {
-    testQuery = StructuredQuery.builder().build();
+    testQuery = Ccdl.builder().build();
   }
 
   @AfterEach
