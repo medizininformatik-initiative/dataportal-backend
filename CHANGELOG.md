@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.4.0] - 2026-02-10
+
+- Based on ontology **[v3.9.6](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.6)**
+
+### Changed
+- Update ontology to [v3.9.6](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.6) ([#844](https://github.com/medizininformatik-initiative/dataportal-backend/issues/844))
+### Fixed
+- Check children fields when validating CRTDL and checking attributeRefs ([#842](https://github.com/medizininformatik-initiative/dataportal-backend/issues/842))
+- DSF Client Key PW may be null ([#776](https://github.com/medizininformatik-initiative/dataportal-backend/issues/776))
+### Security
+- update dependencies
+
 ## [8.3.0] - 2026-02-06
 
 - Based on ontology **[v3.9.5](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.5)**
