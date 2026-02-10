@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
+import de.medizininformatikinitiative.dataportal.backend.dse.api.Field;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Attribute;
 import de.medizininformatikinitiative.dataportal.backend.query.api.AttributeGroup;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
@@ -62,6 +63,20 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
     return !containsInvalidEntries(ctx, dataExtraction);
   }
 
+  private boolean fieldOrChildrenMatch(Field field, String attributeRef) {
+
+    if (field.id().equalsIgnoreCase(attributeRef)) {
+      return true;
+    }
+
+    if (field.children() != null && !field.children().isEmpty()) {
+      return field.children().stream()
+              .anyMatch(child -> fieldOrChildrenMatch(child, attributeRef));
+    }
+
+    return false;
+  }
+
   private boolean containsInvalidEntries(ConstraintValidatorContext ctx, DataExtraction dataExtraction) {
     if (dataExtraction == null || dataExtraction.attributeGroups() == null || dataExtraction.attributeGroups().isEmpty()) return false;
     var hasErrors = false;
@@ -109,8 +124,9 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
       var attribute = attributeGroup.attributes().get(i);
 
       if (dseProfile != null) {
-        // ensure linkedGroup exists for each attribute of type "reference" in dse profile
+
         if (dseProfile.references().stream().anyMatch(ref -> ref.id().equalsIgnoreCase(attribute.attributeRef()))) {
+          // ensure linkedGroup exists for each attribute of type "reference" in dse profile
           if (attribute.linkedGroups() == null || attribute.linkedGroups().isEmpty()) {
             ValidationErrorBuilder.addError(
                 ctx,
@@ -119,7 +135,7 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
             );
             hasErrors = true;
           }
-        } else if (dseProfile.fields().stream().noneMatch(field -> field.id().equalsIgnoreCase(attribute.attributeRef()))) {
+        } else if (dseProfile.fields().stream().noneMatch(field -> fieldOrChildrenMatch(field, attribute.attributeRef()))) {
           // attributes of DSE features (attributeGroups) (fields) not in ontology profile for feature
           ValidationErrorBuilder.addError(
               ctx,

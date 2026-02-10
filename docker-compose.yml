@@ -147,6 +147,4 @@ services:
 
 volumes:
   dataportal-postgres-data:
-    name: "dataportal-postgres-data"
   dataportal-elastic-data:
-    name: "dataportal-elastic-data"
