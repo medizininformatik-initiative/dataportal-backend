@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.PeriodDuration;
-import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.security.Principal;
@@ -185,25 +184,18 @@ public class FeasibilityQueryHandlerRestController {
     try {
       var queryId = queryHandlerService.runQueryAsync(query, userId);
       return ResponseEntity
-          .created(buildResultLocationUri(request, queryId))
+          .created(buildResultLocationUri(queryId))
           .build();
     } catch (QueryDispatchException e) {
       return ResponseEntity.internalServerError().build();
     }
-
-
   }
 
-  private URI buildResultLocationUri(HttpServletRequest httpServletRequest,
-                                     Long queryId) {
-    UriComponentsBuilder uriBuilder =
-        (apiBaseUrl != null && !apiBaseUrl.isEmpty())
-            ? ServletUriComponentsBuilder.fromUriString(apiBaseUrl)
-            : ServletUriComponentsBuilder.fromRequestUri(httpServletRequest);
-
-    return uriBuilder.replacePath("")
-        .pathSegment("api", "v5", "query", "feasibility", String.valueOf(queryId))
-        .build()
+  private URI buildResultLocationUri(Long queryId) {
+    return ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/{id}")
+        .buildAndExpand(queryId)
         .toUri();
   }
 

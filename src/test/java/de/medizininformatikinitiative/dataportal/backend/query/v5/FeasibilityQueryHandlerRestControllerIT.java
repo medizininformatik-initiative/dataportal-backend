@@ -393,7 +393,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
             .content(jsonUtil.writeValueAsString(testQuery)))
         .andExpect(status().isCreated())
         .andExpect(header().exists("location"))
-        .andExpect(header().string("location", PATH + "/1"));
+        .andExpect(header().string("location", "http://localhost" + PATH + "/1"));
   }
 
   @Test
@@ -495,7 +495,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
             .content(jsonUtil.writeValueAsString(testQuery)))
         .andExpect(status().isCreated())
         .andExpect(header().exists("location"))
-        .andExpect(header().string("location", PATH + "/1"));
+        .andExpect(header().string("location", "http://localhost" + PATH + "/1"));
   }
 
   @ParameterizedTest

@@ -19,9 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.Principal;
 import java.util.ArrayList;
 
@@ -63,18 +63,15 @@ public class DataqueryHandlerRestController {
     }
 
     var dataquerySlots = dataqueryHandler.getDataquerySlotsJson(principal.getName());
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/{id}")
+        .buildAndExpand(dataqueryId)
+        .toUri();
 
-    UriComponentsBuilder uriBuilder = (apiBaseUrl != null && !apiBaseUrl.isEmpty())
-        ? ServletUriComponentsBuilder.fromUriString(apiBaseUrl)
-        : ServletUriComponentsBuilder.fromRequestUri(httpServletRequest);
-
-    var uriString = uriBuilder.replacePath("")
-        .pathSegment("api", API_VERSION, "query", "data", String.valueOf(dataqueryId))
-        .build()
-        .toUriString();
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add(HttpHeaders.LOCATION, uriString);
-    return new ResponseEntity<>(dataquerySlots, httpHeaders, HttpStatus.CREATED);
+    return ResponseEntity
+        .created(location)
+        .body(dataquerySlots);
   }
 
   @GetMapping(path = "/{dataqueryId}")
@@ -261,17 +258,15 @@ public class DataqueryHandlerRestController {
       return new ResponseEntity<>("storage exceeded", HttpStatus.FORBIDDEN);
     }
 
-    UriComponentsBuilder uriBuilder = (apiBaseUrl != null && !apiBaseUrl.isEmpty())
-        ? ServletUriComponentsBuilder.fromUriString(apiBaseUrl)
-        : ServletUriComponentsBuilder.fromRequestUri(httpServletRequest);
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/{id}")
+        .buildAndExpand(dataqueryId)
+        .toUri();
 
-    var uriString = uriBuilder.replacePath("")
-        .pathSegment("api", API_VERSION, "query", "data", String.valueOf(dataqueryId))
-        .build()
-        .toUriString();
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add(HttpHeaders.LOCATION, uriString);
-    return new ResponseEntity<>(httpHeaders, HttpStatus.CREATED);
+    return ResponseEntity
+        .created(location)
+        .build();
   }
 
   @PutMapping(path = "/{dataqueryId}")
