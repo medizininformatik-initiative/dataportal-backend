@@ -18,7 +18,10 @@ hero:
       text: API
       link: /api
     - theme: alt
-      text: Example
-      link: /example
+      text: Use
+      link: /use
+    - theme: alt
+      text: Development Setup
+      link: /dev
 
 ---

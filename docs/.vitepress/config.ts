@@ -57,8 +57,13 @@ export default withMermaid({
                 activeMatch: '^/$'
             },
             {
-                text: 'Example Use',
-                link: '/example.md',
+                text: 'Use',
+                link: '/use.md',
+                activeMatch: '^/$'
+            },
+            {
+                text: 'Development Setup',
+                link: '/dev.md',
                 activeMatch: '^/$'
             }
         ]
