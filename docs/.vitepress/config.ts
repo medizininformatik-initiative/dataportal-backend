@@ -1,8 +1,8 @@
 import { withMermaid } from "vitepress-plugin-mermaid";
 
 export default withMermaid({
-    title: 'Dataportal Backend',
-    description: 'Dataportal Backend Documentation',
+    title: 'Data Portal Backend',
+    description: 'Data Portal Backend Documentation',
     ignoreDeadLinks: true,
     base: process.env.DOCS_BASE || '/',
     appearance: true,

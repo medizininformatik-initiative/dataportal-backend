@@ -1,6 +1,6 @@
 # Configuration
 
-The dataportal backend is configured via environment variables. See this sections for available variables and their defaults
+The Data Portal backend is configured via environment variables. See this sections for available variables and their defaults
 
 #### `LOG_LEVEL`
 
@@ -94,7 +94,7 @@ Realm to be used for checking bearer tokens.
 
 #### `KEYCLOAK_ALLOWED_ROLE`
 
-The name of the role a user needs to have basic access to the dataportal function.
+The name of the role a user needs to have basic access to the Data Portal function.
 
 **Default:** `DataportalUser`
 
@@ -121,7 +121,7 @@ Role that gives admin rights to a user. Admins do not fall under any limits and 
 
 #### `SPRING_DATASOURCE_URL`
 
-The JDBC URL of the Postgres dataportal database.
+The JDBC URL of the Postgres Data Portal database.
 
 **Default:** `jdbc:postgresql://dataportal-db:5432/dataportal`
 
@@ -130,7 +130,7 @@ The JDBC URL of the Postgres dataportal database.
 
 #### `SPRING_DATASOURCE_USERNAME`
 
-Username to connect to the Postgres dataportal database.
+Username to connect to the Postgres Data Portal database.
 
 **Default:** `dataportaluser`
 
@@ -139,7 +139,7 @@ Username to connect to the Postgres dataportal database.
 
 #### `SPRING_DATASOURCE_PASSWORD`
 
-Password to connect to the Postgres dataportal database.
+Password to connect to the Postgres Data Portal database.
 
 **Default:** `dataportalpw`
 
@@ -223,15 +223,6 @@ URL of the local FLARE webservice - needed for FHIR query translation and when r
 URL of the local FHIR server that handles CQL requests
 
 **Default:** `http://cql`
-
-
----
-
-#### `API_BASE_URL`
-
-Sets the base URL of the webservice. This is necessary if the webservice is running behind a proxy server. If not filled, the API base URL is the request URL
-
-**Default:** – (none)
 
 
 ---

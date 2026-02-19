@@ -1,6 +1,6 @@
 openapi: 3.1.1
 info:
-  title: Dataportal Backend REST API
+  title: Data Portal Backend REST API
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -1908,7 +1908,7 @@ components:
             - "DataportalBackend"
         name:
           type: string
-          example: "Dataportal Backend"
+          example: "Data Portal Backend"
         time:
           type: string
           format: date-time
@@ -2031,5 +2031,5 @@ components:
         implicit:
           authorizationUrl: http://to.be.defined/auth
           scopes:
-            user: Dataportal user role
-            admin: Dataportal admin role
+            user: Data Portal user role
+            admin: Data Portal admin role

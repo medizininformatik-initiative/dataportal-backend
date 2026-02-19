@@ -1,9 +1,9 @@
 ---
 layout: home
-title: Dataportal Backend
+title: Data Portal Backend
 hero:
-  name: FDPG - Dataportal Backend
-  tagline: Providing the FDPG Dataportal UI with (almost) everything it needs
+  name: FDPG - Data Portal Backend
+  tagline: Providing the FDPG Data Portal UI with (almost) everything it needs
   actions:
     - theme: brand
       text: Overview

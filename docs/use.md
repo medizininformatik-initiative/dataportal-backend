@@ -2,8 +2,8 @@
 
 ## Support for self-signed certificates
 
-The dataportal backend supports the use of self-signed certificates from your own CAs.
-On each startup, the dataportal backend will search through the folder /app/certs inside the container, add all found
+The Data Portal backend supports the use of self-signed certificates from your own CAs.
+On each startup, the Data Portal backend will search through the folder /app/certs inside the container, add all found
 CA *.pem files to a java truststore and start the application with this truststore.
 
 Using docker-compose, mount a folder from your host (e.g.: ./certs) to the /app/certs folder,
@@ -12,7 +12,7 @@ have the .pem extension.
 
 ## Working with the Backend
 
-This backend provides a rest webservice which connects the [Dataportal GUI](https://github.com/medizininformatik-initiative/feasibility-gui)
+This backend provides a rest webservice which connects the [Data Portal GUI](https://github.com/medizininformatik-initiative/feasibility-gui)
 and the corresponding middlewares.
 
 To send a feasibility query to the backend, use the following example query:
