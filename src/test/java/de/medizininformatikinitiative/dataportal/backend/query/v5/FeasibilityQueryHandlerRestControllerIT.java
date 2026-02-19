@@ -393,7 +393,28 @@ public class FeasibilityQueryHandlerRestControllerIT {
             .content(jsonUtil.writeValueAsString(testQuery)))
         .andExpect(status().isCreated())
         .andExpect(header().exists("location"))
-        .andExpect(header().string("location", PATH + "/1"));
+        .andExpect(header().string("location", "http://localhost" + PATH + "/1"));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
+  public void testRunQueryEndpoint_respectsContextPath() throws Exception {
+    var contextPath = "/foo/bar";
+    Ccdl testQuery = createValidCcdl();
+
+    doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
+    doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));
+    doReturn(true).when(terminologyService).isExistingTermCode(any(String.class), any(String.class));
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(any(String.class));
+    doReturn(1L).when(queryHandlerService).runQueryAsync(any(Ccdl.class), eq("test"));
+
+    mockMvc.perform(post(URI.create(contextPath + PATH)).with(csrf())
+            .contextPath(contextPath)
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(testQuery)))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("location"))
+        .andExpect(header().string("location", "http://localhost" + contextPath + PATH + "/1"));
   }
 
   @Test
@@ -495,7 +516,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
             .content(jsonUtil.writeValueAsString(testQuery)))
         .andExpect(status().isCreated())
         .andExpect(header().exists("location"))
-        .andExpect(header().string("location", PATH + "/1"));
+        .andExpect(header().string("location", "http://localhost" + PATH + "/1"));
   }
 
   @ParameterizedTest

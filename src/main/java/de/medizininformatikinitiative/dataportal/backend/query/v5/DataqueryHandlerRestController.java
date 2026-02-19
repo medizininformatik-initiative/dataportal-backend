@@ -9,19 +9,16 @@ import de.medizininformatikinitiative.dataportal.backend.query.dataquery.Dataque
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryHandler;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryStorageFullException;
 import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.core.Context;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.Principal;
 import java.util.ArrayList;
 
@@ -38,19 +35,16 @@ public class DataqueryHandlerRestController {
   private final static String API_VERSION = "v5";
   private final DataqueryHandler dataqueryHandler;
   private final ValidationService validationService;
-  private final String apiBaseUrl;
 
   public DataqueryHandlerRestController(DataqueryHandler dataqueryHandler,
-                                        ValidationService validationService,
-                                        @Value("${app.apiBaseUrl}") String apiBaseUrl) {
+                                        ValidationService validationService) {
     this.dataqueryHandler = dataqueryHandler;
     this.validationService = validationService;
-    this.apiBaseUrl = apiBaseUrl;
   }
 
   @PostMapping(path = "")
   public ResponseEntity<Object> storeDataquery(@RequestBody Dataquery dataquery,
-                                               @Context HttpServletRequest httpServletRequest, Principal principal) {
+                                               Principal principal) {
 
     Long dataqueryId;
     try {
@@ -63,18 +57,15 @@ public class DataqueryHandlerRestController {
     }
 
     var dataquerySlots = dataqueryHandler.getDataquerySlotsJson(principal.getName());
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/{id}")
+        .buildAndExpand(dataqueryId)
+        .toUri();
 
-    UriComponentsBuilder uriBuilder = (apiBaseUrl != null && !apiBaseUrl.isEmpty())
-        ? ServletUriComponentsBuilder.fromUriString(apiBaseUrl)
-        : ServletUriComponentsBuilder.fromRequestUri(httpServletRequest);
-
-    var uriString = uriBuilder.replacePath("")
-        .pathSegment("api", API_VERSION, "query", "data", String.valueOf(dataqueryId))
-        .build()
-        .toUriString();
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add(HttpHeaders.LOCATION, uriString);
-    return new ResponseEntity<>(dataquerySlots, httpHeaders, HttpStatus.CREATED);
+    return ResponseEntity
+        .created(location)
+        .body(dataquerySlots);
   }
 
   @GetMapping(path = "/{dataqueryId}")
@@ -248,8 +239,7 @@ public class DataqueryHandlerRestController {
   @PostMapping(path = "/by-user/{userId}")
   public ResponseEntity<Object> storeDataqueryForUser(@RequestBody Dataquery dataquery,
                                                       @PathVariable(value = "userId") String userId,
-                                                      @RequestParam(value = "ttl") String ttlDuration,
-                                                      @Context HttpServletRequest httpServletRequest) {
+                                                      @RequestParam(value = "ttl") String ttlDuration) {
 
     Long dataqueryId;
     try {
@@ -261,17 +251,15 @@ public class DataqueryHandlerRestController {
       return new ResponseEntity<>("storage exceeded", HttpStatus.FORBIDDEN);
     }
 
-    UriComponentsBuilder uriBuilder = (apiBaseUrl != null && !apiBaseUrl.isEmpty())
-        ? ServletUriComponentsBuilder.fromUriString(apiBaseUrl)
-        : ServletUriComponentsBuilder.fromRequestUri(httpServletRequest);
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/{id}")
+        .buildAndExpand(dataqueryId)
+        .toUri();
 
-    var uriString = uriBuilder.replacePath("")
-        .pathSegment("api", API_VERSION, "query", "data", String.valueOf(dataqueryId))
-        .build()
-        .toUriString();
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add(HttpHeaders.LOCATION, uriString);
-    return new ResponseEntity<>(httpHeaders, HttpStatus.CREATED);
+    return ResponseEntity
+        .created(location)
+        .build();
   }
 
   @PutMapping(path = "/{dataqueryId}")
