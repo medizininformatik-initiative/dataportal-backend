@@ -59,7 +59,6 @@ public class FeasibilityQueryHandlerRestController {
   private final RateLimitingService rateLimitingService;
   private final UserBlacklistRepository userBlacklistRepository;
   private final AuthenticationHelper authenticationHelper;
-  private final String apiBaseUrl;
 
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
@@ -91,20 +90,17 @@ public class FeasibilityQueryHandlerRestController {
                                                RateLimitingService rateLimitingService,
                                                ValidationService validationService,
                                                UserBlacklistRepository userBlacklistRepository,
-                                               AuthenticationHelper authenticationHelper,
-                                               @Value("${app.apiBaseUrl}") String apiBaseUrl) {
+                                               AuthenticationHelper authenticationHelper) {
     this.queryHandlerService = queryHandlerService;
     this.rateLimitingService = rateLimitingService;
     this.validationService = validationService;
     this.userBlacklistRepository = userBlacklistRepository;
     this.authenticationHelper = authenticationHelper;
-    this.apiBaseUrl = apiBaseUrl;
   }
 
   @PostMapping
   public ResponseEntity<Object> runQuery(
       @RequestBody JsonNode queryNode,
-      @Context HttpServletRequest request,
       Authentication authentication)
       throws InvalidAuthenticationException, NoSuchMethodException {
 
