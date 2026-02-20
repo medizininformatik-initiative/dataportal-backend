@@ -1,0 +1,2035 @@
+openapi: 3.1.1
+info:
+  title: Data Portal Backend REST API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 7.3.0
+externalDocs:
+  description: Check out the github repository
+  url: https://github.com/medizininformatik-initiative/feasibility-backend
+servers:
+  - url: https://to.be.defined
+    variables:
+      basePath:
+        default: /api/v5
+tags:
+  - name: dataquery
+    description: operations for dataqueries
+  - name: feasibility
+    description: operations for feasibility queries
+  - name: terminology
+    description: operations to work with the ontology
+  - name: codeable concepts
+    description: operations on codeable concepts
+  - name: dse
+    description: Data Selection and Extraction
+  - name: validation
+    description: Validate CCDL/CRTDL
+  - name: intrinsics
+    description: Offers intrinsic information about this application.
+paths:
+  /query/data:
+    post:
+      tags:
+        - dataquery
+      summary: Store a dataquery in the backend.
+      description: The query will only be stored, nothing will be dispatched. Does not have to pass any validation and may be incomplete. May or may not contain result.
+      operationId: storeDataQuery
+      requestBody:
+        description: Dataquery
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataquery"
+        required: true
+      responses:
+        201:
+          description: Dataquery successfully stored
+          headers:
+            Location:
+              description: Path to the result of your newly created dataquery
+              schema:
+                type: string
+                format: url
+        401:
+          description: Unauthorized - please login first
+        422:
+          description: Invalid input
+      security:
+        - dataportal_auth:
+            - user
+    get:
+      tags:
+        - dataquery
+      summary: Get the list of the calling users dataqueries
+      description: This returns a list with basic information about the queries. Id, label (if present) and creation date. Basically for all parameters I'm not sure if we need them (at least right away)
+      operationId: getDataQueryList
+      parameters:
+        - name: include-temporary
+          in: query
+          description: if set to true, queries spawned from other users are contained
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: skip-validation
+          in: query
+          description: If true, do not validate the query and do not include a list of invalid terms. TODO - maybe invert this?
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataQueryListEntry"
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
+  /query/data/by-user/{userId}:
+    post:
+      tags:
+        - dataquery
+      summary: Spawn a query for another user
+      operationId: createDataqueryForUser
+      parameters:
+        - name: ttl
+          in: query
+          description: How long until the query gets deleted (ISO 8601 Duration)
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Dataquery
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataquery"
+        required: true
+      responses:
+        201:
+          description: Dataquery successfully stored
+          headers:
+            Location:
+              description: Path to the result of your newly created dataquery
+              schema:
+                type: string
+                format: url
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Storage exceeded
+      security:
+        - dataportal_auth:
+            - admin
+    get:
+      tags:
+        - dataquery
+      summary: Finds query summary (id, label, lastModified) of all queries of one user
+      operationId: findDataQueriesByUser
+      parameters:
+        - name: userId
+          in: path
+          description: User to filter by (keycloak id)
+          required: true
+          schema:
+            type: string
+        - name: include-temporary
+          in: query
+          description: if set to true, queries spawned from other users are contained
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: skip-validation
+          in: query
+          description: If true, do not validate the query and do not include a list of invalid terms. TODO - maybe invert this?
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataQueryListEntry"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: User not found
+      security:
+        - dataportal_auth:
+            - admin
+  /query/data/{queryId}:
+    get:
+      tags:
+        - dataquery
+      summary: Read dataquery by ID
+      description: Returns a single dataquery.
+      operationId: getDataQueryById
+      parameters:
+        - name: queryId
+          in: path
+          description: ID of query to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: skip-validation
+          in: query
+          description: If true, do not validate the query and do not include a list of invalid terms
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataquery"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Query not found
+      security:
+        - dataportal_auth:
+            - user
+    put:
+      tags:
+        - dataquery
+      summary: Update a dataquery in the backend.
+      description: The query will be updated. It must be provided completely, there are no partial updates.
+      operationId: updateDataQuery
+      requestBody:
+        description: CRTDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataquery"
+        required: true
+      responses:
+        204:
+          description: Dataquery successfully updated
+          content: {}
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: The dataquery could not be found
+      security:
+        - dataportal_auth:
+            - user
+    delete:
+      tags:
+        - dataquery
+      summary: Delete a dataquery
+      operationId: deleteDataQuery
+      parameters:
+        - name: queryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        204:
+          description: No content
+          content:
+            {}
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: The dataquery could not be found
+      security:
+        - dataportal_auth:
+            - user
+  /query/data/{queryId}/crtdl:
+    get:
+      tags:
+        - dataquery
+      summary: Read dataquery CRTDL by ID
+      description: Returns only the CRTDL part of a dataquery or alternatively a zip file containing the crtdl json and csv files
+      operationId: getDataQueryCRTDLById
+      parameters:
+        - name: Accept
+          in: header
+          description: Specify the desired format
+          schema:
+            type: string
+            enum: [application/json, application/zip]
+        - name: queryId
+          in: path
+          description: ID of query to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: skip-validation
+          in: query
+          description: If true, do not validate the query and do not include a list of invalid terms
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CRTDL"
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Query not found
+      security:
+        - dataportal_auth:
+            - admin
+            - user
+  /query/data/convert/crtdl:
+    post:
+      tags:
+        - dataquery
+      summary: Convert a CRTDL to an zip file with csv contents.
+      description: Nothing will be stored, only a zip file will be generated
+      operationId: convertCrtdlToCsv
+      requestBody:
+        description: CRTDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CRTDL"
+        required: true
+      responses:
+        200:
+          description: CRTDL successfully converted
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                examples:
+                  - attachment; filename=untitled.zip
+            Content-Type:
+              schema:
+                type: string
+                examples:
+                  application/zip
+        400:
+          description: Bad request - validation of the CRTDL failed
+        401:
+          description: Unauthorized - please login first
+        422:
+          description: Invalid input
+      security:
+        - dataportal_auth:
+            - user
+  /query/feasibility:
+    post:
+      tags:
+        - feasibility
+      summary: Create a feasibility query in the broker
+      description: The query will be spawned in the broker and directly be dispatched.
+      operationId: runQuery
+      parameters:
+      requestBody:
+        description: CCDL to create and dispatch
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CCDL"
+        required: true
+      responses:
+        201:
+          description: Query successfully dispatched
+          headers:
+            Location:
+              description: Path to the result of your newly created query
+              schema:
+                type: string
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        422:
+          description: Invalid input
+        429:
+          description: Too many requests in a given amount of time (configurable)
+        500:
+          description: Dispatch error
+      security:
+        - dataportal_auth:
+            - user
+  /query/feasibility/{queryId}/summary-result:
+    get:
+      tags:
+        - feasibility
+      summary: Read query result summary by query ID
+      description: Returns the aggregated results to a query. There is no breakdown by site. So, the resultLines parameter of the response is de facto an array of QueryResultLines, but it will always be empty in this case.
+      operationId: getQueryResultSummary
+      parameters:
+        - name: queryId
+          in: path
+          description: ID of query for which the results are requested
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResultSummary"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Query not found
+        429:
+          description: Too many requests
+      security:
+        - dataportal_auth:
+            - admin
+            - user
+  /query/feasibility/{queryId}/detailed-result:
+    get:
+      tags:
+        - feasibility
+      summary: Read query result by ID
+      description: Returns results to query with the real site names - admin rights required
+      operationId: getQueryResultDetailed
+      parameters:
+        - name: queryId
+          in: path
+          description: ID of query for which the results are requested
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResult"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Query not found
+      security:
+        - dataportal_auth:
+            - admin
+  /query/feasibility/{queryId}/detailed-obfuscated-result:
+    get:
+      tags:
+        - feasibility
+      summary: Read obfuscated query result by ID
+      description: Returns all results to query with the site names obfuscated.
+      operationId: getQueryResultDetailedObfuscated
+      parameters:
+        - name: queryId
+          in: path
+          description: ID of query for which the results are requested
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResultObfuscated"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Query not found
+        429:
+          description: Too many requests
+      security:
+        - dataportal_auth:
+            - admin
+            - user
+  /query/feasibility/detailed-obfuscated-result-rate-limit:
+    get:
+      tags:
+        - feasibility
+      summary: get the rate limit for detailed obfuscated results
+      operationId: getDetailedObfuscatedResultRateLimit
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResultRateLimit"
+  /query/feasibility/quota:
+    get:
+      tags:
+        - feasibility
+      summary: get the amount of feasibility queries a user has executed during the configured intervals
+      operationId: getQuota
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryQuota"
+  /query/feasibility/cql:
+    post:
+      tags:
+        - feasibility
+      summary: Translate a CCDL to cql
+      description: Nothing will be persisted in the backend. It simply returns the cql.
+      operationId: sq2Cql
+      parameters:
+      requestBody:
+        description: CCDL to translate
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CCDL"
+        required: true
+      responses:
+        200:
+          description: Query successfully translated
+        401:
+          description: Unauthorized - please login first
+        422:
+          description: Invalid input
+      security:
+        - dataportal_auth:
+            - user
+  /query/data/query-slots:
+    get:
+      tags:
+        - dataquery
+      summary: Show how many data query slots a user already used and how many he has left.
+      operationId: getDataQuerySlots
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataQuerySlots"
+      security:
+        - dataportal_auth:
+            - user
+  /terminology/search/filter:
+    get:
+      tags:
+        - terminology
+      summary: Get the list of available filters
+      operationId: getFilters
+      responses:
+        200:
+          description: Ok, return the list of available filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Filter"
+  /terminology/systems:
+    get:
+      tags:
+        - terminology
+      summary: Get the mapping of system urls to display names
+      operationId: getTerminologySystems
+      responses:
+        200:
+          description: System mapping file found and readable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerminologySystems"
+  /terminology/entry/search:
+    get:
+      tags:
+        - terminology
+      summary: Parametrized search in the configured elastic search service.
+      operationId: searchEntry
+      parameters:
+        - name: searchterm
+          in: query
+          description: The term to search for. In case of an empty searchterm, return the first page of the whole index, sorted alphabetically
+          schema:
+            type: string
+          examples: Diabetes Mellitus
+        - name: contexts
+          in: query
+          description: Limit the search to any of the given contexts
+          schema:
+            type: array
+            items:
+              type: string
+              example: Diagnosis
+          style: form
+          explode: false
+        - name: terminologies
+          in: query
+          description: Limit the search to a any of the given terminologies
+          schema:
+            type: array
+            items:
+              type: string
+              example: ICD10
+          style: form
+          explode: false
+        - name: kds-modules
+          in: query
+          description: Limit the search to any of the given KDS modules
+          schema:
+            type: array
+            items:
+              type: string
+              example: Condition
+          style: form
+          explode: false
+        - name: criteria-sets
+          in: query
+          description: Limit the search to certain criteria sets (specified via url)
+          schema:
+            type: array
+            items:
+              type: string
+              example: http://fhir.de/CodeSystem/bfarm/icd-10-gm
+          style: form
+          explode: false
+        - name: availability
+          in: query
+          description: Limit the search to available items? (Maybe better invert this one to make this the default?)
+          schema:
+            type: boolean
+          example: true
+        - name: page-size
+          in: query
+          description: How many results shall be returned per page
+          schema:
+            type: integer
+          example: 10
+        - name: page
+          in: query
+          description: Which page shall be returned
+          schema:
+            type: integer
+          example: 42
+      responses:
+        200:
+          description: Ok, return the list of results for the search
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElasticSearchResult"
+  /terminology/entry/bulk-search:
+    post:
+      tags:
+        - terminology
+      summary: Search for exact matches in the configured elastic search service.
+      operationId: bulkSearchEntry
+      requestBody:
+        description: Terminology Bulk Search
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerminologyBulkSearchRequest"
+        required: true
+      responses:
+        200:
+          description: Ok, return the list of results for the search
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElasticSearchBulkResult"
+  /terminology/entry/{id}/relations:
+    get:
+      tags:
+        - terminology
+      summary: Get the detailed entry for a criterion, containing children and translations
+      operationId: getEntryById
+      parameters:
+        - name: id
+          in: path
+          description: The id (contextualized termcode hash) of the entry that shall be retrieved
+          required: true
+          schema:
+            type: string
+            example: 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8
+      responses:
+        200:
+          description: Entry found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationsEntry"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Entry not found
+  /terminology/entry/{id}:
+    get:
+      tags:
+        - terminology
+      summary: Get the detailed entry for a criterion, containing children and translations
+      description: This should be in the getEntryById call, but for better distinction between the return values it is listed seperately here
+      operationId: getEntriesById
+      parameters:
+        - name: id
+          in: path
+          description: The ids (contextualized termcode hash) of the entries that shall be retrieved
+          required: true
+          schema:
+            type: string
+            example: 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8
+      responses:
+        200:
+          description: Entry found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElasticSearchResultEntry"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Entry not found
+  /terminology/criteria-profile-data:
+    get:
+      tags:
+        - terminology
+      summary: Get the profile data for criteria, containing uiProfileId context and termCodes
+      description: This should return all the information needed to build criteria in the frontend.
+      operationId: getEntriesByIdsWithDetail
+      parameters:
+        - name: ids
+          in: query
+          style: form
+          explode: false
+          description: A comma-separated list of IDs (contextualized termcode hashes) of the entries that shall be retrieved.
+          required: true
+          schema:
+            type: string
+            example: 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8,203e04cd-4f0a-321b-b1ad-9ec6d211e0a9
+      responses:
+        200:
+          description: Entries found. May contain empty entries if some were not found.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CriteriaProfileData"
+        401:
+          description: Unauthorized - please login first.
+        403:
+          description: Forbidden - insufficient access rights.
+  /terminology/ui-profile:
+    get:
+      tags:
+        - terminology
+      summary: Get a List of all UiProfiles
+      operationId: getUiProfiles
+      responses:
+        200:
+          description: Get all UiProfiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UiProfileList"
+        401:
+          description: Unauthorized - please login first.
+        403:
+          description: Forbidden - insufficient access rights.
+  /codeable-concept/entry/search:
+    get:
+      tags:
+        - codeable concepts
+      summary: Search for codeable concepts by code or display. Optionally filter by value sets
+      operationId: searchCodeableConcepts
+      parameters:
+        - name: searchterm
+          in: query
+          description: The term to search for. In case of an empty searchterm, return the first page of the whole index, sorted alphabetically
+          schema:
+            type: string
+          example: Diabetes Mellitus
+        - name: value-sets
+          in: query
+          description: Limit the search to certain value sets (specified via url)
+          schema:
+            type: array
+            items:
+              type: string
+              example: http://fhir.de/CodeSystem/bfarm/icd-10-gm
+          style: form
+          explode: false
+        - name: page-size
+          in: query
+          description: How many results shall be returned per page
+          schema:
+            type: integer
+          example: 10
+        - name: page
+          in: query
+          description: Which page shall be returned
+          schema:
+            type: integer
+          example: 42
+      responses:
+        200:
+          description: Ok, return the page of results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeableConceptSearchResult"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+  /codeable-concept/entry/bulk-search:
+    post:
+      tags:
+        - codeable concepts
+      summary: Search for codeable concepts by code with exact match
+      operationId: bulkSearchCodeableConcepts
+      requestBody:
+        description: Codeable Concepts Bulk Search
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeableConceptBulkSearchRequest"
+        required: true
+      responses:
+        200:
+          description: Ok, return a list with found codes and a list with codes that were not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeableConceptBulkSearchResult"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+  /codeable-concept/entry:
+    get:
+      tags:
+        - codeable concepts
+      summary: Retrieve Codeable Concepts by their ids
+      operationId: getCodeableConceptsByCode
+      parameters:
+        - name: ids
+          in: query
+          style: form
+          explode: false
+          description: The ids (contextualized termcode hash) of the entry that shall be retrieved
+          required: true
+          schema:
+            type: string
+            example: 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8,203e04cd-4f0a-321b-b1ad-9ec6d211e0a9
+      responses:
+        200:
+          description: Ok, return the codeable concept
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeableConceptEntry"
+        401:
+          description: Unauthorized - please login first
+        403:
+          description: Forbidden - insufficient access rights
+        404:
+          description: Entry not found
+  /dse/profile-tree:
+    get:
+      tags:
+        - dse
+      summary: Get the complete DSE profile tree
+      description: This can not be filtered or paginated or anything since for now it is rather small. All filtering will be done in the frontend for now. Might change if problems with that approach occur.
+      operationId: getProfileTree
+      responses:
+        200:
+          description: Profile tree file found and readable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileTreeNode"
+  /dse/profile-data:
+    get:
+      tags:
+        - dse
+      summary: Get the profile data for the submitted ids
+      description: Get profile data for all submitted ids. If a profile is not found, an error message will be supplied.
+      operationId: getProfileData
+      parameters:
+        - name: ids
+          in: query
+          style: form
+          explode: false
+          description: A comma-separated list of IDs (here - mostly URLs) of the entries that shall be retrieved.
+          required: true
+          schema:
+            type: string
+            example: https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab,https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure
+      responses:
+        200:
+          description: Success, returning profiles - may contain profiles with error messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileDataList"
+  /validation/crtdl:
+    post:
+      tags:
+        - validation
+      summary: Validate a submitted CRTDL
+      description: Check if the json matches the schema and if the content does not contain invalid entries
+      operationId: validateCrtdl
+      requestBody:
+        description: CRTDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CRTDL"
+        required: true
+      responses:
+        200:
+          description: CRTDL is valid
+        400:
+          description: CRTDL contains errors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ValidationIssue"
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
+  /validation/ccdl:
+    post:
+      tags:
+        - validation
+      summary: Validate a submitted CCDL
+      description: Check if the json matches the schema and if the content does not contain invalid entries
+      operationId: validateCcdl
+      requestBody:
+        description: CCDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CCDL"
+        required: true
+      responses:
+        200:
+          description: CCDL is valid
+        400:
+          description: CCDL contains errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationIssue"
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
+  /validation/dataquery:
+    post:
+      tags:
+        - validation
+      summary: Validate a submitted dataquery
+      description: Check if the json matches the schema and if the content does not contain invalid entries
+      operationId: validateDataquery
+      requestBody:
+        description: CCDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataquery"
+        required: true
+      responses:
+        201:
+          description: Dataquery is valid
+        400:
+          description: Dataquery contains errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationIssue"
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
+  /actuator/health:
+    get:
+      summary: Offers health information about this application.
+      description: ''
+      operationId: ''
+      responses:
+        200:
+          description: Successful health information.
+          content:
+            application/vnd.spring-boot.actuator.v3+json:
+              examples:
+                Healthy Application:
+                  value: |-
+                    {
+                        "status": "UP"
+                    }
+      tags:
+        - intrinsics
+  /actuator/info:
+    get:
+      summary: Offers build information about the backend.
+      description: ''
+      operationId: ''
+      responses:
+        200:
+          description: Successful build information.
+          content:
+            application/vnd.spring-boot.actuator.v3+json:
+              schema:
+                $ref: "#/components/schemas/SystemInfo"
+      tags:
+        - intrinsics
+  /.settings:
+    get:
+      summary: Offers config settings needed by the frontend.
+      description: ''
+      operationId: ''
+      responses:
+        200:
+          description: Successful health information.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsInfo"
+      tags:
+        - intrinsics
+components:
+  schemas:
+    Dataquery:
+      type: object
+      required:
+        - content
+      properties:
+        label:
+          type: string
+          examples:
+            - my query
+        comment:
+          type: string
+          examples:
+            - this can be a longer text explaining what this query is for
+        totalNumberOfResults:
+          type: integer
+        content:
+          type: object
+          $ref: "#/components/schemas/CRTDL"
+    CRTDL:
+      type: object
+      properties:
+        display:
+          type: string
+          examples:
+            - Example CRTDL
+        cohortDefinition:
+          type: object
+          $ref: "#/components/schemas/CCDL"
+        dataExtraction:
+          type: object
+          $ref: "#/components/schemas/DataExtractionQuery"
+    DataExtractionQuery:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - 123
+        attributeGroups:
+          type: array
+          items:
+            type: string
+            examples:
+              - to be done correctly...for now just a placeholder because it doesn't matter for this conversation
+    DataQueryListEntry:
+      type: object
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: integer
+          format: int64
+        label:
+          type: string
+        comment:
+          type: string
+        lastModified:
+          type: string
+          format: date-time
+        resultSize:
+          type: integer
+        ccdl:
+          type: object
+          properties:
+            exists:
+              type: boolean
+            isValid:
+              type: boolean
+        dataExtraction:
+          type: object
+          properties:
+            exists:
+              type: boolean
+            isValid:
+              type: boolean
+    Query:
+      type: object
+      required:
+        - id
+        - content
+      properties:
+        id:
+          type: integer
+          format: int64
+        content:
+          $ref: "#/components/schemas/CCDL"
+        label:
+          type: string
+        results:
+          $ref: "#/components/schemas/QueryResult"
+    QueryResultSummary:
+      type: object
+      properties:
+        totalNumberOfPatients:
+          type: integer
+          format: int64
+        queryId:
+          type: string
+        resultLines:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryResultLine"
+    QueryResultObfuscated:
+      type: object
+      properties:
+        totalNumberOfPatients:
+          type: integer
+          format: int64
+        queryId:
+          type: string
+        resultLines:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryResultLineObfuscated"
+    QueryResult:
+      type: object
+      properties:
+        totalNumberOfPatients:
+          type: integer
+          format: int64
+        queryId:
+          type: string
+        resultLines:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryResultLine"
+    QueryResultLine:
+      type: object
+      required:
+        - siteName
+        - numberOfPatients
+      properties:
+        siteName:
+          type: string
+        numberOfPatients:
+          type: integer
+          format: int64
+    QueryResultLineObfuscated:
+      type: object
+      required:
+        - siteName
+        - numberOfPatients
+      properties:
+        siteName:
+          type: string
+          description: obfuscated site name
+        numberOfPatients:
+          type: integer
+          format: int64
+    QueryResultRateLimit:
+      type: object
+      properties:
+        limit:
+          type: number
+          format: int64
+        remaining:
+          type: number
+          format: int64
+    CCDL:
+      type: object
+      required:
+        - version
+        - inclusionCriteria
+      properties:
+        version:
+          type: string
+          format: uri
+          description: The json schema version
+          examples:
+            - http://to_be_decided.com/draft-1/schema#
+        display:
+          type: string
+          examples:
+            - foobar
+        inclusionCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriterionList"
+        exclusionCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriterionList"
+    DataQuerySlots:
+      type: object
+      required:
+        - used
+        - total
+      properties:
+        used:
+          type: integer
+          description: The amount of used dataquery slots for a user.
+          examples:
+            - 2
+        total:
+          type: integer
+          description: The total amount of dataquery slots per user.
+          examples:
+            - 10
+    TermCode:
+      description: The termCode defines a concept based on a coding system (i.e. LOINC). The triplet of code, system and version identify the concept.
+      type: object
+      required:
+        - code
+        - system
+        - display
+      properties:
+        code:
+          type: string
+          examples:
+            - 119373006
+        system:
+          type: string
+          examples:
+            - http://snomed.info/sct
+        version:
+          type: string
+          examples:
+            - http://snomed.info/sct/900000000000207008/version/20210731
+        display:
+          type: string
+          examples:
+            - Amniotic fluid specimen (specimen)
+    beforeDate:
+      type: string
+      format: date-time
+    afterDate:
+      type: string
+      format: date-time
+    TimeRestriction:
+      anyOf:
+        - $ref: "#/components/schemas/beforeDate"
+        - $ref: "#/components/schemas/afterDate"
+    Unit:
+      type: object
+      required:
+        - code
+        - display
+      properties:
+        code:
+          type: string
+        display:
+          type: string
+    AttributeFilter:
+      type: object
+      description: An AttributeFilter requires different properties, depending on the type. Please refer to the JSON Schema for this.
+      required:
+        - type
+      properties:
+        attributeCode:
+          $ref: "#/components/schemas/TermCode"
+    ValueFilter:
+      type: object
+      description: A ValueFilter requires different properties, depending on the type. Please refer to the JSON Schema for this.
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - concept
+            - quantity-comparator
+            - quantity-range
+        selectedConcepts:
+          type: array
+          items:
+            $ref: "#/components/schemas/TermCode"
+        comparator:
+          type: string
+          enum:
+            - eq
+            - ue
+            - le
+            - lt
+            - ge
+            - gt
+        unit:
+          $ref: "#/components/schemas/Unit"
+        value:
+          type: number
+          format: double
+        minValue:
+          type: number
+          format: double
+        maxValue:
+          type: number
+          format: double
+    Criterion:
+      type: object
+      required:
+        - termCodes
+      properties:
+        termCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TermCode"
+        attributeFilters:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttributeFilter"
+        valueFilter:
+          $ref: "#/components/schemas/ValueFilter"
+        timeRestriction:
+          $ref: "#/components/schemas/TimeRestriction"
+    CriterionList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Criterion"
+    ContextualizedTermCodeList:
+      type: object
+      properties:
+        contextualizedTermCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContextualizedTermCode"
+    ContextualizedTermCode:
+      type: object
+      properties:
+        termcode:
+          $ref: "#/components/schemas/TermCode"
+        context:
+          $ref: "#/components/schemas/TermCode"
+    ValidationIssue:
+      type: object
+      required:
+        - path
+        - value
+      properties:
+        path:
+          type: string
+          examples:
+            - /inclusionCriteria/0/0/termCodes/0
+        value:
+          $ref: "#/components/schemas/ValidationIssueValue"
+        details:
+          type: object
+          description: Additional information about the error. Context dependant.
+          additionalProperties: true
+    ValidationIssueValue:
+      type: object
+      properties:
+        message:
+          type: string
+          examples:
+            - The termcode does not exist in the system.
+        code:
+          type: string
+          examples:
+            - VALIDATION-20002
+    TranslationEntry:
+      type: object
+      required:
+        - language
+        - value
+      properties:
+        language:
+          type: string
+          examples:
+            - de-DE
+            - en-US
+        value:
+          type: string
+          examples:
+            - translated entry
+    ElasticSearchResult:
+      type: object
+      properties:
+        totalHits:
+          type: integer
+          examples:
+            - 42
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticSearchResultEntry"
+    ElasticSearchBulkResult:
+      type: object
+      properties:
+        uiProfileId:
+          type: string
+        found:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticSearchResultEntryExtended"
+        notFound:
+          type: array
+          items:
+            type: string
+            examples:
+              - foo
+    RelationsEntry:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        selectable:
+          type: boolean
+        termcode:
+          type: string
+        terminology:
+          type: string
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticSearchRelationEntry"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticSearchRelationEntry"
+        relatedTerms:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticSearchRelationEntry"
+    ElasticSearchResultEntry:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        id:
+          type: string
+          format: uuid
+          examples:
+            - 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8
+        availability:
+          description: Not sure if we want this as numeric value, percentage or just boolean?
+          type: integer
+          minimum: 0
+          examples:
+            - 119578
+        context:
+          type: string
+          examples:
+            - Diagnosis
+        terminology:
+          type: string
+          examples:
+            - icd-10
+        termcode:
+          type: string
+          examples:
+            - E10-E14
+        kdsModule:
+          type: string
+          examples:
+            - Condition
+        selectable:
+          type: boolean
+          examples:
+            - true
+    ElasticSearchResultEntryExtended:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        id:
+          type: string
+          format: uuid
+          examples:
+            - 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8
+        availability:
+          description: Not sure if we want this as numeric value, percentage or just boolean?
+          type: integer
+          minimum: 0
+          examples:
+            - 119578
+        context:
+          $ref: "#/components/schemas/TermCode"
+        termCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TermCode"
+        terminology:
+          type: string
+          examples:
+            - icd-10
+        kdsModule:
+          type: string
+          examples:
+            - Condition
+        selectable:
+          type: boolean
+          examples:
+            - true
+    ElasticSearchTranslationEntry:
+      type: object
+      properties:
+        lang:
+          type: string
+          examples:
+            - en
+        value:
+          type: string
+          examples:
+            - Diabetes Mellitus
+    ElasticSearchRelationEntry:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - Endokrine, Ernährungs- und Stoffwechselerkrankungen
+        contextualizedTermcodeHash:
+          type: string
+          examples:
+            - c55d0d62-6c47-30b0-94b2-afa383ce35f7
+    Filter:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - Terminology
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/FilterValue"
+          examples:
+            - ICD10
+            - SNOMED
+            - LOINC
+    FilterValue:
+      type: string
+      examples:
+        - icd10
+    LocalizedValue:
+      type: object
+      properties:
+        language:
+          type: string
+          examples:
+            - de-DE
+            - en-US
+        value:
+          type: string
+          examples:
+            - localized entry
+            - lokalisierter Eintrag
+    DisplayEntry:
+      type: object
+      properties:
+        original:
+          type: string
+          examples:
+            - display entry
+        translations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocalizedValue"
+    CodeableConceptEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        termCode:
+          $ref: "#/components/schemas/TermCode"
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+    CodeableConceptSearchResult:
+      type: object
+      properties:
+        totalHits:
+          type: integer
+          examples:
+            - 42
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodeableConceptEntry"
+    CodeableConceptBulkSearchResult:
+      type: object
+      properties:
+        found:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodeableConceptEntry"
+        notFound:
+          type: array
+          items:
+            type: string
+            examples:
+              - foo
+    CriteriaProfileData:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        context:
+          $ref: "#/components/schemas/TermCode"
+        termCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TermCode"
+        uiProfileId:
+          type: string
+          examples:
+            - Bioprobe
+    UiProfileEntry:
+      type: object
+      properties:
+        attributeDefinitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttributeDefinition"
+        name:
+          type: string
+          examples:
+            - Diagnose
+        timeRestrictionAllowed:
+          type: boolean
+          examples:
+            - false
+        valueDefinition:
+          type: string
+    UiProfileListEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - Bioprobe
+            - Patient1
+        uiProfile:
+          $ref: "#/components/schemas/UiProfileEntry"
+    UiProfileList:
+      type: array
+      items:
+        $ref: "#/components/schemas/UiProfileListEntry"
+    AttributeDefinition:
+      type: object
+      properties:
+        allowedUnits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Unit"
+        attributeCode:
+          $ref: "#/components/schemas/TermCode"
+        max:
+          type: number
+          examples:
+            - null
+        min:
+          type: number
+          examples:
+            - null
+        optional:
+          type: boolean
+          examples:
+            - true
+        precision:
+          type: number
+          examples:
+            - 1
+        referencedCriteriaSet:
+          type: array
+          items:
+            type: string
+            examples:
+              - http://fdpg.mii.cds/CriteriaSet/Diagnose/icd-10-gm
+        referencedValueSet:
+          type: array
+          items:
+            type: string
+            examples:
+              - http://hl7.org/fhir/sid/icd-o-3
+        type:
+          type: string
+          examples:
+            - reference
+    TerminologySystems:
+      type: object
+      required:
+        - url
+        - name
+      properties:
+        url:
+          type: string
+          format: uri
+          examples:
+            - http://fhir.de/CodeSystem/bfarm/ops
+        name:
+          type: string
+          examples:
+            - OPS
+    ProfileTreeNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          examples:
+            - aee6afe1-3b96-4449-85cd-be8046ccbb84
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileTreeNode"
+        name:
+          type: string
+          examples:
+            - ProfileObservationLaboruntersuchung
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        module:
+          type: string
+          examples:
+            - modul-labor
+        url:
+          type: string
+          format: uri
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab
+        leaf:
+          type: boolean
+          examples:
+            - true
+        selectable:
+          type: boolean
+          examples:
+            - false
+    ProfileDataField:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - Observation.value[x]:valueQuantity.id
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        description:
+          $ref: "#/components/schemas/DisplayEntry"
+        type:
+          type: string
+        recommended:
+          type: boolean
+        required:
+          type: boolean
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDataField"
+    ProfileDataFilter:
+      type: object
+      properties:
+        type:
+          type: string
+          examples:
+            - token
+        name:
+          type: string
+          examples:
+            - code
+        ui_type:
+          type: string
+          examples:
+            - code
+        referencedCriteriaSet:
+          type: string
+          format: uri
+          examples:
+            - http://fdpg.mii.cds/CriteriaSet/Diagnose/icd-10-gm
+    ProfileDataEntry:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDataField"
+        filters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDataFilter"
+        errorCode:
+          type: string
+          examples:
+            - TBD-000
+        errorCause:
+          type: string
+          examples:
+            - Profile entry not found
+    ProfileDataList:
+      type: array
+      items:
+        $ref: "#/components/schemas/ProfileDataEntry"
+    QueryQuota:
+      type: object
+      properties:
+        soft:
+          $ref: "#/components/schemas/QueryQuotaEntry"
+        hard:
+          $ref: "#/components/schemas/QueryQuotaEntry"
+    QueryQuotaEntry:
+      type: object
+      properties:
+        intervalInMinutes:
+          type: number
+          examples:
+            - 60
+        used:
+          type: number
+          examples:
+            - 2
+        limit:
+          type: number
+          examples:
+            - 10
+    GitInfo:
+      type: object
+      properties:
+        build:
+          type: object
+          properties:
+            version:
+              type: string
+              examples:
+                - "7.0.0-SNAPSHOT"
+            time:
+              type: string
+              format: date-time
+              examples:
+                - "2025-03-03T14:49:54Z"
+        commit:
+          type: object
+          properties:
+            id:
+              type: object
+              properties:
+                full:
+                  type: string
+                  examples:
+                    -  "30491dadef17d601b6658dc4f267197061bc2a79"
+                abbrev:
+                  type: string
+                  examples:
+                    - "30491da"
+        branch:
+          type: string
+          examples:
+            - "feature/460-provide-count-of-sent-queries"
+    BuildInfo:
+      type: object
+      properties:
+        artifact:
+          type: string
+          examples:
+            - "DataportalBackend"
+        name:
+          type: string
+          example: "Data Portal Backend"
+        time:
+          type: string
+          format: date-time
+          examples:
+            - "2025-03-03T14:49:52.182Z"
+        version:
+          type: string
+          examples:
+            -  "7.0.0-SNAPSHOT"
+        group:
+          type: string
+          examples:
+            - "de.medizininformatik-initiative"
+    Terminology:
+      type: object
+      properties:
+        ontologyTag:
+          type: string
+          examples:
+            - "v3.1.0"
+    SystemInfo:
+      type: object
+      properties:
+        git:
+          $ref: "#/components/schemas/GitInfo"
+        build:
+          $ref: "#/components/schemas/BuildInfo"
+        terminology:
+          $ref: "#/components/schemas/Terminology"
+    SettingsInfo:
+      type: object
+      properties:
+        uiBackendApiPath:
+          type: string
+          examples:
+            - /api/v5
+        readResultSummaryPollingInterval:
+          type: string
+          format: duration
+          examples:
+            - PT1M
+        readResultDetailedObfuscatedPollingInterval:
+          type: string
+          format: duration
+          examples:
+            - PT10S
+        readResultDetailedObfuscatedAmount:
+          type: number
+          examples:
+            - 3
+        readResultDetailedObfuscatedInterval:
+          type: string
+          format: duration
+          examples:
+            - PT10S
+        passthroughPollingTimeUi:
+          type: string
+          format: duration
+          examples:
+            - PT1M
+        passthroughCcdlVersion:
+          type: string
+          examples:
+            - v1
+        passthroughPortalLink:
+          type: string
+          examples:
+            - https://antrag.forschen-fuer-gesundheit.de
+        passthroughDsePatientProfileUrl:
+          type: string
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/PatientPseudonymisiert
+        maxSavedQueriesPerUser:
+          type: number
+          examples:
+            - 10
+    TerminologyBulkSearchRequest:
+      type: object
+      properties:
+        terminology:
+          type: string
+          required: true
+          examples:
+            - http://fhir.de/CodeSystem/bfarm/icd-10-gm
+        context:
+          type: string
+          required: true
+          examples:
+            - Diagnose
+        searchterms:
+          type: array
+          required: true
+          items:
+            type: string
+            examples:
+              - Z01.81
+              - R84
+              - something invalid
+    CodeableConceptBulkSearchRequest:
+      type: object
+      properties:
+        valueSet:
+          type: string
+          required: true
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/ext/modul-biobank/ValueSet/sct-body-structures
+        searchterms:
+          type: array
+          required: true
+          items:
+            type: string
+            examples:
+              - 763436008
+              - 763434006
+              - something invalid
+  securitySchemes:
+    dataportal_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://to.be.defined/auth
+          scopes:
+            user: Data Portal user role
+            admin: Data Portal admin role
