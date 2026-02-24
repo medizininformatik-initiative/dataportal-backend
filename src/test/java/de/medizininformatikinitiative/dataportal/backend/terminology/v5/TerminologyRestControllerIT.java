@@ -96,7 +96,7 @@ public class TerminologyRestControllerIT {
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
   public void testGetUiProfiles_succeedsWith200() throws Exception {
-    doReturn(List.of(createUiProfileEntry())).when(terminologyService).getUiProfiles();
+    doReturn(List.of(createUiProfile())).when(terminologyService).getUiProfiles();
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/ui-profile")).with(csrf()))
         .andExpect(status().isOk())
@@ -289,13 +289,6 @@ public class TerminologyRestControllerIT {
         .attributeDefinitions(List.of(createAttributeDefinition()))
         .valueDefinition(createAttributeDefinition())
         .timeRestrictionAllowed(true)
-        .build();
-  }
-
-  private UiProfileEntry createUiProfileEntry() {
-    return UiProfileEntry.builder()
-        .id("test-ui-profile")
-        .uiProfile(createUiProfile())
         .build();
   }
 
