@@ -1668,20 +1668,10 @@ components:
             - false
         valueDefinition:
           type: string
-    UiProfileListEntry:
-      type: object
-      properties:
-        id:
-          type: string
-          examples:
-            - Bioprobe
-            - Patient1
-        uiProfile:
-          $ref: "#/components/schemas/UiProfileEntry"
     UiProfileList:
       type: array
       items:
-        $ref: "#/components/schemas/UiProfileListEntry"
+        $ref: "#/components/schemas/UiProfileEntry"
     AttributeDefinition:
       type: object
       properties:
