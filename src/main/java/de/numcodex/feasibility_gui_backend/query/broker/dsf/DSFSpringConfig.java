@@ -17,10 +17,13 @@ import org.threeten.extra.PeriodDuration;
 @Configuration
 public class DSFSpringConfig {
 
-    @Value("${app.broker.dsf.security.keystore.p12file}")
-    private String keyStoreFile;
+    @Value("${app.broker.dsf.security.client.certificate}")
+    private String clientCertificateFile;
 
-    @Value("${app.broker.dsf.security.keystore.password}")
+    @Value("${app.broker.dsf.security.client.key.file}")
+    private String clientKeyFile;
+
+    @Value("${app.broker.dsf.security.client.key.password}")
     private char[] keyStorePassword;
 
     @Value("${app.broker.dsf.security.certificate}")
@@ -89,7 +92,8 @@ public class DSFSpringConfig {
 
     @Bean
     FhirSecurityContextProvider fhirSecurityContextProvider() {
-        return new DSFFhirSecurityContextProvider(keyStoreFile, keyStorePassword, certificateFile);
+        return new DSFFhirSecurityContextProvider(clientCertificateFile, clientKeyFile, keyStorePassword,
+                certificateFile);
     }
 
     @Bean

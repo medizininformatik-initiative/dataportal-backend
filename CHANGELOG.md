@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [7.5.2] - 2026-02-23
+
+- Based on ontology **[v3.9.1](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.1)**
+- 
+### Changed
+- Provide Client Certificate in PEM format Instead of Java Keystore ([#497](https://github.com/medizininformatik-initiative/dataportal-backend/issues/497))
+### Fixed
+- Reconnect Websocket to DSF after Connection Failure ([#738](https://github.com/medizininformatik-initiative/dataportal-backend/issues/738))
+
 ## [7.5.1] - 2025-10-16
 
 - Based on ontology **[v3.9.1](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.1)**

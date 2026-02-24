@@ -7,4 +7,8 @@ public class FhirSecurityContextProvisionException extends Exception {
     public FhirSecurityContextProvisionException(Throwable cause) {
         super(cause);
     }
+
+    public FhirSecurityContextProvisionException(String message) {
+        super(message);
+    }
 }
