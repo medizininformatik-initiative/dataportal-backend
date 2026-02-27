@@ -125,9 +125,9 @@ public class TerminologyService {
     return result;
   }
 
-  public List<UiProfile> getUiProfiles() {
+  public List<UiProfileEntry> getUiProfiles() {
     var uiProfiles = uiProfileRepository.findAll();
-    return uiProfiles.stream()
+    var convertedUiProfiles = uiProfiles.stream()
         .map(uip -> {
           try {
             return jsonUtil.readValue(uip.getUiProfile(), UiProfile.class);
@@ -135,6 +135,10 @@ public class TerminologyService {
             throw new RuntimeException("Failed to parse uiProfileId: " + uip.getUiProfile(), e);
           }
         })
+        .toList();
+
+    return convertedUiProfiles.stream()
+        .map(UiProfileEntry::of)
         .toList();
   }
 }

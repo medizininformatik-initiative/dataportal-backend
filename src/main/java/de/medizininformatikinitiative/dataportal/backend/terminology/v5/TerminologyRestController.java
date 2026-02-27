@@ -42,7 +42,7 @@ public class TerminologyRestController {
   }
 
   @GetMapping("ui-profile")
-  public List<UiProfile> getUiProfiles() {
+  public List<UiProfileEntry> getUiProfiles() {
     return terminologyService.getUiProfiles();
   }
 
