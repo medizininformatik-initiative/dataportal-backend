@@ -21,6 +21,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.Auth
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.hamcrest.Matchers;
+import org.hl7.fhir.utilities.tests.TestConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Tag("query")
 @ExtendWith(SpringExtension.class)
-@Import(RateLimitingServiceSpringConfig.class)
+@Import({RateLimitingServiceSpringConfig.class, TestConfig.class})
 @WebMvcTest(
     controllers = DataqueryHandlerRestController.class
 )
@@ -87,7 +88,26 @@ public class DataqueryHandlerRestControllerIT {
             .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(queryId))))
         .andExpect(status().isCreated())
         .andExpect(header().exists("location"))
-        .andExpect(header().string("location", PATH_API + PATH_QUERY + PATH_DATA + "/" + queryId))
+        .andExpect(header().string("location", "http://localhost" + PATH_API + PATH_QUERY + PATH_DATA + "/" + queryId))
+        .andExpect(jsonPath("$.used").exists())
+        .andExpect(jsonPath("$.total").exists());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testStoreDataquery_respectsContextPath() throws Exception {
+    var contextPath = "/foo/bar";
+    long queryId = 1L;
+    doReturn(queryId).when(dataqueryHandler).storeDataquery(any(Dataquery.class), any(String.class));
+    doReturn(createSavedQuerySlots()).when(dataqueryHandler).getDataquerySlotsJson(any(String.class));
+
+    mockMvc.perform(post(URI.create(contextPath + PATH_API + PATH_QUERY + PATH_DATA)).with(csrf())
+            .contextPath(contextPath)
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(queryId))))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("location"))
+        .andExpect(header().string("location", "http://localhost" + contextPath + PATH_API + PATH_QUERY + PATH_DATA + "/" + queryId))
         .andExpect(jsonPath("$.used").exists())
         .andExpect(jsonPath("$.total").exists());
   }
@@ -373,6 +393,58 @@ public class DataqueryHandlerRestControllerIT {
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123" + "?skip-validation=true")).with(csrf()))
         .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_succeeds() throws Exception {
+    doReturn(1L).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_respectsContextPath() throws Exception {
+    var contextPath = "/foo/bar";
+    doReturn(1L).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(contextPath + PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .contextPath(contextPath)
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("location"))
+        .andExpect(header().string("location", "http://localhost" + contextPath + PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123/1"));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_500OnDataqueryException() throws Exception {
+    doThrow(DataqueryException.class).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_403OnStorageExceeded() throws Exception {
+    doThrow(DataqueryStorageFullException.class).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isForbidden());
   }
 
   @Test

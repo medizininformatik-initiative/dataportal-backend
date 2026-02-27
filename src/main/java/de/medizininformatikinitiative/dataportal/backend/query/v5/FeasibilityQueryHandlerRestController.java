@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.PeriodDuration;
-import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.security.Principal;
@@ -60,7 +59,6 @@ public class FeasibilityQueryHandlerRestController {
   private final RateLimitingService rateLimitingService;
   private final UserBlacklistRepository userBlacklistRepository;
   private final AuthenticationHelper authenticationHelper;
-  private final String apiBaseUrl;
 
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
@@ -92,20 +90,17 @@ public class FeasibilityQueryHandlerRestController {
                                                RateLimitingService rateLimitingService,
                                                ValidationService validationService,
                                                UserBlacklistRepository userBlacklistRepository,
-                                               AuthenticationHelper authenticationHelper,
-                                               @Value("${app.apiBaseUrl}") String apiBaseUrl) {
+                                               AuthenticationHelper authenticationHelper) {
     this.queryHandlerService = queryHandlerService;
     this.rateLimitingService = rateLimitingService;
     this.validationService = validationService;
     this.userBlacklistRepository = userBlacklistRepository;
     this.authenticationHelper = authenticationHelper;
-    this.apiBaseUrl = apiBaseUrl;
   }
 
   @PostMapping
   public ResponseEntity<Object> runQuery(
       @RequestBody JsonNode queryNode,
-      @Context HttpServletRequest request,
       Authentication authentication)
       throws InvalidAuthenticationException, NoSuchMethodException {
 
@@ -185,25 +180,18 @@ public class FeasibilityQueryHandlerRestController {
     try {
       var queryId = queryHandlerService.runQueryAsync(query, userId);
       return ResponseEntity
-          .created(buildResultLocationUri(request, queryId))
+          .created(buildResultLocationUri(queryId))
           .build();
     } catch (QueryDispatchException e) {
       return ResponseEntity.internalServerError().build();
     }
-
-
   }
 
-  private URI buildResultLocationUri(HttpServletRequest httpServletRequest,
-                                     Long queryId) {
-    UriComponentsBuilder uriBuilder =
-        (apiBaseUrl != null && !apiBaseUrl.isEmpty())
-            ? ServletUriComponentsBuilder.fromUriString(apiBaseUrl)
-            : ServletUriComponentsBuilder.fromRequestUri(httpServletRequest);
-
-    return uriBuilder.replacePath("")
-        .pathSegment("api", "v5", "query", "feasibility", String.valueOf(queryId))
-        .build()
+  private URI buildResultLocationUri(Long queryId) {
+    return ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/{id}")
+        .buildAndExpand(queryId)
         .toUri();
   }
 

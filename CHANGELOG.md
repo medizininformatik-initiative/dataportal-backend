@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.5.0] - 2026-02-27
+
+- Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
+
+### Changed
+- Update ontology to [v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0) ([#852](https://github.com/medizininformatik-initiative/dataportal-backend/issues/852))
+- Update sq2cql to [v1.3.0](https://github.com/medizininformatik-initiative/sq2cql/releases/tag/v1.3.0) ([#850](https://github.com/medizininformatik-initiative/dataportal-backend/issues/850))
+### Fixed
+- context path is no longer ignored when building location headers ([#847](https://github.com/medizininformatik-initiative/dataportal-backend/issues/847))
+
 ## [8.4.0] - 2026-02-10
 
 - Based on ontology **[v3.9.6](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v3.9.6)**
