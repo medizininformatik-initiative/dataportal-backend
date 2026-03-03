@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.CriteriaProfileData;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
-import de.medizininformatikinitiative.dataportal.backend.terminology.api.UiProfileEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -150,7 +149,7 @@ class TerminologyServiceTest {
     var result = assertDoesNotThrow(terminologyService::getUiProfiles);
 
     assertThat(result.size()).isEqualTo(1);
-    assertThat(result.get(0)).isInstanceOf(UiProfileEntry.class);
+    assertThat(result.get(0)).isInstanceOf(de.medizininformatikinitiative.dataportal.backend.terminology.api.UiProfile.class);
   }
 
   @Test

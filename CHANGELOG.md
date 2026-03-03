@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.5.1] - 2026-03-03
+
+- Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
+
+### Changed
+- Flatten unnecessarily nested UIProfiles data structure ("uiProfileId") ([#855](https://github.com/medizininformatik-initiative/dataportal-backend/issues/855))
+
 ## [8.5.0] - 2026-02-27
 
 - Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
