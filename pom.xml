@@ -459,9 +459,14 @@
             <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
             <includeOnlyProperty>^git.commit.time.(abbrev|full)$</includeOnlyProperty>
             <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
-            <includeOnlyProperty>^git.branch$</includeOnlyProperty>
             <includeOnlyProperty>^git.build.version$</includeOnlyProperty>
           </includeOnlyProperties>
+          <replacementProperties>
+            <replacementProperty>
+              <property>git.branch</property>
+              <value>${env.branch}</value>
+            </replacementProperty>
+          </replacementProperties>
           <commitIdGenerationMode>full</commitIdGenerationMode>
         </configuration>
       </plugin>

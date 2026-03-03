@@ -252,9 +252,25 @@ jobs:
       with:
         egress-policy: audit
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      with:
-        fetch-depth: 0
-        ref: ${{ github.ref }}
+
+    - name: Get branch name
+      id: get-branch-name
+      run: |
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          HEADREF="${{ github.head_ref }}"
+          EVENT_BASEREF=""
+        else
+          HEADREF="${GITHUB_REF##*/}"
+          EVENT_BASEREF="${GITHUB_EVENT_BASE_REF#refs/heads/}"
+        fi
+        
+        FINAL_BRANCHNAME="${EVENT_BASEREF:-$HEADREF}"
+        
+        # Export to GitHub Actions
+        echo "branch=$FINAL_BRANCHNAME" >> $GITHUB_ENV
+      env:
+        GITHUB_EVENT_BASE_REF: ${{ github.event.base_ref }}
+      shell: bash
 
     - name: Parse version
       uses: nowsprinting/check-version-format-action@bb1181a02ee5d9ae4feead2842236183c85152c6 # v4.0.7
