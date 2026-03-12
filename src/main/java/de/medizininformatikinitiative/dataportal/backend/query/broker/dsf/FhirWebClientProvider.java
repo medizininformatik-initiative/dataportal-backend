@@ -20,9 +20,11 @@ public interface FhirWebClientProvider {
   /**
    * Provides a {@link WebsocketClient} to communicate with a FHIR server via a websocket.
    *
+   * @param reconnector A {@link Runnable} that can be used to trigger a reconnection in case the websocket connection
+   *          gets disconnected abnormally
    * @return A {@link WebsocketClient}.
    * @throws FhirWebClientProvisionException If the websocket client can not be provisioned.
    */
-  WebsocketClient provideFhirWebsocketClient() throws FhirWebClientProvisionException;
+  WebsocketClient provideFhirWebsocketClient(Runnable reconnector) throws FhirWebClientProvisionException;
 
 }
