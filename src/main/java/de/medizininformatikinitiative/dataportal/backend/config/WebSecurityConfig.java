@@ -38,6 +38,7 @@ public class WebSecurityConfig {
   public static final String PATH_ACTUATOR_INFO = "/actuator/info";
   public static final String PATH_API = "/api/v5";
   public static final String PATH_VALIDATION = "/validation";
+  public static final String PATH_UPGRADE = "/upgrade";
   public static final String PATH_QUERY = "/query";
   public static final String PATH_DATA = "/data";
   public static final String PATH_FEASIBILITY = "/feasibility";
@@ -99,6 +100,7 @@ public class WebSecurityConfig {
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_ACTUATOR_INFO)).permitAll()
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_SWAGGER_UI)).permitAll()
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_VALIDATION + "/**")).hasAuthority(keycloakAllowedRole)
+            .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_VALIDATION + PATH_UPGRADE + "/**")).hasAuthority(keycloakAllowedRole)
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_TERMINOLOGY + "/**")).hasAuthority(keycloakAllowedRole)
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_QUERY + PATH_DATA)).hasAuthority(keycloakAllowedRole)
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_QUERY + PATH_DATA + PATH_USER_ID_MATCHER)).hasAuthority(keycloakAdminRole)

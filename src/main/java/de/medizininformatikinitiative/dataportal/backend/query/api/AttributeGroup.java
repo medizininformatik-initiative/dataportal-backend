@@ -8,7 +8,7 @@ import java.net.URI;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Builder
+@Builder(toBuilder = true)
 public record AttributeGroup(
     @JsonProperty String id,
     @JsonProperty String name,
