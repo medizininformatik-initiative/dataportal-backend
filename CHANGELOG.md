@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.5.2] - 2026-03-13
+
+- Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
+
+### Fixed
+- Task Resources are no longer handled multiple times after a websocket reconnect ([#872](https://github.com/medizininformatik-initiative/dataportal-backend/issues/872))
+- Display correct branch name in about page ([#868](https://github.com/medizininformatik-initiative/dataportal-backend/issues/868))
+
 ## [8.5.1] - 2026-03-03
 
 - Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**

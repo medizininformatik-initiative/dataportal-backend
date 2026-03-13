@@ -9,12 +9,19 @@ import de.medizininformatikinitiative.dataportal.backend.query.collect.QueryStat
 import de.medizininformatikinitiative.dataportal.backend.query.collect.QueryStatusUpdate;
 import dev.dsf.fhir.client.WebsocketClient;
 import org.hl7.fhir.r4.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Collector for collecting the results of feasibility queries that are running in a distributed fashion.
@@ -22,14 +29,21 @@ import java.util.Map.Entry;
  * The collector gathers query results from a single FHIR server. Communication with this FHIR server
  * happens using a websocket. The FHIR server sends all task resources that are associated with a subscription.
  */
-class DSFQueryResultCollector implements QueryResultCollector {
+class DSFQueryResultCollector implements QueryResultCollector, AutoCloseable {
 
+  private static final Logger logger = LoggerFactory.getLogger(DSFQueryResultCollector.class);
+  private static final int MAX_DELAY_MS = 30000;
+  private static final int START_DELAY_MS = 500;
+
+  private final Map<DSFBrokerClient, QueryStatusListener> listeners = new ConcurrentHashMap<>();
+  private final AtomicBoolean websocketConnectionEstablished = new AtomicBoolean(false);
+  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  private final AtomicInteger delay = new AtomicInteger(START_DELAY_MS);
+  private final AtomicBoolean connectingWebsocket = new AtomicBoolean(false);
   private final QueryResultStore store;
   private final FhirContext fhirContext;
   private final FhirWebClientProvider fhirWebClientProvider;
   private final DSFQueryResultHandler resultHandler;
-  private final Map<DSFBrokerClient, QueryStatusListener> listeners;
-  private boolean websocketConnectionEstablished;
 
   /**
    * Creates a new {@link DSFQueryResultCollector}.
@@ -46,17 +60,42 @@ class DSFQueryResultCollector implements QueryResultCollector {
     this.fhirContext = fhirContext;
     this.fhirWebClientProvider = fhirWebClientProvider;
     this.resultHandler = resultHandler;
-    this.websocketConnectionEstablished = false;
-    this.listeners = new HashMap<>();
+  }
+
+  /**
+   * Package-visible helper that constructs the reconnector Runnable. Extracted for easier testing.
+   *
+   * @return a Runnable that attempts reconnection
+   */
+  private void reconnect() {
+    if (connectingWebsocket.get()) {
+      return;
+    }
+    logger.info("Websocket connection recovery attempt in {}ms ...", delay.get());
+    executor.schedule(() -> {
+      try {
+        websocketConnectionEstablished.set(false);
+        listenForQueryResults();
+        delay.set(START_DELAY_MS);
+        logger.info("Websocket connection recovered");
+      } catch (Exception e) {
+        logger.warn("Could not establish websocket connection: {}", e.getMessage());
+        connectingWebsocket.set(false);
+        reconnect();
+      }
+    }, delay.getAndUpdate(d -> Math.min(2 * d, MAX_DELAY_MS)), TimeUnit.MILLISECONDS);
   }
 
   private void listenForQueryResults() throws FhirWebClientProvisionException {
-    if (!websocketConnectionEstablished) {
-      WebsocketClient fhirWebsocketClient = fhirWebClientProvider.provideFhirWebsocketClient();
+    if (!websocketConnectionEstablished.get() && connectingWebsocket.compareAndSet(false, true)) {
+      WebsocketClient fhirWebsocketClient = fhirWebClientProvider.provideFhirWebsocketClient(this::reconnect);
       fhirWebsocketClient.setResourceHandler(this::setUpQueryResultHandler, this::setUpResourceParser);
 
+      logger.debug("Establishing websocket connection ...");
       fhirWebsocketClient.connect();
-      websocketConnectionEstablished = true;
+      connectingWebsocket.set(false);
+      websocketConnectionEstablished.set(true);
+      logger.info("Websocket connection established");
     }
   }
 
@@ -113,5 +152,10 @@ class DSFQueryResultCollector implements QueryResultCollector {
   @Override
   public void removeResults(String queryId) throws QueryNotFoundException {
     store.removeResult(queryId);
+  }
+
+  @Override
+  public void close() {
+    executor.shutdownNow();
   }
 }
