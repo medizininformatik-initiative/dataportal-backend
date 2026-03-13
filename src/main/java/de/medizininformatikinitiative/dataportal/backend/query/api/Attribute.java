@@ -7,7 +7,7 @@ import lombok.Builder;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Builder
+@Builder(toBuilder = true)
 public record Attribute(
     @JsonProperty String attributeRef,
     @JsonProperty boolean mustHave,

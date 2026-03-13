@@ -30,23 +30,34 @@ public class UpgradeRestController {
   }
 
   @PostMapping(path = PATH_CRTDL)
-  public ResponseEntity<Object> validateCrtdl(@RequestBody JsonNode crtdlNode) {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+  public ResponseEntity<Object> upgradeCrtdl(@RequestBody JsonNode crtdlNode) {
+    // Validate Schema
+    var schemaValidationErrors = validationService.validateCrtdlSchema(crtdlNode);
+    if (!schemaValidationErrors.isEmpty()) {
+      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
+    }
+
+    // Validate Content
+    var crtdl = validationService.crtdlFromJsonNode(crtdlNode);
+    var upgradedCrtdl = upgradeService.upgrade(crtdl);
+    return new ResponseEntity<>(upgradedCrtdl, HttpStatus.OK);
   }
 
   @PostMapping("/dataquery")
   public ResponseEntity<Object> upgradeDataquery(
       @RequestBody JsonNode dataqueryJsonNode) {
 
-    // Validate Schema
-    var schemaValidationErrors = validationService.validateDataquerySchema(dataqueryJsonNode);
-    if (!schemaValidationErrors.isEmpty()) {
-      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
-    }
-
-    // Validate Content
-    var dataquery = validationService.dataqueryFromJsonNode(dataqueryJsonNode);
-    var upgradedCrtdl = upgradeService.upgrade(dataquery.content());
-    return new ResponseEntity<>(HttpStatus.OK);
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+//
+//    // Validate Schema
+//    var schemaValidationErrors = validationService.validateDataquerySchema(dataqueryJsonNode);
+//    if (!schemaValidationErrors.isEmpty()) {
+//      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
+//    }
+//
+//    // Validate Content
+//    var dataquery = validationService.dataqueryFromJsonNode(dataqueryJsonNode);
+//    var upgradedCrtdl = upgradeService.upgrade(dataquery.content());
+//    return new ResponseEntity<>(upgradedCrtdl, HttpStatus.OK);
   }
 }

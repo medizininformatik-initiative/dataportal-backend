@@ -6,14 +6,15 @@ import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.Field;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.UpgradeIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.UpgradeIssueType;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.UpgradeIssueValue;
 import de.medizininformatikinitiative.dataportal.backend.validation.api.UpgradeWrapper;
 import lombok.NonNull;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Optional;
+import java.text.MessageFormat;
+import java.util.*;
 
 @Service
 public class UpgradeService {
@@ -35,6 +36,8 @@ public class UpgradeService {
           .annotations(List.of())
           .build();
     }
+    List<UpgradeIssue> upgradeIssues = new ArrayList<>();
+    DataExtraction fixedDataExtraction = crtdl.dataExtraction();
 
     // Get all dse entries and save them in a map
     var referencedGroups = crtdl.dataExtraction().attributeGroups().stream().map(AttributeGroup::groupReference).distinct().toList();
@@ -49,25 +52,27 @@ public class UpgradeService {
         throw new CrtdlUpgradeException("Dse Profile not found");
       }
       var dseProfile = dseProfileOptional.get();
-      // UPGRADE-1000001: Filter Change
-      Pair<DataExtraction, UpgradeIssue> filterNameChangeResult = handleFilterNameChange(crtdl.dataExtraction(), attributeGroup, dseProfile);
 
+      // UPGRADE-1000001: Filter Change
+      var filterUpgradeResult = handleFilterNameChange(fixedDataExtraction, attributeGroup, dseProfile, i);
+      if (!filterUpgradeResult.upgradeIssues().isEmpty()) {
+        upgradeIssues.addAll(filterUpgradeResult.upgradeIssues());
+      }
+      fixedDataExtraction = filterUpgradeResult.dataExtraction();
 
       // UPGRADE-1000002: Field removed as no longer available + UPGRADE-1000003: Field changed to parent
-      for (Attribute a : attributeGroup.attributes()) {
-        if (dseProfile.fields().stream().noneMatch(field -> fieldOrChildrenMatch(field, a.attributeRef()))) {
-          System.out.println("not matching: " + a.attributeRef());
-          var firstMatch = findFirstMatchingParent(a.attributeRef(), dseProfile);
-          if (firstMatch.isPresent()) {
-            System.out.println("found existing parent: " + firstMatch.get());
-          } else {
-            System.out.println("no matching parent found. removing");
-          }
-         }
+      var fieldRemovedResult = handleFieldRemoved(fixedDataExtraction, attributeGroup, dseProfile, i);
+      if (!fieldRemovedResult.upgradeIssues().isEmpty()) {
+        upgradeIssues.addAll(fieldRemovedResult.upgradeIssues());
       }
+      fixedDataExtraction = fieldRemovedResult.dataExtraction();
 
       // UPGRADE-1000004: Profile removed as it does not exist anymore
-
+//      var profileRemovedResult = handleProfileRemoved(fixedDataExtraction, attributeGroup, dseProfile, i);
+//      if (profileRemovedResult.upgradeIssue() != null) {
+//        upgradeIssues.add(profileRemovedResult.upgradeIssue());
+//      }
+//      fixedDataExtraction = profileRemovedResult.dataExtraction();
     }
 
 
@@ -76,13 +81,13 @@ public class UpgradeService {
             .version(crtdl.version())
             .display(crtdl.display())
             .cohortDefinition(crtdl.cohortDefinition())
-            .dataExtraction(crtdl.dataExtraction())
+            .dataExtraction(fixedDataExtraction)
             .build())
-        .annotations(List.of())
+        .annotations(upgradeIssues)
         .build();
   }
 
-  private Pair<DataExtraction, UpgradeIssue> handleFilterNameChange(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile) {
+  private DataExtractionUpgradeResult handleFilterNameChange(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile, int groupIndex) {
     // Right now there should be only one date filter, and that is the only thing we can automatically fix here
     Optional<Filter> dateFilterCrtdl = attributeGroup.filter().stream().filter(f -> "date".equals(f.type())).findFirst();
     Optional<de.medizininformatikinitiative.dataportal.backend.dse.api.Filter> dateFilterProfile = dseProfile.filters().stream().filter(f -> "date".equals(f.type())).findFirst();
@@ -92,16 +97,109 @@ public class UpgradeService {
       var filterProfile = dateFilterProfile.get();
 
       if (!filterCrtdl.name().equals(filterProfile.name())) {
-
+        Filter fixedFilter = filterCrtdl.toBuilder()
+            .name(filterProfile.name())
+            .build();
+        var fixedDataExtraction = DataExtraction.withReplacedDateFilter(dataExtraction,
+            attributeGroup,
+            fixedFilter);
+        UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+            .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/filter/{1}", groupIndex, attributeGroup.filter().indexOf(filterCrtdl)))
+            .value(UpgradeIssueValue.builder()
+                .message(UpgradeIssueType.FILTER_CHANGE.detail())
+                .code("UPGRADE-" + UpgradeIssueType.FILTER_CHANGE.code())
+                .build())
+            .details(Map.of(
+                "replaced", filterCrtdl,
+                "replacedWith", fixedFilter
+            ))
+            .build();
+        return DataExtractionUpgradeResult.builder()
+            .dataExtraction(fixedDataExtraction)
+            .upgradeIssues(List.of(upgradeIssue))
+            .build();
       }
     }
+    return DataExtractionUpgradeResult.builder()
+        .dataExtraction(dataExtraction)
+        .upgradeIssues(List.of())
+        .build();
+  }
+
+  private DataExtractionUpgradeResult handleFieldRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile, int groupIndex) {
+    var fixedDataExtraction = dataExtraction;
+    var fixedAttributeGroup = attributeGroup;
+    var issues = new ArrayList<UpgradeIssue>();
+
+    for (int attributeIndex = 0; attributeIndex < attributeGroup.attributes().size(); ++attributeIndex) {
+      Attribute a = attributeGroup.attributes().get(attributeIndex);
+      if (dseProfile.fields().stream().noneMatch(field -> fieldOrChildrenMatch(field, a.attributeRef()))) {
+        var firstMatch = findFirstMatchingParent(a.attributeRef(), dseProfile);
+        // In case the parent is already in the attribute group, remove it in the else-part
+        if (firstMatch.isPresent()) {
+          if (fixedAttributeGroup.attributes().stream().noneMatch(attr -> attr.attributeRef().equals(firstMatch.get()))) {
+            var fixedAttribute = a.toBuilder()
+                .attributeRef(firstMatch.get())
+                .build();
+            fixedDataExtraction = DataExtraction.withReplacedAttribute(fixedDataExtraction, fixedAttributeGroup, a, fixedAttribute);
+            fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+            UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+                .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+                .value(UpgradeIssueValue.builder()
+                    .message(UpgradeIssueType.FIELD_CHANGED_TO_PARENT.detail())
+                    .code("UPGRADE-" + UpgradeIssueType.FIELD_CHANGED_TO_PARENT.code())
+                    .build())
+                .details(Map.of(
+                    "replaced", a,
+                    "replacedWith", fixedAttribute
+                ))
+                .build();
+            issues.add(upgradeIssue);
+          } else {
+            // TODO: this just duplicates the else tree below...it works but...make this smarter
+            fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, a);
+            fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+            UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+                .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+                .value(UpgradeIssueValue.builder()
+                    .message(UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.detail())
+                    .code("UPGRADE-" + UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.code())
+                    .build())
+                .details(Map.of(
+                    "replaced", a
+                ))
+                .build();
+            issues.add(upgradeIssue);
+          }
+        } else {
+          fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, attributeGroup, a);
+          fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+          UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+              .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+              .value(UpgradeIssueValue.builder()
+                  .message(UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.detail())
+                  .code("UPGRADE-" + UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.code())
+                  .build())
+              .details(Map.of(
+                  "replaced", a
+              ))
+              .build();
+          issues.add(upgradeIssue);
+        }
+      }
+    }
+    return DataExtractionUpgradeResult.builder()
+        .dataExtraction(fixedDataExtraction)
+        .upgradeIssues(issues)
+        .build();
   }
 
   public static Optional<String> findFirstMatchingParent(String attributeRef, DseProfile dseProfile) {
     String current = attributeRef;
 
     while (true) {
-      if (dseProfile.fields().stream().anyMatch(field -> field.id().equals(attributeRef))) {
+      String finalCurrent = current;
+      if (dseProfile.fields().stream().anyMatch(field -> field.id().equals(finalCurrent))) {
         return Optional.of(current);
       }
 
@@ -128,5 +226,12 @@ public class UpgradeService {
     }
 
     return false;
+  }
+
+  private AttributeGroup findAttributeGroup(DataExtraction extraction, String id) {
+    return extraction.attributeGroups().stream()
+        .filter(g -> Objects.equals(g.id(), id))
+        .findFirst()
+        .orElseThrow();
   }
 }
