@@ -2,6 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.query.broker.dsf;
 
 import de.medizininformatikinitiative.dataportal.backend.query.broker.QueryNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.SiteNotFoundException;
+import de.medizininformatikinitiative.dataportal.backend.query.collect.QueryStatusListener;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,20 +11,24 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class DSFQueryResultCollectorTest {
 
-  @Mock
-  QueryResultStore store;
+  @Mock QueryResultStore store;
+  @Mock FhirWebClientProvider clientProvider;
+  @Mock DSFBrokerClient brokerClient;
+  @Mock QueryStatusListener listener;
 
-  @InjectMocks
-  DSFQueryResultCollector collector;
+  @InjectMocks DSFQueryResultCollector collector;
 
   @Test
   public void testGetResultFeasibilityButQueryIsNotFound() throws QueryNotFoundException, SiteNotFoundException {
@@ -65,5 +70,22 @@ public class DSFQueryResultCollectorTest {
   public void testRemoveResultsButQueryIsNotFound() throws QueryNotFoundException {
     Mockito.doThrow(QueryNotFoundException.class).when(store).removeResult("foo");
     assertThrows(QueryNotFoundException.class, () -> collector.removeResults("foo"));
+  }
+
+  @Test
+  public void testAddResultListenerFailsOnProvidingWebsocketClientError() throws Exception {
+    Mockito.doThrow(FhirWebClientProvisionException.class).when(clientProvider)
+        .provideFhirWebsocketClient(Mockito.any(Runnable.class));
+    assertThatThrownBy(() -> collector.addResultListener(brokerClient, listener))
+        .isInstanceOf(IOException.class)
+        .hasMessage("failed to establish websocket connection to listen for results")
+        .hasCauseInstanceOf(FhirWebClientProvisionException.class);
+  }
+
+  @Test
+  public void testRemoveResultsIsDelegatedToStore() throws QueryNotFoundException {
+    var queryId = "foo";
+    collector.removeResults(queryId);
+    verify(store).removeResult(queryId);
   }
 }
