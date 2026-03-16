@@ -7,6 +7,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.validation.Da
 import lombok.Builder;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_EMPTY)
 @Builder(toBuilder = true)
@@ -63,5 +64,13 @@ public record DataExtraction(
             .map(g -> g.equals(targetGroup) ? updatedGroup : g)
             .toList())
         .build();
+  }
+
+  public static DataExtraction withRemovedAttributeGroup(DataExtraction extraction, AttributeGroup toRemove) {
+    return new DataExtraction(
+        extraction.attributeGroups().stream()
+            .filter(g -> !Objects.equals(g.id(), toRemove.id()))
+            .toList()
+    );
   }
 }
