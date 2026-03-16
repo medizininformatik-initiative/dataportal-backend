@@ -10,7 +10,9 @@ public enum UpgradeIssueType {
   FILTER_CHANGE(1000001, "Filter Change"),
   FIELD_NO_LONGER_AVAILABLE(1000002, "Field removed as no longer available"),
   FIELD_CHANGED_TO_PARENT(1000003, "Field changed to parent"),
-  PROFILE_REMOVED(1000004, "Profile removed as it does not exist anymore");
+  PROFILE_REMOVED(1000004, "Profile removed as it does not exist anymore"),
+  REFERENCE_NO_LONGER_AVAILABLE(1000005, "Reference removed as no longer available"),
+  REFERENCE_CHANGED_TO_PARENT(1000006, "Reference changed to parent");
 
   private static final UpgradeIssueType[] VALUES;
 

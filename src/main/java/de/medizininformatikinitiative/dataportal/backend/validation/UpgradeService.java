@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.Field;
+import de.medizininformatikinitiative.dataportal.backend.dse.api.Reference;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.UpgradeIssue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.UpgradeIssueType;
@@ -73,7 +74,7 @@ public class UpgradeService {
       fixedDataExtraction = filterUpgradeResult.dataExtraction();
 
       // UPGRADE-1000002: Field removed as no longer available + UPGRADE-1000003: Field changed to parent
-      var fieldRemovedResult = handleFieldRemoved(fixedDataExtraction, attributeGroup, dseProfile, i);
+      var fieldRemovedResult = handleFieldOrReferenceRemoved(fixedDataExtraction, attributeGroup, dseProfile, i);
       if (!fieldRemovedResult.upgradeIssues().isEmpty()) {
         upgradeIssues.addAll(fieldRemovedResult.upgradeIssues());
       }
@@ -149,55 +150,103 @@ public class UpgradeService {
         .build();
   }
 
-  private DataExtractionUpgradeResult handleFieldRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile, int groupIndex) {
+  private DataExtractionUpgradeResult handleFieldOrReferenceRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile, int groupIndex) {
     var fixedDataExtraction = dataExtraction;
     var fixedAttributeGroup = attributeGroup;
     var issues = new ArrayList<UpgradeIssue>();
 
     for (int attributeIndex = 0; attributeIndex < attributeGroup.attributes().size(); ++attributeIndex) {
-      Attribute a = attributeGroup.attributes().get(attributeIndex);
-      if (dseProfile.fields().stream().noneMatch(field -> fieldOrChildrenMatch(field, a.attributeRef()))) {
-        var firstMatch = findFirstMatchingParent(a.attributeRef(), dseProfile);
-        // In case the parent is already in the attribute group, remove it in the else-part
-        if (firstMatch.isPresent()) {
-          var fixedAttribute = a.toBuilder()
-              .attributeRef(firstMatch.get())
-              .build();
-          if (fixedAttributeGroup.attributes().stream().noneMatch(attr -> attr.attributeRef().equals(firstMatch.get()))) {
-            fixedDataExtraction = DataExtraction.withReplacedAttribute(fixedDataExtraction, fixedAttributeGroup, a, fixedAttribute);
-            fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+      Attribute attribute = attributeGroup.attributes().get(attributeIndex);
+
+      // If there are linked groups, check references instead of fields
+      if (attribute.linkedGroups() != null && !attribute.linkedGroups().isEmpty()) {
+        if (dseProfile.references().stream().noneMatch(reference -> referenceOrChildrenMatch(reference, attribute.attributeRef()))) {
+          var firstMatch = findFirstMatchingParentReference(attribute.attributeRef(), dseProfile);
+          // In case the parent is already in the attribute group, remove it in the else-part
+          if (firstMatch.isPresent()) {
+            var fixedAttribute = attribute.toBuilder()
+                .attributeRef(firstMatch.get())
+                .build();
+            if (fixedAttributeGroup.attributes().stream().noneMatch(attr -> attr.attributeRef().equals(firstMatch.get()))) {
+              fixedDataExtraction = DataExtraction.withReplacedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute, fixedAttribute);
+              fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+            } else {
+              fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute);
+              fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+            }
+            UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+                .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+                .value(UpgradeIssueValue.builder()
+                    .message(UpgradeIssueType.REFERENCE_CHANGED_TO_PARENT.detail())
+                    .code("UPGRADE-" + UpgradeIssueType.REFERENCE_CHANGED_TO_PARENT.code())
+                    .build())
+                .details(Map.of(
+                    "replaced", attribute,
+                    "replacedWith", fixedAttribute
+                ))
+                .build();
+            issues.add(upgradeIssue);
           } else {
-            fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, a);
-            fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+            fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute);
+            fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, fixedAttributeGroup.id());
+            UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+                .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+                .value(UpgradeIssueValue.builder()
+                    .message(UpgradeIssueType.REFERENCE_NO_LONGER_AVAILABLE.detail())
+                    .code("UPGRADE-" + UpgradeIssueType.REFERENCE_NO_LONGER_AVAILABLE.code())
+                    .build())
+                .details(Map.of(
+                    "replaced", attribute
+                ))
+                .build();
+            issues.add(upgradeIssue);
           }
-          UpgradeIssue upgradeIssue = UpgradeIssue.builder()
-              .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
-              .value(UpgradeIssueValue.builder()
-                  .message(UpgradeIssueType.FIELD_CHANGED_TO_PARENT.detail())
-                  .code("UPGRADE-" + UpgradeIssueType.FIELD_CHANGED_TO_PARENT.code())
-                  .build())
-              .details(Map.of(
-                  "replaced", a,
-                  "replacedWith", fixedAttribute
-              ))
-              .build();
-          issues.add(upgradeIssue);
-        } else {
-          fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, attributeGroup, a);
-          fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
-          UpgradeIssue upgradeIssue = UpgradeIssue.builder()
-              .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
-              .value(UpgradeIssueValue.builder()
-                  .message(UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.detail())
-                  .code("UPGRADE-" + UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.code())
-                  .build())
-              .details(Map.of(
-                  "replaced", a
-              ))
-              .build();
-          issues.add(upgradeIssue);
+        }
+      } else {
+        if (dseProfile.fields().stream().noneMatch(field -> fieldOrChildrenMatch(field, attribute.attributeRef()))) {
+          var firstMatch = findFirstMatchingParentField(attribute.attributeRef(), dseProfile);
+          // In case the parent is already in the attribute group, remove it in the else-part
+          if (firstMatch.isPresent()) {
+            var fixedAttribute = attribute.toBuilder()
+                .attributeRef(firstMatch.get())
+                .build();
+            if (fixedAttributeGroup.attributes().stream().noneMatch(attr -> attr.attributeRef().equals(firstMatch.get()))) {
+              fixedDataExtraction = DataExtraction.withReplacedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute, fixedAttribute);
+              fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+            } else {
+              fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute);
+              fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+            }
+            UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+                .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+                .value(UpgradeIssueValue.builder()
+                    .message(UpgradeIssueType.FIELD_CHANGED_TO_PARENT.detail())
+                    .code("UPGRADE-" + UpgradeIssueType.FIELD_CHANGED_TO_PARENT.code())
+                    .build())
+                .details(Map.of(
+                    "replaced", attribute,
+                    "replacedWith", fixedAttribute
+                ))
+                .build();
+            issues.add(upgradeIssue);
+          } else {
+            fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute);
+            fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, fixedAttributeGroup.id());
+            UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+                .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+                .value(UpgradeIssueValue.builder()
+                    .message(UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.detail())
+                    .code("UPGRADE-" + UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.code())
+                    .build())
+                .details(Map.of(
+                    "replaced", attribute
+                ))
+                .build();
+            issues.add(upgradeIssue);
+          }
         }
       }
+
     }
     return DataExtractionUpgradeResult.builder()
         .dataExtraction(fixedDataExtraction)
@@ -205,12 +254,32 @@ public class UpgradeService {
         .build();
   }
 
-  public static Optional<String> findFirstMatchingParent(String attributeRef, DseProfile dseProfile) {
+  public static Optional<String> findFirstMatchingParentField(String attributeRef, DseProfile dseProfile) {
     String current = attributeRef;
 
     while (true) {
       String finalCurrent = current;
       if (dseProfile.fields().stream().anyMatch(field -> field.id().equals(finalCurrent))) {
+        return Optional.of(current);
+      }
+
+      int lastDot = current.lastIndexOf('.');
+      if (lastDot < 0) {
+        break;
+      }
+
+      current = current.substring(0, lastDot);
+    }
+
+    return Optional.empty();
+  }
+
+  public static Optional<String> findFirstMatchingParentReference(String attributeRef, DseProfile dseProfile) {
+    String current = attributeRef;
+
+    while (true) {
+      String finalCurrent = current;
+      if (dseProfile.references().stream().anyMatch(reference -> reference.id().equals(finalCurrent))) {
         return Optional.of(current);
       }
 
@@ -234,6 +303,20 @@ public class UpgradeService {
     if (field.children() != null && !field.children().isEmpty()) {
       return field.children().stream()
           .anyMatch(child -> fieldOrChildrenMatch(child, attributeRef));
+    }
+
+    return false;
+  }
+
+  private boolean referenceOrChildrenMatch(Reference reference, String attributeRef) {
+
+    if (reference.id().equalsIgnoreCase(attributeRef)) {
+      return true;
+    }
+
+    if (reference.children() != null && !reference.children().isEmpty()) {
+      return reference.children().stream()
+          .anyMatch(child -> referenceOrChildrenMatch(child, attributeRef));
     }
 
     return false;
