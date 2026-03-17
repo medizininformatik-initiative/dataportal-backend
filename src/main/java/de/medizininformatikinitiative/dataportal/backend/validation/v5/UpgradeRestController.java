@@ -1,12 +1,10 @@
 package de.medizininformatikinitiative.dataportal.backend.validation.v5;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import de.medizininformatikinitiative.dataportal.backend.validation.CrtdlUpgradeException;
 import de.medizininformatikinitiative.dataportal.backend.validation.UpgradeService;
 import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import static de.medizininformatikinitiative.dataportal.backend.config.WebSecurityConfig.*;
@@ -24,11 +22,6 @@ public class UpgradeRestController {
     this.upgradeService = upgradeService;
   }
 
-  @PostMapping(PATH_CCDL)
-  public ResponseEntity<?> validateCcdl(@RequestBody JsonNode queryNode) {
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-  }
-
   @PostMapping(path = PATH_CRTDL)
   public ResponseEntity<Object> upgradeCrtdl(@RequestBody JsonNode crtdlNode) {
     // Validate Schema
@@ -41,23 +34,5 @@ public class UpgradeRestController {
     var crtdl = validationService.crtdlFromJsonNode(crtdlNode);
     var upgradedCrtdl = upgradeService.upgrade(crtdl);
     return new ResponseEntity<>(upgradedCrtdl, HttpStatus.OK);
-  }
-
-  @PostMapping("/dataquery")
-  public ResponseEntity<Object> upgradeDataquery(
-      @RequestBody JsonNode dataqueryJsonNode) {
-
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-//
-//    // Validate Schema
-//    var schemaValidationErrors = validationService.validateDataquerySchema(dataqueryJsonNode);
-//    if (!schemaValidationErrors.isEmpty()) {
-//      return new ResponseEntity<>(schemaValidationErrors, HttpStatus.BAD_REQUEST);
-//    }
-//
-//    // Validate Content
-//    var dataquery = validationService.dataqueryFromJsonNode(dataqueryJsonNode);
-//    var upgradedCrtdl = upgradeService.upgrade(dataquery.content());
-//    return new ResponseEntity<>(upgradedCrtdl, HttpStatus.OK);
   }
 }
