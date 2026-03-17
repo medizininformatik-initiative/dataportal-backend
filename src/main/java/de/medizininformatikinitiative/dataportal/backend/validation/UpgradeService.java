@@ -39,9 +39,10 @@ public class UpgradeService {
     var fixedDataExtraction = dataExtraction;
 
     for (int i = 0; i < dataExtraction.attributeGroups().size(); i++) {
-      var attributeGroup = dataExtraction.attributeGroups().get(i);
+      var fixedAttributeGroup = dataExtraction.attributeGroups().get(i);
+      AttributeGroup finalFixedAttributeGroup = fixedAttributeGroup;
       var dseProfile = profileData.stream()
-          .filter(p -> attributeGroup.groupReference().toString().equals(p.url()))
+          .filter(p -> finalFixedAttributeGroup.groupReference().toString().equals(p.url()))
           .findFirst()
           .orElseThrow(() -> new CrtdlUpgradeException("Dse Profile not found"));
 
@@ -54,9 +55,10 @@ public class UpgradeService {
       );
 
       for (var handler : handlers) {
-        var result = handler.handle(fixedDataExtraction, attributeGroup, i);
+        var result = handler.handle(fixedDataExtraction, fixedAttributeGroup, i);
         issues.addAll(result.upgradeIssues());
         fixedDataExtraction = result.dataExtraction();
+        fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, fixedAttributeGroup.id());
       }
     }
 
