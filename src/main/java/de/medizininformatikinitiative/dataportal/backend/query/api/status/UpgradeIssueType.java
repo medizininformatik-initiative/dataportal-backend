@@ -12,7 +12,9 @@ public enum UpgradeIssueType {
   FIELD_CHANGED_TO_PARENT(1000003, "Field changed to parent"),
   PROFILE_REMOVED(1000004, "Profile removed as it does not exist anymore"),
   REFERENCE_NO_LONGER_AVAILABLE(1000005, "Reference removed as no longer available"),
-  REFERENCE_CHANGED_TO_PARENT(1000006, "Reference changed to parent");
+  REFERENCE_CHANGED_TO_PARENT(1000006, "Reference changed to parent"),
+  LINKED_GROUPS_NO_LONGER_AVAILABLE(1000007, "One or more linked group references removed as no longer available"),
+  ALL_LINKED_GROUPS_NO_LONGER_AVAILABLE(1000008, "Attribute removed since all referenced groups are no longer available");
 
   private static final UpgradeIssueType[] VALUES;
 

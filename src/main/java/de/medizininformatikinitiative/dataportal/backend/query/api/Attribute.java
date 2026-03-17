@@ -16,4 +16,10 @@ public record Attribute(
   public Attribute {
     linkedGroups = linkedGroups == null ? List.of() : linkedGroups;
   }
+
+  public static Attribute withReplacedLinkedGroups(Attribute attribute, List<String> linkedGroups) {
+    return attribute.toBuilder()
+        .linkedGroups(linkedGroups)
+        .build();
+  }
 }

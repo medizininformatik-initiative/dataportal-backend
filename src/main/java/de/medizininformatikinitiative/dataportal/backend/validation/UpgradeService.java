@@ -80,6 +80,13 @@ public class UpgradeService {
       }
       fixedDataExtraction = fieldRemovedResult.dataExtraction();
 
+      // UPGRADE-1000007: Linked Group references removed + UPGRADE-1000008 : Attribute removed because all linked groups are gone
+      var linkedGroupsRemovedResult = handleLinkedGroupsRemoved(fixedDataExtraction, attributeGroup, dseProfile, i);
+      if (!linkedGroupsRemovedResult.upgradeIssues().isEmpty()) {
+        upgradeIssues.addAll(linkedGroupsRemovedResult.upgradeIssues());
+      }
+      fixedDataExtraction = linkedGroupsRemovedResult.dataExtraction();
+
     }
 
     return UpgradeWrapper.builder()
@@ -248,6 +255,69 @@ public class UpgradeService {
       }
 
     }
+    return DataExtractionUpgradeResult.builder()
+        .dataExtraction(fixedDataExtraction)
+        .upgradeIssues(issues)
+        .build();
+  }
+
+  private DataExtractionUpgradeResult handleLinkedGroupsRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile, int groupIndex) {
+    var fixedDataExtraction = dataExtraction;
+    var fixedAttributeGroup = attributeGroup;
+    var issues = new ArrayList<UpgradeIssue>();
+
+    for (int attributeIndex = 0; attributeIndex < attributeGroup.attributes().size(); ++attributeIndex) {
+      Attribute attribute = attributeGroup.attributes().get(attributeIndex);
+      if (attribute.linkedGroups() == null || attribute.linkedGroups().isEmpty()) {
+        continue;
+      }
+      var fixedLinkedGroups = new ArrayList<String>();
+      for (int linkedGroupIndex = 0; linkedGroupIndex < attribute.linkedGroups().size(); ++ linkedGroupIndex) {
+        var linkedGroupReference = attribute.linkedGroups().get(linkedGroupIndex);
+        boolean matches = dataExtraction.attributeGroups().stream()
+            .anyMatch(ag -> linkedGroupReference.equals(ag.id()));
+        if (matches) {
+          fixedLinkedGroups.add(linkedGroupReference);
+        }
+      }
+      if (fixedLinkedGroups.size() == attribute.linkedGroups().size()) {
+        // Nothing was removed
+        continue;
+      } else if (fixedLinkedGroups.isEmpty()) {
+        // Everything was removed
+        fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute);
+        fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+        UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+            .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+            .value(UpgradeIssueValue.builder()
+                .message(UpgradeIssueType.ALL_LINKED_GROUPS_NO_LONGER_AVAILABLE.detail())
+                .code("UPGRADE-" + UpgradeIssueType.ALL_LINKED_GROUPS_NO_LONGER_AVAILABLE.code())
+                .build())
+            .details(Map.of(
+                "replaced", attribute
+            ))
+            .build();
+        issues.add(upgradeIssue);
+      } else {
+        // Some links were removed
+        var fixedAttribute = Attribute.withReplacedLinkedGroups(attribute, fixedLinkedGroups);
+        fixedDataExtraction = DataExtraction.withReplacedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute, fixedAttribute);
+        fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+        UpgradeIssue upgradeIssue = UpgradeIssue.builder()
+            .path(MessageFormat.format("dataExtraction/attributeGroups/{0}/attributes/{1}", groupIndex, attributeIndex))
+            .value(UpgradeIssueValue.builder()
+                .message(UpgradeIssueType.LINKED_GROUPS_NO_LONGER_AVAILABLE.detail())
+                .code("UPGRADE-" + UpgradeIssueType.LINKED_GROUPS_NO_LONGER_AVAILABLE.code())
+                .build())
+            .details(Map.of(
+                "replaced", attribute,
+                "replacedWith", fixedAttribute
+            ))
+            .build();
+        issues.add(upgradeIssue);
+      }
+    }
+
     return DataExtractionUpgradeResult.builder()
         .dataExtraction(fixedDataExtraction)
         .upgradeIssues(issues)
