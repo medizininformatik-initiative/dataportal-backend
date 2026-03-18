@@ -58,7 +58,12 @@ public class UpgradeService {
         var result = handler.handle(fixedDataExtraction, fixedAttributeGroup, i);
         issues.addAll(result.upgradeIssues());
         fixedDataExtraction = result.dataExtraction();
-        fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, fixedAttributeGroup.id());
+        try {
+          fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, fixedAttributeGroup.id());
+        } catch (NoSuchElementException e) {
+          // If the group has been removed earlier, don't try to execute any other handlers on it
+          break;
+        }
       }
     }
 
