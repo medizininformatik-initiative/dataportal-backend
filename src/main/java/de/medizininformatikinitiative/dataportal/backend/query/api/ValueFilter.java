@@ -24,6 +24,6 @@ public record ValueFilter(
 ) {
   public ValueFilter {
     Objects.requireNonNull(type);
-    selectedConcepts = selectedConcepts == null ? List.of() : selectedConcepts;
+    selectedConcepts = (selectedConcepts == null && List.of(ValueFilterType.REFERENCE, ValueFilterType.CONCEPT).contains(type)) ? List.of() : selectedConcepts;
   }
 }
