@@ -8,7 +8,7 @@ import lombok.Builder;
 import java.time.LocalDate;
 import java.util.List;
 
-@Builder
+@Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record Filter(
     @JsonProperty String type,

@@ -7,7 +7,7 @@ import lombok.Builder;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Builder
+@Builder(toBuilder = true)
 public record Attribute(
     @JsonProperty String attributeRef,
     @JsonProperty boolean mustHave,
@@ -15,5 +15,11 @@ public record Attribute(
 ) {
   public Attribute {
     linkedGroups = linkedGroups == null ? List.of() : linkedGroups;
+  }
+
+  public static Attribute withReplacedLinkedGroups(Attribute attribute, List<String> linkedGroups) {
+    return attribute.toBuilder()
+        .linkedGroups(linkedGroups)
+        .build();
   }
 }
