@@ -12,7 +12,7 @@
 
   <groupId>de.medizininformatik-initiative</groupId>
   <artifactId>DataportalBackend</artifactId>
-  <version>8.6.0</version>
+  <version>8.6.1</version>
 
   <name>Dataportal Backend</name>
   <description>Backend of the Dataportal</description>
@@ -179,7 +179,7 @@
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>org.hl7.fhir.utilities</artifactId>
-      <version>6.7.11</version>
+      <version>6.9.0</version>
     </dependency>
 
     <dependency>
@@ -419,7 +419,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.5.4</version>
+        <version>3.5.5</version>
         <executions>
           <execution>
             <goals>

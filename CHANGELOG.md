@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.6.1] - 2026-03-19
+
+- Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
+
+### Security
+- Updated HAPI utilities to v6.9.0 due to critical [CVE-2026-33180](https://github.com/hapifhir/org.hl7.fhir.core/security/advisories/GHSA-p7m9-v2cm-2h7m)
+
 ## [8.6.0] - 2026-03-18
 
 - Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
