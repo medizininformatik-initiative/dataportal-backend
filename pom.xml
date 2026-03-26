@@ -474,12 +474,6 @@
             <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
             <includeOnlyProperty>^git.build.version$</includeOnlyProperty>
           </includeOnlyProperties>
-          <replacementProperties>
-            <replacementProperty>
-              <property>git.branch</property>
-              <value>${env.branch}</value>
-            </replacementProperty>
-          </replacementProperties>
           <commitIdGenerationMode>full</commitIdGenerationMode>
         </configuration>
       </plugin>
