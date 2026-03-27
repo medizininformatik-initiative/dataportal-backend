@@ -19,6 +19,7 @@ public class SettingsController {
   private static final String KEY_READ_RESULT_SUMMARY_POLLING_INTERVAL = "readResultSummaryPollingInterval";
   private static final String KEY_READ_RESULT_DETAILED_OBFUSCATED_AMOUNT = "readResultDetailedObfuscatedAmount";
   private static final String KEY_READ_RESULT_DETAILED_OBFUSCATED_INTERVAL = "readResultDetailedObfuscatedInterval";
+  private static final String KEY_QUERYRESULT_EXPIRY = "queryResultExpiry";
   private static final String KEY_PORTAL_LINK = "passthroughPortalLink";
   private static final String KEY_CCDL_VERSION = "passthroughCcdlVersion";
   private static final String KEY_REST_API_PATH = "uiBackendApiPath";
@@ -34,6 +35,9 @@ public class SettingsController {
 
   @Value("${app.privacy.quota.read.resultSummary.pollingInterval}")
   private String readResultSummaryPollingInterval = "PT5S";
+
+  @Value("${app.queryResultExpiry}")
+  private String queryResultExpiry = "PT1M";
 
   @Value("${passthrough.pollingSummary}")
   private String passthroughPollingSummary = "PT10S";
@@ -80,6 +84,7 @@ public class SettingsController {
         Map.entry(KEY_READ_RESULT_DETAILED_OBFUSCATED_POLLING_INTERVAL, readResultDetailedObfuscatedPollingInterval),
         Map.entry(KEY_READ_RESULT_DETAILED_OBFUSCATED_AMOUNT, readResultDetailedObfuscatedAmount),
         Map.entry(KEY_READ_RESULT_DETAILED_OBFUSCATED_INTERVAL, readResultDetailedObfuscatedInterval),
+        Map.entry(KEY_QUERYRESULT_EXPIRY, queryResultExpiry),
         Map.entry(KEY_POLLING_TIME_UI, pollingTimeUi),
         Map.entry(KEY_CCDL_VERSION, ccdlVersion),
         Map.entry(KEY_PORTAL_LINK, portalLink),
