@@ -254,7 +254,7 @@ jobs:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Parse version
-      uses: nowsprinting/check-version-format-action@fafe3beb8aaf166d9123541f43d488e20a0c183d # v4.0.8
+      uses: nowsprinting/check-version-format-action@976544c127ab571b88419766cc9d3b459f8d7b82 # v5.0.1
       id: version
       with:
         prefix: 'v'
