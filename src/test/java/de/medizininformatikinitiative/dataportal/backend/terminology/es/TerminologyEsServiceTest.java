@@ -177,6 +177,27 @@ public class TerminologyEsServiceTest {
     assertThat(filters).containsAll(expectedTermFiltersList);
   }
 
+  @Test
+  void testGetAvailableFiltersFiltered_succeeds() {
+    var expectedTermFiltersList = createTermFilterList(filterFields);
+
+    doReturn(searchHits).when(operations).search(any(NativeQuery.class), any());
+    doReturn(elasticsearchAggregations).when(searchHits).getAggregations();
+    // This fails when written as doReturn()...when(), but works in this order...so...
+    when(elasticsearchAggregations.aggregationsAsMap().get(any(String.class)).aggregation().getAggregate().sterms()
+        .buckets().array()).thenReturn(List.of(createStringTermsBucket()));
+
+    var filters = terminologyEsService.getAvailableFilters("foo", null, null, null, null);
+
+    assertThat(filters.size()).isEqualTo(1);
+    assertThat(expectedTermFiltersList).contains(filters.get(0));
+  }
+
+  @Test
+  void testGetAvailableFiltersFiltered_failsOnInvalidSearchTerm() {
+    assertThrows(IllegalArgumentException.class, () -> terminologyEsService.getAvailableFilters("invalid-term", null, null, null, null));
+  }
+
   @ParameterizedTest
   @MethodSource("generateArgumentsForTestPerformOntologySearchWithPaging")
   void testPerformOntologySearchWithPaging(List<String> criteriaSets, List<String> context, List<String> kdsModule, List<String> terminology, Boolean availability, Integer pageSize, Integer page) {

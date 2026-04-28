@@ -7,8 +7,12 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.es.Terminol
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.TermFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -52,8 +56,27 @@ public class TerminologyRestController {
   }
 
   @GetMapping("search/filter")
-  public List<TermFilter> getAvailableFilters() {
-    return terminologyEsService.getAvailableFilters();
+  public List<TermFilter> getFilter(@RequestParam(value = "targetFilter", required = false) String targetFilter,
+                                    @RequestParam(value = "searchterm", required = false) String searchTerm,
+                                    @RequestParam(value = "contexts", required = false) List<String> contexts,
+                                    @RequestParam(value = "kds-modules", required = false) List<String> kdsModules,
+                                    @RequestParam(value = "terminologies", required = false) List<String> terminologies) {
+
+    boolean hasOptionalParams = StringUtils.hasText(searchTerm)
+        || !CollectionUtils.isEmpty(contexts)
+        || !CollectionUtils.isEmpty(kdsModules)
+        || !CollectionUtils.isEmpty(terminologies);
+
+    if (hasOptionalParams && !StringUtils.hasText(targetFilter)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Optional parameters (searchterm, contexts, kds-modules, terminologies) require 'targetFilter' to be set.");
+    }
+
+    if (StringUtils.hasText(targetFilter)) {
+      return terminologyEsService.getAvailableFilters(targetFilter, searchTerm, contexts, kdsModules, terminologies);
+    } else {
+      return terminologyEsService.getAvailableFilters();
+    }
   }
 
   @GetMapping("entry/search")
