@@ -33,6 +33,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -119,6 +120,19 @@ public class TerminologyEsService {
         .build());
 
     return list;
+  }
+
+  public List<TermFilter> getAvailableFilters(String targetFilter,
+                                              String searchTerm,
+                                              List<String> contexts,
+                                              List<String> kdsModules,
+                                              List<String> terminologies) {
+    var filterTerms = List.of(filterFields);
+    if (!filterTerms.contains(targetFilter)) {
+      throw new IllegalArgumentException("Unknown filter");
+    }
+
+    return List.of(getFilter(targetFilter, searchTerm, contexts, kdsModules, terminologies));
   }
 
   public EsSearchResult performOntologySearchWithPaging(String keyword,
@@ -294,28 +308,73 @@ public class TerminologyEsService {
     return RelationEntry.of(ontologyItemRelationsDocument);
   }
 
-  private TermFilter getFilter(String termApi) {
-    final var termElastic = termApi.equalsIgnoreCase("context") ? "context.code" : termApi;
-    var aggregationQuery = NativeQuery.builder()
+  private TermFilter getFilter(String targetFilter) {
+    return getFilter(targetFilter, null, null, null, null);
+  }
+
+  private TermFilter getFilter(String targetFilter,
+                               String searchTerm,
+                               List<String> contexts,
+                               List<String> kdsModules,
+                               List<String> terminologies) {
+    final var termElastic = targetFilter.equalsIgnoreCase("context") ? "context.code" : targetFilter;
+    var queryBuilder = NativeQuery.builder()
         .withAggregation(termElastic, Aggregation.of(a -> a
             .terms(ta -> ta.field(termElastic).size(50))))
-        .withMaxResults(0)
-        .build();
+        .withMaxResults(0);
 
+    boolean anyListHasValues = Stream.of(contexts, kdsModules, terminologies)
+        .anyMatch(list -> list != null && !list.isEmpty());
+    boolean hasSearchTerm = searchTerm != null && !searchTerm.isBlank();
+
+    if (anyListHasValues || hasSearchTerm) {
+      queryBuilder.withQuery(Query.of(q -> q
+          .bool(b -> {
+            // --- existing filters ---
+            if (!(CollectionUtils.isEmpty(contexts) || targetFilter.equalsIgnoreCase("context"))) {
+              b.filter(f -> f.terms(t -> t.field("context.code")
+                  .terms(tv -> tv.value(contexts.stream()
+                      .map(FieldValue::of).toList()))));
+            }
+            if (!(CollectionUtils.isEmpty(kdsModules) || targetFilter.equalsIgnoreCase("kds_module"))) {
+              b.filter(f -> f.terms(t -> t.field("kds_module")
+                  .terms(tv -> tv.value(kdsModules.stream()
+                      .map(FieldValue::of).toList()))));
+            }
+            if (!(CollectionUtils.isEmpty(terminologies) || targetFilter.equalsIgnoreCase("terminology"))) {
+              b.filter(f -> f.terms(t -> t.field("terminology")
+                  .terms(tv -> tv.value(terminologies.stream()
+                      .map(FieldValue::of).toList()))));
+            }
+
+            // --- new: search term must match at least one of the four fields ---
+            if (hasSearchTerm) {
+              b.must(m -> m.multiMatch(mm -> mm
+                  .query(searchTerm)
+                  .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
+              ));
+            }
+
+            return b;
+          })));
+    }
+
+    var aggregationQuery = queryBuilder.build();
     SearchHits<OntologyListItemDocument> searchHits = operations.search(aggregationQuery, OntologyListItemDocument.class);
     ElasticsearchAggregations aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
     assert aggregations != null;
     List<StringTermsBucket> buckets = aggregations.aggregationsAsMap().get(termElastic).aggregation().getAggregate().sterms().buckets().array();
     List<TermFilterValue> termFilterValues = new ArrayList<>();
-
     buckets.forEach(b -> {
       if (!b.key().stringValue().isEmpty()) {
-        termFilterValues.add(TermFilterValue.builder().label(b.key().stringValue()).count(b.docCount()).build());
+        termFilterValues.add(TermFilterValue.builder()
+            .label(b.key().stringValue())
+            .count(b.docCount())
+            .build());
       }
     });
-
     return TermFilter.builder()
-        .name(termApi)
+        .name(targetFilter)
         .type("selectable-concept")
         .values(termFilterValues)
         .build();

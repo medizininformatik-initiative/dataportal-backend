@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Docker Meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -53,7 +53,7 @@ jobs:
           java-version: 22
 
       - name: Cache Local Maven Repo
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.m2/repository
           key: tests-maven-${{ hashFiles('pom.xml') }}
@@ -64,7 +64,7 @@ jobs:
             [{"id": "mii", "username": "${{ github.actor }}", "password": "${{ secrets.GITHUB_TOKEN }}"}]
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
+        uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
         with:
           languages: java
           queries: security-and-quality
@@ -73,14 +73,13 @@ jobs:
         run: mvn -Pdownload-ontology -B verify
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
         with:
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
+        uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
 
       - name: Upload Dataportal Backend Jar
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -89,10 +88,10 @@ jobs:
           path: target/dataportalBackend.jar
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
 
       - name: Build and Export to Docker
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           tags: backend:latest
@@ -123,7 +122,7 @@ jobs:
         java-version: 22
 
     - name: Cache Local Maven Repo
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ~/.m2/repository
         key: security-scan-maven-${{ hashFiles('pom.xml') }}
@@ -137,14 +136,14 @@ jobs:
       run: mvn -Pdownload-ontology -B -DskipTests package
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
       with:
         context: .
         tags: security-scan-build:latest
         push: false
 
     - name: Run Trivy Vulnerability Scanner
-      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
       with:
         image-ref: security-scan-build:latest
         format: sarif
@@ -156,7 +155,7 @@ jobs:
         TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
 
     - name: Upload Trivy Scan Results to GitHub Security Tab
-      uses: github/codeql-action/upload-sarif@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
+      uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
       with:
         sarif_file: trivy-results.sarif
 
@@ -164,7 +163,7 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     env:
-      ONTOLOGY_GIT_TAG: v4.0.0
+      ONTOLOGY_GIT_TAG: v4.1.0
       ELASTIC_HOST: http://localhost:9200
       ELASTIC_FILEPATH: https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download/TAGPLACEHOLDER/
       ELASTIC_FILENAME: elastic.zip
@@ -251,36 +250,18 @@ jobs:
       uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
       with:
         egress-policy: audit
+
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-    - name: Get branch name
-      id: get-branch-name
-      run: |
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          HEADREF="${{ github.head_ref }}"
-          EVENT_BASEREF=""
-        else
-          HEADREF="${GITHUB_REF##*/}"
-          EVENT_BASEREF="${GITHUB_EVENT_BASE_REF#refs/heads/}"
-        fi
-        
-        FINAL_BRANCHNAME="${EVENT_BASEREF:-$HEADREF}"
-        
-        # Export to GitHub Actions
-        echo "branch=$FINAL_BRANCHNAME" >> $GITHUB_ENV
-      env:
-        GITHUB_EVENT_BASE_REF: ${{ github.event.base_ref }}
-      shell: bash
-
     - name: Parse version
-      uses: nowsprinting/check-version-format-action@bb1181a02ee5d9ae4feead2842236183c85152c6 # v4.0.7
+      uses: nowsprinting/check-version-format-action@976544c127ab571b88419766cc9d3b459f8d7b82 # v5.0.1
       id: version
       with:
         prefix: 'v'
 
     - name: Report invalid version
       if: ${{ startsWith(github.ref, 'refs/tags/v') && steps.version.outputs.is_valid != 'true' }}
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
       with:
         script: |
             core.setFailed('Tag name "${{ github.ref_name }}" is not a valid semantic version!')
@@ -292,7 +273,7 @@ jobs:
         java-version: 22
 
     - name: Cache Local Maven Repo
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ~/.m2/repository
         key: release-maven-${{ hashFiles('pom.xml') }}
@@ -311,20 +292,20 @@ jobs:
       run: mvn -Pdownload-ontology -B -DskipTests package
 
     - name: Login to GitHub Docker Registry
-      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
       with:
         context: .
         platforms: linux/amd64,linux/arm64

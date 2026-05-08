@@ -1,10 +1,10 @@
 openapi: 3.1.1
 info:
-  title: Data Portal Backend REST API
+  title: Dataportal Backend REST API
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 7.3.0
+  version: 8.6.1
 externalDocs:
   description: Check out the github repository
   url: https://github.com/medizininformatik-initiative/feasibility-backend
@@ -1003,6 +1003,34 @@ paths:
       security:
         - dataportal_auth:
             - user
+  /upgrade/crtdl:
+    post:
+      tags:
+        - upgrade
+      summary: Fix some of the problems a CRTDL could have after ontology updates
+      description: Some common problems can be automatically fixed by either removing parts of the CRTDL or renaming things. Try to fix as many as possible
+      operationId: upgradeCrtdl
+      requestBody:
+        description: CRTDL
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CRTDL"
+        required: true
+      responses:
+        200:
+          description: CRTDL upgrade finished. If any changes were made, they are listed in "annotations"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpgradeWrapper"
+        400:
+          description: Submitted JSON does not adhere to CRTDL schema
+        401:
+          description: Unauthorized - please login first
+      security:
+        - dataportal_auth:
+            - user
   /actuator/health:
     get:
       summary: Offers health information about this application.
@@ -1668,20 +1696,10 @@ components:
             - false
         valueDefinition:
           type: string
-    UiProfileListEntry:
-      type: object
-      properties:
-        id:
-          type: string
-          examples:
-            - Bioprobe
-            - Patient1
-        uiProfile:
-          $ref: "#/components/schemas/UiProfileEntry"
     UiProfileList:
       type: array
       items:
-        $ref: "#/components/schemas/UiProfileListEntry"
+        $ref: "#/components/schemas/UiProfileEntry"
     AttributeDefinition:
       type: object
       properties:
@@ -1908,7 +1926,7 @@ components:
             - "DataportalBackend"
         name:
           type: string
-          example: "Data Portal Backend"
+          example: "Dataportal Backend"
         time:
           type: string
           format: date-time
@@ -2024,6 +2042,49 @@ components:
               - 763436008
               - 763434006
               - something invalid
+    UpgradeWrapper:
+      type: object
+      properties:
+        crtdl:
+          $ref: "#/components/schemas/CRTDL"
+        annotations:
+          type: list
+          items:
+            $ref: "#/components/schemas/UpgradeIssue"
+    UpgradeIssue:
+      type: object
+      properties:
+        path:
+          type: string
+          examples:
+            - dataExtraction/attributeGroups/1/filter/0
+        value:
+          $ref: "#/components/schemas/UpgradeIssueValue"
+        details:
+          type: object
+          additionalProperties: true
+          example:
+            replaced:
+              type: date
+              name: date
+              start: "2026-03-12"
+              end: "2026-03-13"
+            replacedWith:
+              type: date
+              name: authoredon
+              start: "2026-03-12"
+              end: "2026-03-13"
+    UpgradeIssueValue:
+      type: object
+      properties:
+        message:
+          type: string
+          examples:
+            - Filter Change
+        code:
+          type: string
+          examples:
+            - UPGRADE-1000001
   securitySchemes:
     dataportal_auth:
       type: oauth2
@@ -2031,5 +2092,5 @@ components:
         implicit:
           authorizationUrl: http://to.be.defined/auth
           scopes:
-            user: Data Portal user role
-            admin: Data Portal admin role
+            user: Dataportal user role
+            admin: Dataportal admin role

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.7.0] - 2026-05-08
+
+- Based on ontology **[v4.1.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.1.0)**
+
+### Added
+- Allow to filter available filters on categories and keyword ([#931](https://github.com/medizininformatik-initiative/dataportal-backend/issues/931))
+- Include result expiry time in settings ([#895](https://github.com/medizininformatik-initiative/dataportal-backend/issues/895))
+### Changed
+- Update ontology to [v4.1.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.1.0) ([#944](https://github.com/medizininformatik-initiative/dataportal-backend/issues/944))
+### Removed
+- Removed git branch info from info endpoint ([#896](https://github.com/medizininformatik-initiative/dataportal-backend/issues/896))
+### Fixed
+- Fixed some bugs in openapi description (included in [#931](https://github.com/medizininformatik-initiative/dataportal-backend/issues/931))
+### Security
+- Update dependencies and github actions
+
 ## [8.6.1] - 2026-03-19
 
 - Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**

@@ -12,6 +12,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.elasticsearch.DataElasticsearchTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -31,8 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.Thread.sleep;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -41,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Import({TerminologyEsService.class})
 @Testcontainers
 @DataElasticsearchTest(properties = {
-    "app.elastic.filter=context,terminology"
+    "app.elastic.filter=context,terminology,kds_module"
 })
 public class TerminologyEsServiceIT {
 
@@ -97,13 +99,104 @@ public class TerminologyEsServiceIT {
     assertThat(availableFilters).isNotNull();
 
     assertThat(availableFilters)
-        .hasSize(3)
+        .hasSize(4)
         .extracting(TermFilter::name, TermFilter::type)
         .containsExactlyInAnyOrder(
             tuple("availability", "boolean"),
             tuple("context", "selectable-concept"),
-            tuple("terminology", "selectable-concept")
+            tuple("terminology", "selectable-concept"),
+            tuple("kds_module", "selectable-concept")
         );
+  }
+
+  @Test
+  void testGetAvailableFilters_unknownFilterType_throws() {
+    assertThatThrownBy(() ->
+        terminologyEsService.getAvailableFilters("unknown", null, null, null, null)
+    ).isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Unknown filter");
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("availableFiltersProvider")
+  void testGetAvailableFilters(
+      String testName,
+      String filterType,
+      String searchTerm,
+      List<String> kdsModules,
+      List<String> terminologies,
+      List<String> contexts,
+      int expectedSize,
+      String expectedFilterName,
+      String expectedFilterType
+  ) {
+    List<TermFilter> availableFilters = terminologyEsService.getAvailableFilters(
+        filterType, searchTerm, kdsModules, terminologies, contexts
+    );
+
+    assertThat(availableFilters).isNotNull();
+    if (expectedSize == 0) {
+      assertThat(availableFilters).isEmpty();
+    } else {
+      assertThat(availableFilters)
+          .hasSize(expectedSize)
+          .extracting(TermFilter::name, TermFilter::type)
+          .containsExactlyInAnyOrder(tuple(expectedFilterName, expectedFilterType));
+    }
+  }
+
+  private static Stream<Arguments> availableFiltersProvider() {
+    final String CONTEXT_URL = "http://fhir.de/CodeSystem/bfarm/icd-10-gm";
+    final String TERMINOLOGY   = "Diagnose";
+    final String KDS_URL       = "http://fhir.de/CodeSystem/bfarm/icd-10-gm";
+
+    return Stream.of(
+        // ── Single-parameter combinations ────────────────────────────────────────
+        Arguments.of("context only",
+            "context", null, null, null, List.of(CONTEXT_URL),
+            1, "context", "selectable-concept"),
+
+        Arguments.of("terminology only",
+            "terminology", null, null, List.of(TERMINOLOGY), null,
+            1, "terminology", "selectable-concept"),
+
+        Arguments.of("kdsModule only",
+            "kds_module", null, List.of(KDS_URL), null, null,
+            1, "kds_module", "selectable-concept"),
+
+        Arguments.of("searchTerm only",
+            "context", "icd", null, null, null,
+            1, "context", "selectable-concept"),
+
+        // ── searchTerm combined with each list parameter ──────────────────────
+        Arguments.of("searchTerm + context",
+            "context", "icd", null, null, List.of(CONTEXT_URL),
+            1, "context", "selectable-concept"),
+
+        Arguments.of("searchTerm + terminology",
+            "terminology", "diag", null, List.of(TERMINOLOGY), null,
+            1, "terminology", "selectable-concept"),
+
+        Arguments.of("searchTerm + kdsModule",
+            "kds_module", "icd", List.of(KDS_URL), null, null,
+            1, "kds_module", "selectable-concept"),
+
+        // ── All parameters filled ─────────────────────────────────────────────
+        Arguments.of("all parameters filled",
+            "context", "icd", List.of(KDS_URL), List.of(TERMINOLOGY), List.of(CONTEXT_URL),
+            1, "context", "selectable-concept"),
+
+        // ── Empty lists (treated as no filter) — same as "all null" → returns everything ──
+        Arguments.of("empty lists + searchTerm",
+            "context", "icd", List.of(), List.of(), List.of(),
+            // No list filters active; only searchTerm narrows results → expect whatever matches "icd"
+            1, "context", "selectable-concept"),
+
+        Arguments.of("all null — no filters, returns all aggregated buckets",
+            "context", null, null, null, null,
+            // No filters at all → full aggregation over all docs → expect at least 1 result
+            1, "context", "selectable-concept")
+    );
   }
 
   @Test
