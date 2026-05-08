@@ -132,6 +132,65 @@ public class TerminologyRestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetFilters_succeedsWithParams() throws Exception {
+    List<String> filterList = List.of("context");
+    List<TermFilter> termFilterList = createTermFilterList(filterList.toArray(new String[0]));
+    doReturn(termFilterList).when(terminologyEsService).getAvailableFilters(anyString(), anyString(), anyList(), anyList(), anyList());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter"))
+            .param("targetFilter", "context")
+            .param("searchterm", "")
+            .param("contexts", "")
+            .param("terminologies", "foo")
+            .param("kds-modules", "bar")
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(content().json(jsonUtil.writeValueAsString(termFilterList)));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetFilters_succeedsWithSearchterm() throws Exception {
+    List<String> filterList = List.of("context");
+    List<TermFilter> termFilterList = createTermFilterList(filterList.toArray(new String[0]));
+    doReturn(termFilterList).when(terminologyEsService).getAvailableFilters(anyString(), anyString(), anyList(), anyList(), anyList());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter"))
+            .param("targetFilter", "context")
+            .param("searchterm", "Verbr")
+            .param("contexts", "")
+            .param("terminologies", "")
+            .param("kds-modules", "")
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(content().json(jsonUtil.writeValueAsString(termFilterList)));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetFilters_succeedsWithParamsAndNullFilters() throws Exception {
+    List<String> filterList = List.of("context");
+    List<TermFilter> termFilterList = createTermFilterList(filterList.toArray(new String[0]));
+    doReturn(termFilterList).when(terminologyEsService).getAvailableFilters(anyString(), isNull(), isNull(), isNull(), isNull());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter"))
+            .param("targetFilter", "context")
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(content().json(jsonUtil.writeValueAsString(termFilterList)));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetFilters_failsOnOptionalParametersWithoutTargetFilter() throws Exception {
+    mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter"))
+            .param("searchterm", "blood")
+            .with(csrf()))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   public void testGetFilters_failsOnUnauthorized() throws Exception {
     mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter")).with(csrf()))
         .andExpect(status().isUnauthorized());

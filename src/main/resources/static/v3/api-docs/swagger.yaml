@@ -26,6 +26,8 @@ tags:
     description: Data Selection and Extraction
   - name: validation
     description: Validate CCDL/CRTDL
+  - name: upgrade
+    description: (try to) upgrade a CRTDL
   - name: intrinsics
     description: Offers intrinsic information about this application.
 paths:
@@ -75,7 +77,7 @@ paths:
             default: false
         - name: skip-validation
           in: query
-          description: If true, do not validate the query and do not include a list of invalid terms. TODO - maybe invert this?
+          description: If true, do not validate the query and do not include a list of invalid terms.
           required: false
           schema:
             type: boolean
@@ -101,6 +103,12 @@ paths:
       summary: Spawn a query for another user
       operationId: createDataqueryForUser
       parameters:
+        - name: userId
+          in: path
+          description: ID of the user for whom to spawn the query
+          required: true
+          schema:
+            type: string
         - name: ttl
           in: query
           description: How long until the query gets deleted (ISO 8601 Duration)
@@ -151,7 +159,7 @@ paths:
             default: false
         - name: skip-validation
           in: query
-          description: If true, do not validate the query and do not include a list of invalid terms. TODO - maybe invert this?
+          description: If true, do not validate the query and do not include a list of invalid terms.
           required: false
           schema:
             type: boolean
@@ -218,6 +226,13 @@ paths:
       summary: Update a dataquery in the backend.
       description: The query will be updated. It must be provided completely, there are no partial updates.
       operationId: updateDataQuery
+      parameters:
+        - name: queryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       requestBody:
         description: CRTDL
         content:
@@ -357,7 +372,6 @@ paths:
       summary: Create a feasibility query in the broker
       description: The query will be spawned in the broker and directly be dispatched.
       operationId: runQuery
-      parameters:
       requestBody:
         description: CCDL to create and dispatch
         content:
@@ -407,7 +421,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QueryResultSummary"
+                $ref: "#/components/schemas/QueryResult"
         401:
           description: Unauthorized - please login first
         403:
@@ -498,6 +512,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/QueryResultRateLimit"
+      security:
+        - dataportal_auth:
+            - user
   /query/feasibility/quota:
     get:
       tags:
@@ -511,6 +528,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/QueryQuota"
+      security:
+        - dataportal_auth:
+            - user
   /query/feasibility/cql:
     post:
       tags:
@@ -518,7 +538,6 @@ paths:
       summary: Translate a CCDL to cql
       description: Nothing will be persisted in the backend. It simply returns the cql.
       operationId: sq2Cql
-      parameters:
       requestBody:
         description: CCDL to translate
         content:
@@ -557,7 +576,51 @@ paths:
       tags:
         - terminology
       summary: Get the list of available filters
+      description: Can optionally be filtered to only get the filters of one category, depending on the selections of other categories
       operationId: getFilters
+      parameters:
+        - name: targetFilter
+          in: query
+          description: The requested filter category. Only if this is set, the further filters for contexts, kds-modules and terminologies are considered. If it is empty or null, ALL entries are returned.
+          schema:
+            type: string
+          example: terminology
+        - name: searchterm
+          in: query
+          description: Allow to take the searchterm into consideration to narrow down the results further.
+          schema:
+            type: string
+          example: terminology
+        - name: contexts
+          in: query
+          description: Limit the search to any of the given contexts
+          schema:
+            type: array
+            items:
+              type: string
+              example: Diagnosis
+          style: form
+          explode: false
+        - name: terminologies
+          in: query
+          description: Limit the search to a any of the given terminologies
+          schema:
+            type: array
+            items:
+              type: string
+              example: ICD10
+          style: form
+          explode: false
+        - name: kds-modules
+          in: query
+          description: Limit the search to any of the given KDS modules
+          schema:
+            type: array
+            items:
+              type: string
+              example: Condition
+          style: form
+          explode: false
       responses:
         200:
           description: Ok, return the list of available filters
@@ -567,6 +630,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Filter"
+      security:
+        - dataportal_auth:
+            - user
   /terminology/systems:
     get:
       tags:
@@ -580,6 +646,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TerminologySystems"
+      security:
+        - dataportal_auth:
+            - user
   /terminology/entry/search:
     get:
       tags:
@@ -592,7 +661,7 @@ paths:
           description: The term to search for. In case of an empty searchterm, return the first page of the whole index, sorted alphabetically
           schema:
             type: string
-          examples: Diabetes Mellitus
+          example: Diabetes Mellitus
         - name: contexts
           in: query
           description: Limit the search to any of the given contexts
@@ -658,6 +727,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ElasticSearchResult"
+      security:
+        - dataportal_auth:
+            - user
   /terminology/entry/bulk-search:
     post:
       tags:
@@ -678,6 +750,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ElasticSearchBulkResult"
+      security:
+        - dataportal_auth:
+            - user
   /terminology/entry/{id}/relations:
     get:
       tags:
@@ -705,12 +780,15 @@ paths:
           description: Forbidden - insufficient access rights
         404:
           description: Entry not found
+      security:
+        - dataportal_auth:
+            - user
   /terminology/entry/{id}:
     get:
       tags:
         - terminology
       summary: Get the detailed entry for a criterion, containing children and translations
-      description: This should be in the getEntryById call, but for better distinction between the return values it is listed seperately here
+      description: This should be in the getEntryById call, but for better distinction between the return values it is listed separately here
       operationId: getEntriesById
       parameters:
         - name: id
@@ -733,6 +811,9 @@ paths:
           description: Forbidden - insufficient access rights
         404:
           description: Entry not found
+      security:
+        - dataportal_auth:
+            - user
   /terminology/criteria-profile-data:
     get:
       tags:
@@ -763,6 +844,9 @@ paths:
           description: Unauthorized - please login first.
         403:
           description: Forbidden - insufficient access rights.
+      security:
+        - dataportal_auth:
+            - user
   /terminology/ui-profile:
     get:
       tags:
@@ -780,6 +864,9 @@ paths:
           description: Unauthorized - please login first.
         403:
           description: Forbidden - insufficient access rights.
+      security:
+        - dataportal_auth:
+            - user
   /codeable-concept/entry/search:
     get:
       tags:
@@ -826,6 +913,9 @@ paths:
           description: Unauthorized - please login first
         403:
           description: Forbidden - insufficient access rights
+      security:
+        - dataportal_auth:
+            - admin
   /codeable-concept/entry/bulk-search:
     post:
       tags:
@@ -850,6 +940,9 @@ paths:
           description: Unauthorized - please login first
         403:
           description: Forbidden - insufficient access rights
+      security:
+        - dataportal_auth:
+            - admin
   /codeable-concept/entry:
     get:
       tags:
@@ -893,6 +986,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProfileTreeNode"
+      security:
+        - dataportal_auth:
+            - user
   /dse/profile-data:
     get:
       tags:
@@ -917,6 +1013,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProfileDataList"
+      security:
+        - dataportal_auth:
+            - user
   /validation/crtdl:
     post:
       tags:
@@ -969,7 +1068,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationIssue"
+                type: array
+                items:
+                  $ref: "#/components/schemas/ValidationIssue"
         401:
           description: Unauthorized - please login first
       security:
@@ -990,7 +1091,7 @@ paths:
               $ref: "#/components/schemas/Dataquery"
         required: true
       responses:
-        201:
+        200:
           description: Dataquery is valid
         400:
           description: Dataquery contains errors
@@ -1035,7 +1136,7 @@ paths:
     get:
       summary: Offers health information about this application.
       description: ''
-      operationId: ''
+      operationId: 'getHealth'
       responses:
         200:
           description: Successful health information.
@@ -1053,7 +1154,7 @@ paths:
     get:
       summary: Offers build information about the backend.
       description: ''
-      operationId: ''
+      operationId: 'getInfo'
       responses:
         200:
           description: Successful build information.
@@ -1067,7 +1168,7 @@ paths:
     get:
       summary: Offers config settings needed by the frontend.
       description: ''
-      operationId: ''
+      operationId: 'getSettings'
       responses:
         200:
           description: Successful health information.
@@ -1095,7 +1196,6 @@ components:
         totalNumberOfResults:
           type: integer
         content:
-          type: object
           $ref: "#/components/schemas/CRTDL"
     CRTDL:
       type: object
@@ -1105,24 +1205,88 @@ components:
           examples:
             - Example CRTDL
         cohortDefinition:
-          type: object
           $ref: "#/components/schemas/CCDL"
         dataExtraction:
-          type: object
           $ref: "#/components/schemas/DataExtractionQuery"
     DataExtractionQuery:
       type: object
+      required:
+        - attributeGroups
+      additionalProperties: false
       properties:
-        id:
-          type: string
-          examples:
-            - 123
         attributeGroups:
           type: array
           items:
-            type: string
-            examples:
-              - to be done correctly...for now just a placeholder because it doesn't matter for this conversation
+            type: object
+            required:
+              - id
+              - groupReference
+              - attributes
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              groupReference:
+                type: string
+                format: uri
+              includeReferenceOnly:
+                type: boolean
+              attributes:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - attributeRef
+                    - mustHave
+                  properties:
+                    attributeRef:
+                      type: string
+                    mustHave:
+                      type: boolean
+                    linkedGroups:
+                      type: array
+                      items:
+                        type: string
+              filter:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - type
+                    - name
+                  additionalProperties: false
+                  properties:
+                    type:
+                      type: string
+                    name:
+                      type: string
+                    codes:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - code
+                          - system
+                          - display
+                        additionalProperties: false
+                        properties:
+                          code:
+                            type: string
+                          system:
+                            type: string
+                            format: uri
+                          display:
+                            type: string
+                          version:
+                            type: string
+                    start:
+                      type: string
+                      format: date
+                    end:
+                      type: string
+                      format: date
     DataQueryListEntry:
       type: object
       required:
@@ -1170,18 +1334,6 @@ components:
           type: string
         results:
           $ref: "#/components/schemas/QueryResult"
-    QueryResultSummary:
-      type: object
-      properties:
-        totalNumberOfPatients:
-          type: integer
-          format: int64
-        queryId:
-          type: string
-        resultLines:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryResultLine"
     QueryResultObfuscated:
       type: object
       properties:
@@ -1233,10 +1385,10 @@ components:
       type: object
       properties:
         limit:
-          type: number
+          type: integer
           format: int64
         remaining:
-          type: number
+          type: integer
           format: int64
     CCDL:
       type: object
@@ -1503,7 +1655,7 @@ components:
           examples:
             - 203e04cd-4f0a-321b-b1ad-9ec6d211e0a8
         availability:
-          description: Not sure if we want this as numeric value, percentage or just boolean?
+          description: How often is this available
           type: integer
           minimum: 0
           examples:
@@ -1579,7 +1731,7 @@ components:
         name:
           type: string
           examples:
-            - Endokrine, Ernährungs- und Stoffwechselerkrankungen
+            - Endokrine, Ern?hrungs- und Stoffwechselerkrankungen
         contextualizedTermcodeHash:
           type: string
           examples:
@@ -1591,18 +1743,25 @@ components:
           type: string
           examples:
             - Terminology
+        type:
+          type: string
+          examples:
+            - selectable-concept
         values:
           type: array
           items:
             $ref: "#/components/schemas/FilterValue"
-          examples:
-            - ICD10
-            - SNOMED
-            - LOINC
     FilterValue:
-      type: string
-      examples:
-        - icd10
+      type: object
+      properties:
+        label:
+          type: string
+          examples:
+            - http://fhir.de/CodeSystem/bfarm/icd-10-gm
+        count:
+          type: integer
+          examples:
+            - 1234
     LocalizedValue:
       type: object
       properties:
@@ -1742,20 +1901,22 @@ components:
           examples:
             - reference
     TerminologySystems:
-      type: object
-      required:
-        - url
-        - name
-      properties:
-        url:
-          type: string
-          format: uri
-          examples:
-            - http://fhir.de/CodeSystem/bfarm/ops
-        name:
-          type: string
-          examples:
-            - OPS
+      type: array
+      items:
+        type: object
+        required:
+          - url
+          - name
+        properties:
+          url:
+            type: string
+            format: uri
+            examples:
+              - http://fhir.de/CodeSystem/bfarm/ops
+          name:
+            type: string
+            examples:
+              - OPS
     ProfileTreeNode:
       type: object
       properties:
@@ -1873,15 +2034,15 @@ components:
       type: object
       properties:
         intervalInMinutes:
-          type: number
+          type: integer
           examples:
             - 60
         used:
-          type: number
+          type: integer
           examples:
             - 2
         limit:
-          type: number
+          type: integer
           examples:
             - 10
     GitInfo:
@@ -2005,20 +2166,21 @@ components:
             - 10
     TerminologyBulkSearchRequest:
       type: object
+      required:
+        - terminology
+        - context
+        - searchterms
       properties:
         terminology:
           type: string
-          required: true
           examples:
             - http://fhir.de/CodeSystem/bfarm/icd-10-gm
         context:
           type: string
-          required: true
           examples:
             - Diagnose
         searchterms:
           type: array
-          required: true
           items:
             type: string
             examples:
@@ -2027,15 +2189,16 @@ components:
               - something invalid
     CodeableConceptBulkSearchRequest:
       type: object
+      required:
+        - valueSet
+        - searchterms
       properties:
         valueSet:
           type: string
-          required: true
           examples:
             - https://www.medizininformatik-initiative.de/fhir/ext/modul-biobank/ValueSet/sct-body-structures
         searchterms:
           type: array
-          required: true
           items:
             type: string
             examples:
@@ -2048,7 +2211,7 @@ components:
         crtdl:
           $ref: "#/components/schemas/CRTDL"
         annotations:
-          type: list
+          type: array
           items:
             $ref: "#/components/schemas/UpgradeIssue"
     UpgradeIssue:
