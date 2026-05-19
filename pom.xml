@@ -376,7 +376,7 @@
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
-      <version>4.0.7</version>
+      <version>4.0.8</version>
     </dependency>
 
   </dependencies>
@@ -502,7 +502,7 @@
       <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-impl</artifactId>
-        <version>4.0.7</version>
+        <version>4.0.8</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
