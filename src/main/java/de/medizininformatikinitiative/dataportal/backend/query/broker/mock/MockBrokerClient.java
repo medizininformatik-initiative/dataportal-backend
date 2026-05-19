@@ -80,7 +80,7 @@ public class MockBrokerClient implements BrokerClient {
     var mocks = siteNames.keySet()
         .stream().map(siteId -> CompletableFuture.runAsync(() -> {
           try {
-            Thread.sleep(Math.round(2000 + 6000 * Math.random()));
+            Thread.sleep(Math.round(500 + 1000 * Math.random()));
             query.registerSiteResults(siteId, (int) Math.round(10 + 500 * Math.random()));
             var statusUpdate = QueryStatusUpdate.builder()
                 .source(this)
