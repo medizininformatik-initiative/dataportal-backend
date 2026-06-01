@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dispatch;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerClient;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContentRepository;

@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
@@ -163,7 +163,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
       hasErrors = unitsAndQuantitiesContainErrors(ctx, criterion, uiProfile,
           MessageFormat.format("{0}/valueFilter", jsonPointerBase)) || hasErrors;
 
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException(e);
     } catch (UiProfileNotFoundException uie) {
       ValidationErrorBuilder.addError(

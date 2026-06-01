@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import org.springframework.beans.factory.annotation.Qualifier;

@@ -1,10 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.status;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
-import java.io.IOException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * Custom Serializer for {@link UpgradeIssueType} to add prefix to code and replace boolean with yes/no.
@@ -20,10 +18,10 @@ public class UpgradeIssueSerializer extends StdSerializer<UpgradeIssueType> {
   }
 
   @Override
-  public void serialize(UpgradeIssueType upgradeIssueType, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+  public void serialize(UpgradeIssueType upgradeIssueType, JsonGenerator jsonGenerator, SerializationContext serializerProvider) {
     jsonGenerator.writeStartObject();
-    jsonGenerator.writeStringField("code", "UPGRADE-" + upgradeIssueType.code());
-    jsonGenerator.writeStringField("detail", upgradeIssueType.detail());
+    jsonGenerator.writeStringProperty("code", "UPGRADE-" + upgradeIssueType.code());
+    jsonGenerator.writeStringProperty("detail", upgradeIssueType.detail());
     jsonGenerator.writeEndObject();
   }
 }

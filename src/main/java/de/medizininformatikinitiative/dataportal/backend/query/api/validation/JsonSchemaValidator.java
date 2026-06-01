@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.networknt.schema.*;
 import com.networknt.schema.Error;
 import com.networknt.schema.regex.JoniRegularExpressionFactory;

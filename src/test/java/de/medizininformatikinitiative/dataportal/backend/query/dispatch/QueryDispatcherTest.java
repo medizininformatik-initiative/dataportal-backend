@@ -1,7 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dispatch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerClient;
@@ -40,7 +41,7 @@ public class QueryDispatcherTest {
   private QueryHashCalculator queryHashCalculator;
 
   @Spy
-  private ObjectMapper jsonUtil = new ObjectMapper();
+  private ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
   @Mock
   private QueryRepository queryRepository;
@@ -75,7 +76,7 @@ public class QueryDispatcherTest {
   }
 
   @Test
-  public void testDispatchEnqueuedQuery_FailsWhenCcdlNotFetchable() throws JsonProcessingException {
+  public void testDispatchEnqueuedQuery_FailsWhenCcdlNotFetchable() throws JacksonException {
     var testQueryId = 99999L;
     var testQuery = new Query();
     testQuery.setId(testQueryId);
@@ -83,7 +84,7 @@ public class QueryDispatcherTest {
     testQuery.setQueryContent(testQueryContent);
 
     doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
-    doThrow(JsonProcessingException.class).when(jsonUtil).readValue(testQueryContent.getQueryContent(),
+    doThrow(JacksonException.class).when(jsonUtil).readValue(testQueryContent.getQueryContent(),
         Ccdl.class);
 
     var queryDispatcher = createQueryDispatcher(List.of());
@@ -93,7 +94,7 @@ public class QueryDispatcherTest {
   }
 
   @Test
-  public void testDispatchEnqueuedQuery_FailsWhenQueryCannotGetTranslated() throws JsonProcessingException,
+  public void testDispatchEnqueuedQuery_FailsWhenQueryCannotGetTranslated() throws JacksonException,
       QueryTranslationException {
     var testQueryId = 99999L;
     var testQuery = new Query();

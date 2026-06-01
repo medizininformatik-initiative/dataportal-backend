@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.dse;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfileTreeNode;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileRepository;
@@ -12,7 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.URL;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,8 +37,9 @@ public class DseService {
   }
 
   public DseProfileTreeNode readProfileTree(String dseProfileTreeFilename) throws IOException {
-    return objectMapper.readValue(
-        new URL("file:" + dseProfileTreeFilename), DseProfileTreeNode.class);
+    try (var in = new FileInputStream(dseProfileTreeFilename)) {
+      return objectMapper.readValue(in, DseProfileTreeNode.class);
+    }
   }
 
   public List<DseProfile> getProfileData(List<String> profileIds) {
@@ -54,7 +55,7 @@ public class DseService {
       if (dseProfile.isPresent()) {
         try {
           results.add(objectMapper.readValue(dseProfile.get().getEntry(), DseProfile.class));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
           throw new RuntimeException(e);
         }
       } else {

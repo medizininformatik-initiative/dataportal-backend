@@ -1,14 +1,15 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import org.junit.jupiter.api.Test;
 
 public class CcdlV2ParserTest {
 
   @Test
-  public void queryBuilder() throws JsonProcessingException {
+  public void queryBuilder() throws JacksonException {
 
     String testQuery = """
         {
@@ -137,7 +138,7 @@ public class CcdlV2ParserTest {
           "display" : "Beispiel-Query"
         }""";
 
-    var objectMapper = new ObjectMapper();
+    var objectMapper = JsonMapper.builderWithJackson2Defaults().build();
     var test = objectMapper.readValue(testQuery, Ccdl.class);
     var jsonString = objectMapper.writeValueAsString(test);
     assert (jsonString.contains("attributeCode"));

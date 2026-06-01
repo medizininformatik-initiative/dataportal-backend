@@ -1,8 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.v5;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
@@ -162,7 +162,7 @@ public class DataqueryHandlerRestControllerIT {
   public void testGetDataquery_failsOnJsonError() throws Exception {
     long dataqueryId = 1;
 
-    doThrow(JsonProcessingException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+    doThrow(JacksonException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId)).with(csrf()))
         .andExpect(status().isInternalServerError());
@@ -197,7 +197,7 @@ public class DataqueryHandlerRestControllerIT {
   public void testGetDataqueryCrtdl_failsOnJsonError() throws Exception {
     long dataqueryId = 1;
 
-    doThrow(JsonProcessingException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+    doThrow(JacksonException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl")).with(csrf()))
         .andExpect(status().isInternalServerError());
@@ -240,7 +240,7 @@ public class DataqueryHandlerRestControllerIT {
     long dataqueryId = 1;
 
     doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-    doThrow(JsonProcessingException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+    doThrow(JacksonException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl"))
             .header(HttpHeaders.ACCEPT, "application/zip")
@@ -296,7 +296,7 @@ public class DataqueryHandlerRestControllerIT {
   public void testConvertCrtdlToCsv_failsOnJsonError() throws Exception {
     long dataqueryId = 1L;
 
-    doThrow(JsonProcessingException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+    doThrow(JacksonException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
 
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
             .contentType(APPLICATION_JSON)
@@ -474,7 +474,7 @@ public class DataqueryHandlerRestControllerIT {
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
   public void testUpdateDataquery_failsOnJsonProcessingException() throws Exception {
-    doThrow(JsonProcessingException.class).when(dataqueryHandler).updateDataquery(any(Long.class), any(Dataquery.class), any(String.class));
+    doThrow(JacksonException.class).when(dataqueryHandler).updateDataquery(any(Long.class), any(Dataquery.class), any(String.class));
     mockMvc.perform(put(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
@@ -532,7 +532,7 @@ public class DataqueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createValidPersistenceDataqueryToGet(long id) throws JsonProcessingException {
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createValidPersistenceDataqueryToGet(long id) throws JacksonException {
     var dataquery = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery();
     dataquery.setId(id);
     dataquery.setCrtdl(jsonUtil.writeValueAsString(createCrtdl()));
@@ -543,7 +543,7 @@ public class DataqueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private List<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> createValidPersistenceDataqueryListToGet(int entries) throws JsonProcessingException {
+  private List<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> createValidPersistenceDataqueryListToGet(int entries) throws JacksonException {
     var dataqueryList = new ArrayList<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery>();
     for (int i = 0; i < entries; ++i) {
       dataqueryList.add(createValidPersistenceDataqueryToGet(i));
@@ -572,7 +572,7 @@ public class DataqueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private List<Dataquery> createValidApiDataqueryListToGet(int entries) throws JsonProcessingException {
+  private List<Dataquery> createValidApiDataqueryListToGet(int entries) throws JacksonException {
     var dataqueryList = new ArrayList<Dataquery>();
     for (int i = 0; i < entries; ++i) {
       dataqueryList.add(createValidApiDataqueryToGet(i));

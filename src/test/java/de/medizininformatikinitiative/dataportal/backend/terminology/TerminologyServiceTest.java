@@ -1,7 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.CriteriaProfileData;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
@@ -37,7 +38,7 @@ class TerminologyServiceTest {
   private static UUID VALID_NODE_ID_CAT1 = UUID.fromString("72ceaea9-c1ff-2e94-5fc0-7ba34feca654");
 
   private static UUID INVALID_NODE_ID = UUID.fromString("00000000-1111-2222-3333-444444444444");
-  private final ObjectMapper jsonUtil = new ObjectMapper();
+  private final ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
   @Mock
   private UiProfileRepository uiProfileRepository;
   @Mock
@@ -218,7 +219,7 @@ class TerminologyServiceTest {
     }
   }
 
-  private UiProfile createUiProfile() throws JsonProcessingException {
+  private UiProfile createUiProfile() throws JacksonException {
     var uiProfile = new UiProfile();
     uiProfile.setId(1L);
     uiProfile.setName("example");
@@ -231,7 +232,7 @@ class TerminologyServiceTest {
     return uiProfile;
   }
 
-  private UiProfile createBogousUiProfile() throws JsonProcessingException {
+  private UiProfile createBogousUiProfile() throws JacksonException {
     var uiProfile = new UiProfile();
     uiProfile.setId(1L);
     uiProfile.setName("example");

@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dispatch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerClient;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerSpringConfig;
@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.test.StepVerifier;
@@ -80,7 +80,7 @@ public class QueryDispatcherIT {
   private List<BrokerClient> queryBrokerClients;
 
   @Test
-  public void testEnqueueNewQuery_QueryContentGetsCreatedIfNotAlreadyPresent() throws JsonProcessingException {
+  public void testEnqueueNewQuery_QueryContentGetsCreatedIfNotAlreadyPresent() throws JacksonException {
     var otherQuery = Ccdl.builder()
         .version(URI.create("https://to_be_decided.com/draft-2/schema#"))
         .build();
@@ -105,7 +105,7 @@ public class QueryDispatcherIT {
   }
 
   @Test
-  public void testEnqueueNewQuery_QueryContentGetsReusedIfAlreadyPresent() throws JsonProcessingException {
+  public void testEnqueueNewQuery_QueryContentGetsReusedIfAlreadyPresent() throws JacksonException {
     var testQuery = Ccdl.builder().build();
     var serializedTestQuery = jsonUtil.writeValueAsString(testQuery);
     var serializedTestQueryHash = queryHashCalculator.calculateSerializedQueryBodyHash(serializedTestQuery);
@@ -119,7 +119,7 @@ public class QueryDispatcherIT {
   }
 
   @Test
-  public void testEnqueueNewQuery() throws JsonProcessingException {
+  public void testEnqueueNewQuery() throws JacksonException {
     var testQuery = Ccdl.builder().build();
     var serializedTestQuery = jsonUtil.writeValueAsString(testQuery);
     var serializedTestQueryHash = queryHashCalculator.calculateSerializedQueryBodyHash(serializedTestQuery);
