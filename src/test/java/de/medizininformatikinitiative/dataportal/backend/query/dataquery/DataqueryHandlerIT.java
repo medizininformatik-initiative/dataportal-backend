@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService;
@@ -20,8 +20,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -94,7 +94,7 @@ public class DataqueryHandlerIT {
 
   @Test
   @WithMockUser(username = CREATOR, roles = {"DATAPORTAL_USER"})
-  public void testGetDataquery() throws JsonProcessingException {
+  public void testGetDataquery() throws JacksonException {
     var dataqueryEntity = createDataqueryEntity(false);
     var dataqueryId = dataqueryRepository.save(dataqueryEntity).getId();
     var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -107,7 +107,7 @@ public class DataqueryHandlerIT {
 
   @Test
   @WithMockUser(username = CREATOR, roles = {"DATAPORTAL_USER"})
-  public void testUpdateDataquery() throws JsonProcessingException, DataqueryStorageFullException, DataqueryException {
+  public void testUpdateDataquery() throws JacksonException, DataqueryStorageFullException, DataqueryException {
     var dataquery = createDataquery(false);
     var dataqueryWithResult = createDataquery(true);
     var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -123,7 +123,7 @@ public class DataqueryHandlerIT {
   }
 
   @Test
-  public void testGetDataqueriesByAuthor() throws JsonProcessingException {
+  public void testGetDataqueriesByAuthor() throws JacksonException {
     var listSize = 10;
 
     for (int i = 0; i < listSize; ++i) {
@@ -138,7 +138,7 @@ public class DataqueryHandlerIT {
   }
 
   @Test
-  public void testDeleteDataquery() throws JsonProcessingException {
+  public void testDeleteDataquery() throws JacksonException {
     var listSize = 10;
 
     for (int i = 0; i < listSize; ++i) {
@@ -156,7 +156,7 @@ public class DataqueryHandlerIT {
   }
 
   @Test
-  public void testGetDataquerySlotsJson() throws JsonProcessingException, DataqueryException {
+  public void testGetDataquerySlotsJson() throws JacksonException, DataqueryException {
     var dataqueriesWithResult = 3;
     var dataqueriesWithoutResult = 5;
 
@@ -210,7 +210,7 @@ public class DataqueryHandlerIT {
         .build();
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult) throws JsonProcessingException {
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult) throws JacksonException {
     de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery out = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery();
     out.setLabel(LABEL);
     out.setComment(COMMENT);

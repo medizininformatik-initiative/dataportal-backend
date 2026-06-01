@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.validation.v5;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import de.medizininformatikinitiative.dataportal.backend.validation.ContentValidationException;
 import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.springframework.http.HttpStatus;

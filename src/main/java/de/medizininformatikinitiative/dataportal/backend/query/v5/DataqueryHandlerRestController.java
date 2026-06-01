@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.v5;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.CrtdlSectionInfo;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryCsvExportException;
@@ -93,7 +93,7 @@ public class DataqueryHandlerRestController {
               .build())
           .build();
       return new ResponseEntity<>(dataqueryWithInvalidCriteria, HttpStatus.OK);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -107,7 +107,7 @@ public class DataqueryHandlerRestController {
     try {
       var dataquery = dataqueryHandler.getDataqueryById(dataqueryId, authentication);
       return new ResponseEntity<>(dataquery.content(), HttpStatus.OK);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -125,7 +125,7 @@ public class DataqueryHandlerRestController {
       headers.add(HttpHeaders.CONTENT_DISPOSITION, headerValue);
       headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
       return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
-    } catch (IOException e) {
+    } catch (IOException | JacksonException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -157,7 +157,7 @@ public class DataqueryHandlerRestController {
       headers.add(HttpHeaders.CONTENT_DISPOSITION, headerValue);
       headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
       return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
-    } catch (IOException e) {
+    } catch (IOException | JacksonException e) {
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -272,7 +272,7 @@ public class DataqueryHandlerRestController {
       return new ResponseEntity<>(dataquerySlots, HttpStatus.OK);
     } catch (DataqueryException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
     } catch (DataqueryStorageFullException e) {
       return new ResponseEntity<>(HttpStatus.FORBIDDEN);

@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
@@ -59,7 +59,7 @@ public class DataqueryHandler {
       de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataqueryEntity = de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(tmp);
       dataqueryEntity = dataqueryRepository.save(dataqueryEntity);
       return dataqueryEntity.getId();
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new DataqueryException(e.getMessage());
     }
   }
@@ -79,12 +79,12 @@ public class DataqueryHandler {
       de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataqueryEntity = de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(tmp);
       dataqueryEntity = dataqueryRepository.save(dataqueryEntity);
       return dataqueryEntity.getId();
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new DataqueryException(e.getMessage());
     }
   }
 
-  public Dataquery getDataqueryById(Long dataqueryId, Authentication userAuthentication) throws DataqueryException, JsonProcessingException {
+  public Dataquery getDataqueryById(Long dataqueryId, Authentication userAuthentication) throws DataqueryException, JacksonException {
     de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery = dataqueryRepository.findById(dataqueryId).orElseThrow(DataqueryException::new);
     if (hasAccess(dataquery, userAuthentication)) {
       return Dataquery.of(dataquery);
@@ -93,7 +93,7 @@ public class DataqueryHandler {
     }
   }
 
-  public void updateDataquery(Long queryId, Dataquery dataquery, String userId) throws DataqueryException, DataqueryStorageFullException, JsonProcessingException {
+  public void updateDataquery(Long queryId, Dataquery dataquery, String userId) throws DataqueryException, DataqueryStorageFullException, JacksonException {
     var usedSlots = dataqueryRepository.countByCreatedByWhereResultIsNotNull(userId);
     var existingDataquery = dataqueryRepository.findById(queryId).orElseThrow(DataqueryException::new);
 
@@ -125,7 +125,7 @@ public class DataqueryHandler {
     for (de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery : dataqueries) {
       try {
         ret.add(Dataquery.of(dataquery));
-      } catch (JsonProcessingException e) {
+      } catch (JacksonException e) {
         throw new DataqueryException();
       }
     }

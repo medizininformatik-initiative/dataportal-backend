@@ -1,12 +1,13 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.Map;
 
 public class ValidationErrorBuilder {
 
-  private static final ObjectMapper jsonUtil = new ObjectMapper();
+  private static final ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
   private ValidationErrorBuilder() {}
 

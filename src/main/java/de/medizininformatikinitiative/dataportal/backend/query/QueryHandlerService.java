@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Query;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.*;
@@ -101,7 +101,7 @@ public class QueryHandlerService {
         .build();
   }
 
-  public Query getQuery(Long queryId) throws JsonProcessingException {
+  public Query getQuery(Long queryId) throws JacksonException {
     var query = queryRepository.findById(queryId);
     if (query.isPresent()) {
       return convertQueryToApi(query.get());
@@ -110,7 +110,7 @@ public class QueryHandlerService {
     }
   }
 
-  public Ccdl getQueryContent(Long queryId) throws JsonProcessingException {
+  public Ccdl getQueryContent(Long queryId) throws JacksonException {
     var queryContent = queryContentRepository.findByQueryId(queryId);
     if (queryContent.isPresent()) {
       return jsonUtil.readValue(queryContent.get().getQueryContent(), Ccdl.class);
@@ -121,7 +121,7 @@ public class QueryHandlerService {
 
 
   private Query convertQueryToApi(de.medizininformatikinitiative.dataportal.backend.query.persistence.Query in)
-      throws JsonProcessingException {
+      throws JacksonException {
 
     return Query.builder()
         .id(in.getId())

@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
@@ -22,7 +23,7 @@ public class DataExtractionValidatorSpringConfig {
       CodeableConceptService codeableConceptService,
       DseService dseService) {
     return enabled
-        ? new DataExtractionValidator(codeableConceptService, dseService, new ObjectMapper())
+        ? new DataExtractionValidator(codeableConceptService, dseService, JsonMapper.builderWithJackson2Defaults().build())
         : new DataExtractionPassValidator();
   }
 }

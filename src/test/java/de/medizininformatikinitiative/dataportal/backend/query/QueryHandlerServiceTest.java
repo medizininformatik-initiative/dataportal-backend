@@ -1,8 +1,9 @@
 package de.medizininformatikinitiative.dataportal.backend.query;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.networknt.schema.Error;
 import com.networknt.schema.path.NodePath;
 import com.networknt.schema.path.PathType;
@@ -38,7 +39,7 @@ class QueryHandlerServiceTest {
 
 
   @Spy
-  private ObjectMapper jsonUtil = new ObjectMapper();
+  private ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
   @Mock
   private QueryDispatcher queryDispatcher;
@@ -84,7 +85,7 @@ class QueryHandlerServiceTest {
   }
 
 //  @Test
-//  public void testValidateCcdl_noErrors() throws JsonProcessingException {
+//  public void testValidateCcdl_noErrors() throws JacksonException {
 //    JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
 //    doReturn(List.of()).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
 //
@@ -94,7 +95,7 @@ class QueryHandlerServiceTest {
 //  }
 //
 //  @Test
-//  public void testValidateCcdl_errors() throws JsonProcessingException {
+//  public void testValidateCcdl_errors() throws JacksonException {
 //    JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
 //    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
 //
