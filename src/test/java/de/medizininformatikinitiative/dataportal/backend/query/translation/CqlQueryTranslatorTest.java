@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
@@ -37,9 +37,9 @@ public class CqlQueryTranslatorTest {
   private CqlQueryTranslator cqlQueryTranslator;
 
   @Test
-  public void testTranslate_ModelConversionFailsDuringEncoding() throws JsonProcessingException {
+  public void testTranslate_ModelConversionFailsDuringEncoding() throws JacksonException {
     var testQuery = Ccdl.builder().build();
-    doThrow(JsonProcessingException.class).when(jsonUtil).writeValueAsString(testQuery);
+    doThrow(JacksonException.class).when(jsonUtil).writeValueAsString(testQuery);
 
     assertThrows(QueryTranslationException.class, () -> cqlQueryTranslator.translate(testQuery));
     verify(jsonUtil, never()).readValue(anyString(), eq(de.numcodex.sq2cql.model.structured_query.StructuredQuery.class));
@@ -47,10 +47,10 @@ public class CqlQueryTranslatorTest {
   }
 
   @Test
-  public void testTranslate_ModelConversionFailsDuringDecoding() throws JsonProcessingException {
+  public void testTranslate_ModelConversionFailsDuringDecoding() throws JacksonException {
     var testQuery = Ccdl.builder().build();
     doReturn("foo").when(jsonUtil).writeValueAsString(testQuery);
-    doThrow(JsonProcessingException.class).when(jsonUtil).readValue("foo",
+    doThrow(JacksonException.class).when(jsonUtil).readValue("foo",
         de.numcodex.sq2cql.model.structured_query.StructuredQuery.class);
 
     assertThrows(QueryTranslationException.class, () -> cqlQueryTranslator.translate(testQuery));

@@ -1,10 +1,10 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import com.networknt.schema.Error;
 import com.networknt.schema.path.NodePath;
 import com.networknt.schema.path.PathType;
@@ -58,7 +58,9 @@ class DataqueryHandlerTest {
   private DataqueryHandler dataqueryHandler;
 
   @Spy
-  private ObjectMapper jsonUtil = new ObjectMapper();
+  private ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults()
+      .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+      .build();
 
   @Mock
   private DataqueryRepository dataqueryRepository;
@@ -82,8 +84,6 @@ class DataqueryHandlerTest {
 
   @BeforeEach
   void setUp() {
-    jsonUtil.registerModule(new JavaTimeModule());
-    jsonUtil.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     dataqueryHandler = new DataqueryHandler(csvExportService, jsonUtil, dataqueryRepository, MAX_QUERIES_PER_USER, KEYCLOAK_ADMIN_ROLE);
   }
 
@@ -94,7 +94,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("storeDataquery() -> trying to store a valid object with a user does not throw")
-  void storeDataquery_succeeds() throws JsonProcessingException {
+  void storeDataquery_succeeds() throws JacksonException {
     doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any());
 
     assertDoesNotThrow(() -> dataqueryHandler.storeDataquery(createDataquery(), CREATOR));
@@ -121,7 +121,7 @@ class DataqueryHandlerTest {
   @ParameterizedTest
   @CsvSource({"true", "false"})
   @DisplayName("storeDataquery() -> trying to store a dataquery when no slots are free throws")
-  void storeDataquery_throwsOnNoFreeSlots(boolean withResult) throws JsonProcessingException {
+  void storeDataquery_throwsOnNoFreeSlots(boolean withResult) throws JacksonException {
     lenient().doReturn(MAX_QUERIES_PER_USER + 1L).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
     lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
 
@@ -135,7 +135,7 @@ class DataqueryHandlerTest {
   @ParameterizedTest
   @CsvSource({"true,-1", "true,0", "true,1", "false,-1", "false,0", "false,1"})
   @DisplayName("storeDataquery() -> checking around the query limit")
-  void storeDataquery_testFreeSlotOnEdgeCases(boolean withResult, long offset) throws JsonProcessingException {
+  void storeDataquery_testFreeSlotOnEdgeCases(boolean withResult, long offset) throws JacksonException {
     lenient().doReturn(MAX_QUERIES_PER_USER + offset).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
     lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
 
@@ -152,19 +152,19 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("storeDataquery() -> error in json serialization throws an exception")
-  void storeDataquery_throwsOnJsonSerializationError() throws JsonProcessingException {
+  void storeDataquery_throwsOnJsonSerializationError() throws JacksonException {
     var dataquery = createDataquery();
 
     try (MockedStatic<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> mockedStaticDataquery
              = mockStatic(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class)) {
-      mockedStaticDataquery.when(() -> de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(any(Dataquery.class))).thenThrow(JsonProcessingException.class);
+      mockedStaticDataquery.when(() -> de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(any(Dataquery.class))).thenThrow(JacksonException.class);
       assertThrows(DataqueryException.class, () -> dataqueryHandler.storeDataquery(dataquery, CREATOR));
     }
   }
 
   @Test
   @DisplayName("getDataqueryById() -> retrieving a single dataquery by its id succeeds")
-  void getDataqueryById_succeeds() throws JsonProcessingException {
+  void getDataqueryById_succeeds() throws JacksonException {
     setMockAuth(CREATOR, List.of("DATAPORTAL_USER"));
     var dataqueryEntity = createDataqueryEntity();
     var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -177,7 +177,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("getDataqueryById() -> Throw exception if the user is not the author")
-  void getDataqueryById_throwsOnWrongUser() throws JsonProcessingException {
+  void getDataqueryById_throwsOnWrongUser() throws JacksonException {
     setMockAuth("NOT_THE" + CREATOR, List.of("DATAPORTAL_USER"));
     var dataqueryEntity = createDataqueryEntity();
     var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -188,7 +188,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("getDataqueryById() -> Succeeds for admin user")
-  void getDataqueryById_succeedsForAdmin() throws JsonProcessingException {
+  void getDataqueryById_succeedsForAdmin() throws JacksonException {
     setMockAuth("NOT_THE" + CREATOR, List.of("ROLE_DATAPORTAL_TEST_ADMIN"));
     var dataqueryEntity = createDataqueryEntity();
     var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -211,7 +211,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("updateDataquery() -> trying to update a dataquery succeeds")
-  void updateDataquery_succeeds() throws JsonProcessingException {
+  void updateDataquery_succeeds() throws JacksonException {
     var dataquery = createDataquery();
     var dataqueryEntity = createDataqueryEntity();
 
@@ -222,7 +222,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("updateDataquery() -> throws exception when actor is not the original creator")
-  void updateDataquery_throwsOnWrongUser() throws JsonProcessingException {
+  void updateDataquery_throwsOnWrongUser() throws JacksonException {
     var dataquery = createDataquery();
     var dataqueryEntity = createDataqueryEntity();
     doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -241,7 +241,7 @@ class DataqueryHandlerTest {
   @ParameterizedTest
   @CsvSource({"true,true", "true,false", "false,true", "false,false"})
   @DisplayName("updateDataquery() -> check if storage full exceptions are thrown correctly")
-  void updateDataquery_throwsOnNoFreeSlots(boolean withResultNew, boolean withResultOld) throws JsonProcessingException {
+  void updateDataquery_throwsOnNoFreeSlots(boolean withResultNew, boolean withResultOld) throws JacksonException {
     var dataquery = createDataquery(withResultNew);
     var dataqueryEntity = createDataqueryEntity(withResultOld);
 
@@ -264,7 +264,7 @@ class DataqueryHandlerTest {
       "1,true,true", "1,true,false", "1,false,true", "1,false,false"
   })
   @DisplayName("updateDataquery() -> checking around the query limit")
-  void updateDataquery_testFreeSlotOnEdgeCases(long offset, boolean withResultNew, boolean withResultOld) throws JsonProcessingException {
+  void updateDataquery_testFreeSlotOnEdgeCases(long offset, boolean withResultNew, boolean withResultOld) throws JacksonException {
     var dataquery = createDataquery(withResultNew);
     var dataqueryEntity = createDataqueryEntity(withResultOld);
 
@@ -284,7 +284,7 @@ class DataqueryHandlerTest {
   @ParameterizedTest
   @DisplayName("getDataqueriesByAuthor() -> succeeds")
   @ValueSource(strings = {"true", "false"})
-  void getDataqueriesByAuthor_succeedsWithEntry(boolean includeTemporary) throws JsonProcessingException {
+  void getDataqueriesByAuthor_succeedsWithEntry(boolean includeTemporary) throws JacksonException {
     var dataqueryEntity = createDataqueryEntity();
 
     doReturn(List.of(dataqueryEntity)).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
@@ -299,7 +299,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("getDataqueriesByAuthor() -> succeeds with empty list")
-  void getDataqueriesByAuthor_succeedsWithEmptyList() throws JsonProcessingException {
+  void getDataqueriesByAuthor_succeedsWithEmptyList() throws JacksonException {
 
     doReturn(List.of()).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
 
@@ -312,11 +312,11 @@ class DataqueryHandlerTest {
   @ParameterizedTest
   @ValueSource(strings = {"true", "false"})
   @DisplayName("getDataqueriesByAuthor() -> throws on json error")
-  void getDataqueriesByAuthor_throwsOnJsonException(boolean includeTemporary) throws JsonProcessingException {
+  void getDataqueriesByAuthor_throwsOnJsonException(boolean includeTemporary) throws JacksonException {
     var dataqueryEntity = createDataqueryEntity();
 
     try (MockedStatic<Dataquery> mockedStaticDataquery = mockStatic(Dataquery.class)) {
-      mockedStaticDataquery.when(() -> Dataquery.of(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class))).thenThrow(JsonProcessingException.class);
+      mockedStaticDataquery.when(() -> Dataquery.of(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class))).thenThrow(JacksonException.class);
       doReturn(List.of(dataqueryEntity)).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
       assertThrows(DataqueryException.class, () -> dataqueryHandler.getDataqueriesByAuthor(CREATOR, includeTemporary));
     }
@@ -325,7 +325,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("deleteDataquery() -> succeeds")
-  void deleteDataquery_succeeds() throws JsonProcessingException {
+  void deleteDataquery_succeeds() throws JacksonException {
     var dataqueryEntity = createDataqueryEntity();
 
     doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -335,7 +335,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("deleteDataquery() -> throws on wrong user")
-  void deleteDataquery_throwsOnWrongUser() throws JsonProcessingException {
+  void deleteDataquery_throwsOnWrongUser() throws JacksonException {
     var dataqueryEntity = createDataqueryEntity();
 
     doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
@@ -345,7 +345,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("getDataquerySlotsJson() -> succeeds")
-  void getDataquerySlotsJson_succeeds() throws JsonProcessingException {
+  void getDataquerySlotsJson_succeeds() throws JacksonException {
     var usedSlots = 7L;
 
     doReturn(usedSlots).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
@@ -357,7 +357,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("convertApiToPersistence() -> converting a dataquery from the rest api to the format that will be stored in the database succeeds")
-  void testDataqueryPersistenceOfDataQueryApi() throws JsonProcessingException {
+  void testDataqueryPersistenceOfDataQueryApi() throws JacksonException {
     var dataQuery = createDataquery();
 
     var convertedDataquery = de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(dataQuery);
@@ -378,7 +378,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("Dataquery.of() -> converting a dataquery from the database to the format that will be sent out via api succeeds")
-  void testDataqueryApiOfDataQueryPersistence() throws JsonProcessingException {
+  void testDataqueryApiOfDataQueryPersistence() throws JacksonException {
     var dataqueryEntity = createDataqueryEntity();
     var convertedDataquery = Dataquery.of(dataqueryEntity);
     var originalCrtdl = jsonUtil.readValue(dataqueryEntity.getCrtdl(), Crtdl.class);
@@ -403,7 +403,7 @@ class DataqueryHandlerTest {
 
   @Test
   @DisplayName("storeExpiringDataquery() -> trying to store a valid object with a user does not throw")
-  void storeExpiringDataquery_succeeds() throws JsonProcessingException {
+  void storeExpiringDataquery_succeeds() throws JacksonException {
     doReturn(createDataqueryEntity(false, true)).when(dataqueryRepository).save(any());
 
     assertDoesNotThrow(() -> dataqueryHandler.storeExpiringDataquery(createDataquery(), CREATOR, DURATION));
@@ -413,7 +413,7 @@ class DataqueryHandlerTest {
   @CsvSource({"true,true,true", "true,true,false", "true,false,true", "true,false,false",
       "false,true,true", "false,true,false", "false,false,true"})
   @DisplayName("storeExpiringDataquery() -> trying to store a null object with a null user throws an exception")
-  void storeExpiringDataquery_throwsOnEmptyValue(boolean emptyQuery, boolean emptyUser, boolean emptyTtl) throws JsonProcessingException {
+  void storeExpiringDataquery_throwsOnEmptyValue(boolean emptyQuery, boolean emptyUser, boolean emptyTtl) throws JacksonException {
     assertThrows(NullPointerException.class, () -> dataqueryHandler.storeExpiringDataquery(
         emptyQuery ? null : createDataquery(),
         emptyUser ? null : CREATOR,
@@ -424,7 +424,7 @@ class DataqueryHandlerTest {
   @ParameterizedTest
   @CsvSource({"true", "false"})
   @DisplayName("storeExpiringDataquery() -> trying to store an expiring dataquery when no slots are free does not throw")
-  void storeExpiringDataquery_ignoresFreeSlots(boolean withResult) throws JsonProcessingException {
+  void storeExpiringDataquery_ignoresFreeSlots(boolean withResult) throws JacksonException {
     lenient().doReturn(MAX_QUERIES_PER_USER + 1L).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
     lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
 
@@ -478,7 +478,7 @@ class DataqueryHandlerTest {
   }
 
 //  @Test
-//  public void testValidateCrtdl_noErrors() throws JsonProcessingException {
+//  public void testValidateCrtdl_noErrors() throws JacksonException {
 //    JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
 //    doReturn(List.of()).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
 //
@@ -488,7 +488,7 @@ class DataqueryHandlerTest {
 //  }
 //
 //  @Test
-//  public void testValidateCrtdl_errors() throws JsonProcessingException {
+//  public void testValidateCrtdl_errors() throws JacksonException {
 //    JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
 //    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
 //
@@ -499,7 +499,7 @@ class DataqueryHandlerTest {
 //  }
 //
 //  @Test
-//  public void testValidateDataExtraction_noErrors() throws JsonProcessingException {
+//  public void testValidateDataExtraction_noErrors() throws JacksonException {
 //    JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
 //    doReturn(List.of()).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
 //
@@ -509,7 +509,7 @@ class DataqueryHandlerTest {
 //  }
 //
 //  @Test
-//  public void testValidateDataExtraction_errors() throws JsonProcessingException {
+//  public void testValidateDataExtraction_errors() throws JacksonException {
 //    JsonNode jsonNode = jsonUtil.readTree("{\"foo\":\"bar\"}");
 //    doReturn(List.of(Error.builder().message("error").instanceLocation(new NodePath(PathType.DEFAULT)).build())).when(jsonSchemaValidator).validate(any(String.class), any(JsonNode.class));
 //
@@ -657,7 +657,7 @@ class DataqueryHandlerTest {
         .build();
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult, boolean expiring) throws JsonProcessingException {
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult, boolean expiring) throws JacksonException {
     de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery out = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery();
     out.setId(1L);
     out.setLabel(LABEL);
@@ -670,11 +670,11 @@ class DataqueryHandlerTest {
     return out;
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult) throws JsonProcessingException {
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult) throws JacksonException {
     return createDataqueryEntity(withResult, false);
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity() throws JsonProcessingException {
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity() throws JacksonException {
     return createDataqueryEntity(false, false);
   }
 }

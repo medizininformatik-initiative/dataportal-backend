@@ -1,7 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.*;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfile;
@@ -363,12 +364,12 @@ class DataqueryCsvExportServiceTest {
   }
 
   private de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile createDseProfileApi() throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = JsonMapper.builderWithJackson2Defaults().build();
     return mapper.readValue(createDseProfile().getEntry(), de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class);
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.terminology.api.UiProfile createUiProfileApi() throws JsonProcessingException {
-    ObjectMapper mapper = new ObjectMapper();
+  private de.medizininformatikinitiative.dataportal.backend.terminology.api.UiProfile createUiProfileApi() throws JacksonException {
+    ObjectMapper mapper = JsonMapper.builderWithJackson2Defaults().build();
     return mapper.readValue(createUiProfile().getUiProfile(), de.medizininformatikinitiative.dataportal.backend.terminology.api.UiProfile.class);
   }
 

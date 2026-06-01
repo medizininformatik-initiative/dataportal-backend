@@ -1,7 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -61,6 +60,9 @@ public class WebSecurityConfig {
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
 
+  @Value("${server.ssl.enabled:false}")
+  private boolean sslEnabled;
+
   @SuppressWarnings("unchecked")
   @Bean
   public Jwt2AuthoritiesConverter authoritiesConverter() {
@@ -90,7 +92,6 @@ public class WebSecurityConfig {
   @Bean
   public SecurityFilterChain apiFilterChain(
       HttpSecurity http,
-      ServerProperties serverProperties,
       Converter<Jwt, ? extends AbstractAuthenticationToken> authenticationConverter) throws Exception {
 
     http.authorizeHttpRequests(authorize -> authorize
@@ -123,7 +124,7 @@ public class WebSecurityConfig {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
 
-    if (serverProperties.getSsl() != null && serverProperties.getSsl().isEnabled()) {
+    if (sslEnabled) {
       http.redirectToHttps(Customizer.withDefaults());
     }
     return http.build();

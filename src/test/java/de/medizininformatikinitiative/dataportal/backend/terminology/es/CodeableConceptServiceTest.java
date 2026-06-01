@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.CodeableConceptBulkSearchRequest;
@@ -35,7 +36,7 @@ import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class CodeableConceptServiceTest {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults().build();
   @Mock
   ElasticsearchOperations operations;
   @Mock

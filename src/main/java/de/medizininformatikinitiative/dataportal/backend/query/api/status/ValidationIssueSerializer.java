@@ -1,10 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.status;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
-import java.io.IOException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /**
  * Custom Serializer for {@link ValidationIssueType} to add prefix to code and replace boolean with yes/no.
@@ -20,10 +18,10 @@ public class ValidationIssueSerializer extends StdSerializer<ValidationIssueType
   }
 
   @Override
-  public void serialize(ValidationIssueType validationIssueType, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+  public void serialize(ValidationIssueType validationIssueType, JsonGenerator jsonGenerator, SerializationContext serializerProvider) {
     jsonGenerator.writeStartObject();
-    jsonGenerator.writeStringField("code", "VAL-" + validationIssueType.code());
-    jsonGenerator.writeStringField("detail", validationIssueType.detail());
+    jsonGenerator.writeStringProperty("code", "VAL-" + validationIssueType.code());
+    jsonGenerator.writeStringProperty("detail", validationIssueType.detail());
     jsonGenerator.writeEndObject();
   }
 }

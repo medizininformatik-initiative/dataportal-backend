@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.dse.v5;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -19,7 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.net.URI;
-import java.net.URL;
+import java.io.File;
 import java.util.List;
 
 import static de.medizininformatikinitiative.dataportal.backend.config.WebSecurityConfig.PATH_API;
@@ -53,7 +53,7 @@ class DseRestControllerIT {
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
   public void testGetProfileTree_succeedsWith200() throws Exception {
-    doReturn(jsonUtil.readValue(new URL("file:src/test/resources/ontology/dse/profile_tree.json"), DseProfileTreeNode.class)).when(dseService).getProfileTree();
+    doReturn(jsonUtil.readValue(new File("src/test/resources/ontology/dse/profile_tree.json"), DseProfileTreeNode.class)).when(dseService).getProfileTree();
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_DSE + "/profile-tree")).with(csrf()))
         .andExpect(status().isOk())

@@ -1,4 +1,6 @@
 spring:
+  jackson:
+    use-jackson2-defaults: true
   datasource:
     url: "jdbc:tc:postgresql:16-alpine:///dataportal_test"
 security:

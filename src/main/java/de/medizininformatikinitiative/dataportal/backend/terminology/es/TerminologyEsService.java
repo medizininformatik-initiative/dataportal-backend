@@ -245,7 +245,7 @@ public class TerminologyEsService {
         .build();
 
     var availabilityScoreScript = new Script.Builder()
-        .source("doc['availability'].value == 0 ? _score : _score + 100")
+        .source(s -> s.scriptString("doc['availability'].value == 0 ? _score : _score + 100"))
         .build();
 
     var function = FunctionScoreBuilders.scriptScore()

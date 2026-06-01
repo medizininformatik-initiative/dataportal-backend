@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
@@ -57,7 +58,7 @@ public class CcdlValidatorTest {
 
   @BeforeEach
   public void setUp() throws IOException {
-    var jsonUtil = new ObjectMapper();
+    var jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
     lenient().when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString()))
         .thenReturn(violationBuilder);
     lenient().when(violationBuilder.addConstraintViolation())
