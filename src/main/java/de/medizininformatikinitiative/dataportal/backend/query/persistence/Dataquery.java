@@ -1,7 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import java.util.Objects;
 @Entity
 public class Dataquery {
 
-  private static ObjectMapper jsonUtil = new ObjectMapper().findAndRegisterModules();
+  private static ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,7 +46,7 @@ public class Dataquery {
   @Column(name = "expires_at")
   private Timestamp expiresAt;
 
-  public static Dataquery of(de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery in) throws JsonProcessingException {
+  public static Dataquery of(de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery in) throws JacksonException {
     var out = new Dataquery();
     out.setId(in.id() > 0 ? in.id() : null);
     out.setLabel(in.label());

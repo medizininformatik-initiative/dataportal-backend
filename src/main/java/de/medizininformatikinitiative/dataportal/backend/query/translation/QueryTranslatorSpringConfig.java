@@ -1,7 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType;
 import de.numcodex.sq2cql.Translator;
 import de.numcodex.sq2cql.model.Mapping;
@@ -11,7 +12,7 @@ import de.numcodex.sq2cql.model.MappingTreeModuleRoot;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -152,9 +153,8 @@ public class QueryTranslatorSpringConfig {
   @Qualifier("translation")
   @Bean
   ObjectMapper createTranslationObjectMapper() {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.findAndRegisterModules();
-    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    return mapper;
+    return JsonMapper.builderWithJackson2Defaults()
+        .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .build();
   }
 }

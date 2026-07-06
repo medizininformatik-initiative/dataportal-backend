@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: dataportal-backend
+  jackson:
+    # Preserve Jackson 2 serialization defaults after the Jackson 3 upgrade
+    # (no alphabetical property sorting, lenient trailing tokens, etc.).
+    use-jackson2-defaults: true
   datasource:
     url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_DBNAME:dataportal}
     username: ${DATABASE_USER:dataportaluser}
@@ -33,6 +37,7 @@ springdoc:
     tryItOutEnabled: false
     path: /api/v5/swagger-ui
     url: /v3/api-docs/swagger.yaml
+    supported-submit-methods: []
 management:
   endpoints:
     web:

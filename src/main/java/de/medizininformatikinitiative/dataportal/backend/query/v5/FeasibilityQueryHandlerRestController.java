@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.query.v5;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import de.medizininformatikinitiative.dataportal.backend.config.WebSecurityConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryHandlerService.ResultDetail;

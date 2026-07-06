@@ -3,8 +3,9 @@ package de.medizininformatikinitiative.dataportal.backend.query.api;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.validation.Valid;
 import lombok.Builder;
 
@@ -24,9 +25,9 @@ public record Dataquery(
     @JsonProperty Long resultSize,
     @JsonProperty Timestamp expiresAt
 ) {
-  private static ObjectMapper jsonUtil = new ObjectMapper().findAndRegisterModules();
+  private static ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
-  public static Dataquery of(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery in) throws JsonProcessingException {
+  public static Dataquery of(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery in) throws JacksonException {
     return Dataquery.builder()
         .id(in.getId())
         .label(in.getLabel())

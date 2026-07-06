@@ -1,8 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -35,9 +35,9 @@ public class FhirQueryTranslatorTest {
   private ArgumentCaptor<HttpEntity<String>> requestCaptor;
 
   @Test
-  public void testTranslate_EncodingCcdlForRequestFails() throws JsonProcessingException {
+  public void testTranslate_EncodingCcdlForRequestFails() throws JacksonException {
     var testQuery = Ccdl.builder().build();
-    doThrow(JsonProcessingException.class).when(jsonUtil).writeValueAsString(testQuery);
+    doThrow(JacksonException.class).when(jsonUtil).writeValueAsString(testQuery);
 
     assertThrows(QueryTranslationException.class, () -> fhirQueryTranslator.translate(testQuery));
     verify(jsonUtil).writeValueAsString(testQuery);
@@ -45,7 +45,7 @@ public class FhirQueryTranslatorTest {
   }
 
   @Test
-  public void testTranslate_RequestToExternalTranslationServiceFails() throws JsonProcessingException {
+  public void testTranslate_RequestToExternalTranslationServiceFails() throws JacksonException {
     var testQuery = Ccdl.builder().build();
     doReturn("foo").when(jsonUtil).writeValueAsString(testQuery);
     doThrow(RestClientException.class).when(client)
@@ -57,7 +57,7 @@ public class FhirQueryTranslatorTest {
   }
 
   @Test
-  public void testTranslate_EverythingSucceeds() throws JsonProcessingException, QueryTranslationException {
+  public void testTranslate_EverythingSucceeds() throws JacksonException, QueryTranslationException {
     var testQuery = Ccdl.builder().build();
     doReturn("foo").when(jsonUtil).writeValueAsString(testQuery);
     when(client.postForObject(eq("/query/translate"), requestCaptor.capture(), eq(String.class)))

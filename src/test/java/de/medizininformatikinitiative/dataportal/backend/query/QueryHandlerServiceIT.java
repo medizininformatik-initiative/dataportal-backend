@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
@@ -31,8 +31,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -122,7 +122,7 @@ public class QueryHandlerServiceIT {
   }
 
   @Test
-  public void testGetQuery_succeeds() throws JsonProcessingException {
+  public void testGetQuery_succeeds() throws JacksonException {
     var fakeContent = new QueryContent("{}");
     fakeContent.setHash("a2189dffb");
     queryContentRepository.save(fakeContent);
@@ -138,14 +138,14 @@ public class QueryHandlerServiceIT {
   }
 
   @Test
-  public void testGetQuery_UnknownQueryIdReturnsNull() throws JsonProcessingException {
+  public void testGetQuery_UnknownQueryIdReturnsNull() throws JacksonException {
     var query = queryHandlerService.getQuery(UNKNOWN_QUERY_ID);
 
     assertThat(query).isNull();
   }
 
   @Test
-  public void testGetQueryContent_succeeds() throws JsonProcessingException {
+  public void testGetQueryContent_succeeds() throws JacksonException {
     var fakeContent = new QueryContent("{}");
     fakeContent.setHash("a2189dffb");
     queryContentRepository.save(fakeContent);
@@ -161,7 +161,7 @@ public class QueryHandlerServiceIT {
   }
 
   @Test
-  public void testGetQueryContent_UnknownQueryIdReturnsNull() throws JsonProcessingException {
+  public void testGetQueryContent_UnknownQueryIdReturnsNull() throws JacksonException {
     var queryContent = queryHandlerService.getQueryContent(UNKNOWN_QUERY_ID);
 
     assertThat(queryContent).isNull();
@@ -283,14 +283,14 @@ public class QueryHandlerServiceIT {
   }
 
   @Test
-  public void testGetQuery_nullOnNotFound() throws JsonProcessingException {
+  public void testGetQuery_nullOnNotFound() throws JacksonException {
     var queryFromDb = queryHandlerService.getQuery(1L);
 
     assertThat(queryFromDb).isNull();
   }
 
   @Test
-  public void testGetQuery_succeess() throws JsonProcessingException {
+  public void testGetQuery_succeess() throws JacksonException {
     var queryContentString = jsonUtil.writeValueAsString(createValidCcdl());
     var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
     var queryContent = new QueryContent(queryContentString);
@@ -308,7 +308,7 @@ public class QueryHandlerServiceIT {
   }
 
   @Test
-  public void testGetQueryContent_nullIfNotFound() throws JsonProcessingException {
+  public void testGetQueryContent_nullIfNotFound() throws JacksonException {
     var queryContentString = jsonUtil.writeValueAsString(createValidCcdl());
     var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
     var queryContent = new QueryContent(queryContentString);
@@ -330,7 +330,7 @@ public class QueryHandlerServiceIT {
   }
 
   @Test
-  public void testGetAmountOfQueriesByUserAndInterval() throws JsonProcessingException {
+  public void testGetAmountOfQueriesByUserAndInterval() throws JacksonException {
     var query = new Query();
     query.setCreatedBy(CREATOR);
     queryRepository.save(query).getId();

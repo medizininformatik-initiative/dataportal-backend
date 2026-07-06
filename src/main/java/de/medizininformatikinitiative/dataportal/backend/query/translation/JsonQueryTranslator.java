@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ class JsonQueryTranslator implements QueryTranslator {
   public String translate(Ccdl query) throws QueryTranslationException {
     try {
       return jsonUtil.writeValueAsString(query);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new QueryTranslationException("cannot encode CCDL as JSON", e);
     }
   }
