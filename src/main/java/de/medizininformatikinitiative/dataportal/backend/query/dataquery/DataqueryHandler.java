@@ -126,7 +126,7 @@ public class DataqueryHandler {
       try {
         ret.add(Dataquery.of(dataquery));
       } catch (JacksonException e) {
-        throw new DataqueryException();
+        throw new DataqueryException(e.getMessage());
       }
     }
 
