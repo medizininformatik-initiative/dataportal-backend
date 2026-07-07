@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.6</version>
+    <version>4.1.0</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -423,6 +423,20 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
+
+      <!-- Spring Boot 4.1 bumped maven-resources-plugin to 3.5.0, whose default
+     changeDetection is now "content" instead of "timestamp". That makes
+     process-resources unconditionally overwrite target/classes/maven.properties
+     with the empty src/main/resources/maven.properties placeholder, wiping out
+     what properties-maven-plugin wrote during generate-resources. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+          <changeDetection>timestamp</changeDetection>
+        </configuration>
+      </plugin>
+
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
