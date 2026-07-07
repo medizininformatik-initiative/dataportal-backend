@@ -8,20 +8,6 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "github-actions non-major"
-    },
-    {
-      "matchDatasources": ["maven"],
-      "matchPackageNames": ["de.medizininformatik-initiative:sq2cql"],
-      "registryUrls": [
-        "https://maven.pkg.github.com/medizininformatik-initiative/sq2cql"
-      ]
-    }
-  ],
-  "hostRules": [
-    {
-      "hostType": "maven",
-      "matchHost": "https://maven.pkg.github.com/",
-      "token": "{{ secrets.GH_PACKAGES_TOKEN }}"
     }
   ]
 }
