@@ -33,6 +33,7 @@ import java.util.*;
 @ConditionalOnExpression("${app.elastic.enabled}")
 public class CodeableConceptService {
   public static final String FIELD_NAME_TERMCODE_KEYWORD = "termcode.code.keyword";
+  public static final String FIELD_NAME_TERMCODE_NGRAM = "termcode.code.ngram";
   public static final String FILTER_KEY_VALUE_SETS = "value_sets";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;

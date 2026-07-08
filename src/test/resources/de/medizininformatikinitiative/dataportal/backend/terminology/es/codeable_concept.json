@@ -1,5 +1,8 @@
 {
   "settings": {
+    "index": {
+      "max_ngram_diff": 49
+    },
     "analysis": {
       "tokenizer": {
         "edge_ngram_tokenizer": {
@@ -15,6 +18,29 @@
           "type": "edge_ngram",
           "min_gram": 1,
           "max_gram": 50,
+          "token_chars": [
+            "letter",
+            "digit",
+            "punctuation",
+            "custom"
+          ],
+          "custom_token_chars": [
+            "+-_"
+          ]
+        },
+        "ngram_tokenizer": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 25,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        },
+        "ngram_tokenizer_include_punctuation": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 25,
           "token_chars": [
             "letter",
             "digit",
@@ -45,6 +71,20 @@
             "lowercase"
           ]
         },
+        "ngram_analyzer": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "ngram_analyzer_include_punctuation": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer_include_punctuation",
+          "filter": [
+            "lowercase"
+          ]
+        },
         "lowercase_analyzer": {
           "type": "custom",
           "tokenizer": "whitespace_tokenizer",
@@ -64,6 +104,12 @@
             "fields": {
               "keyword": {
                 "type": "keyword"
+              },
+              "ngram": {
+                "type": "text",
+                "analyzer": "ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "norms": false
               }
             },
             "analyzer": "edge_ngram_analyzer_include_punctuation",
@@ -72,7 +118,15 @@
           "display": {
             "type": "text",
             "analyzer": "edge_ngram_analyzer",
-            "search_analyzer": "lowercase_analyzer"
+            "search_analyzer": "lowercase_analyzer",
+            "fields": {
+              "ngram": {
+                "type": "text",
+                "analyzer": "ngram_analyzer",
+                "search_analyzer": "lowercase_analyzer",
+                "norms": false
+              }
+            }
           },
           "system": {
             "type": "text",
@@ -92,20 +146,47 @@
           "original": {
             "type": "text",
             "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer"
+            "search_analyzer": "lowercase_analyzer",
+            "fields": {
+              "ngram": {
+                "type": "text",
+                "analyzer": "ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "norms": false
+              }
+            }
           },
           "de": {
             "type": "text",
             "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer"
+            "search_analyzer": "lowercase_analyzer",
+            "fields": {
+              "ngram": {
+                "type": "text",
+                "analyzer": "ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "norms": false
+              }
+            }
           },
           "en": {
             "type": "text",
             "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer"
+            "search_analyzer": "lowercase_analyzer",
+            "fields": {
+              "ngram": {
+                "type": "text",
+                "analyzer": "ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "norms": false
+              }
+            }
           }
         }
       }
+    },
+    "_meta": {
+      "version": "v4.1.0"
     }
   }
 }
