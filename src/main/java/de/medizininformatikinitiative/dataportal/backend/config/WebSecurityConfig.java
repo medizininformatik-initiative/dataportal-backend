@@ -51,6 +51,7 @@ public class WebSecurityConfig {
   public static final String PATH_TERMINOLOGY = "/terminology";
   public static final String PATH_DSE = "/dse";
   public static final String PATH_CODEABLE_CONCEPT = "/codeable-concept";
+  public static final String PATH_FEATURE = "/feature";
   public static final String PATH_SWAGGER_UI = "/swagger-ui/**";
   public static final String PATH_SWAGGER_CONFIG = "/v3/api-docs/**";
   public static final String PATH_SETTINGS = "/.settings";
@@ -111,6 +112,7 @@ public class WebSecurityConfig {
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_DSE + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_CODEABLE_CONCEPT + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
+            .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_FEATURE + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
             .anyRequest().authenticated()
         )
         .oauth2ResourceServer(oauth2 -> oauth2
