@@ -7,12 +7,14 @@ on:
     branches:
       - master
       - develop
+      - 'support/**'
     tags:
     - v[0-9]+.[0-9]+.[0-9]+**
   pull_request:
     branches:
     - master
     - develop
+    - 'support/**'
 
 jobs:
   tests:
@@ -73,11 +75,10 @@ jobs:
         run: mvn -Pdownload-ontology -B verify
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
@@ -144,7 +145,7 @@ jobs:
         push: false
 
     - name: Run Trivy Vulnerability Scanner
-      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
         image-ref: security-scan-build:latest
         format: sarif

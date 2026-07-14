@@ -29,7 +29,8 @@ if [ ! "${#ca_files[@]}" -eq 0 ]; then
       echo "###   Importing certificates:"
 
       buf=""
-      while IFS= read -r line; do
+      while IFS= read -r line || [ -n "$line" ]; do
+        line="${line%$'\r'}"
         buf="$buf$line\n"
         if [ "$line" = "-----END CERTIFICATE-----" ]; then
           printf "%b" "$buf" > "$tmp_ca_pem_file"
