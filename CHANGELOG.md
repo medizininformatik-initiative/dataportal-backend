@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.6.2] - 2026-07-14
+
+- Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
+
+### Fixed
+- Fix certificate import bug with windows style line breaks ([#1020](https://github.com/medizininformatik-initiative/dataportal-backend/pull/1020))
+
 ## [8.6.1] - 2026-03-19
 
 - Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
