@@ -33,8 +33,8 @@ public class FeatureRestController {
     return featureService.performFeatureSearchWithRepoAndPaging(keyword, modules, categories, pageSize, page);
   }
 
-  @GetMapping(value = "/entry/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public FeatureEntry getFeatureById(@PathVariable("id") String id) {
-    return featureService.getSearchResultEntryById(id);
+  @GetMapping(value = "/entry/{id}/list-details", produces = MediaType.APPLICATION_JSON_VALUE)
+  public FeatureEntry getFeatureListDetailsById(@PathVariable("id") String id) {
+    return featureService.getFeatureListDetailsById(id);
   }
 }

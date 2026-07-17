@@ -3,6 +3,7 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.FeatureEntry;
+import de.medizininformatikinitiative.dataportal.backend.terminology.api.FeatureSearchEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.FeatureSearchResult;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureDocument;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.FeatureEsRepository;
@@ -45,7 +46,7 @@ public class FeatureService {
   public static final String FIELD_FIELDS_ORIGINAL = "fields.original";
   public static final String FIELD_FIELDS_ORIGINAL_NGRAM = "fields.original.ngram";
   public static final String FIELD_TERMCODE_CODE_WITH_BOOST = "termcode.code^3";
-  public static final String FILTER_KEY_MODULE = "module";
+  public static final String FILTER_KEY_MODULE = "module.display.original";
   public static final String FILTER_KEY_CATEGORIES = "categories";
 
   private ElasticsearchOperations operations;
@@ -73,16 +74,16 @@ public class FeatureService {
     }
 
     var searchHitPage = findByNameOrDisplay(keyword, filterList, PageRequest.of(page, pageSize));
-    List<FeatureEntry> featureEntries = new ArrayList<>();
+    List<FeatureSearchEntry> featureEntries = new ArrayList<>();
 
-    searchHitPage.getSearchHits().forEach(hit -> featureEntries.add(FeatureEntry.of(hit.getContent())));
+    searchHitPage.getSearchHits().forEach(hit -> featureEntries.add(FeatureSearchEntry.of(hit.getContent())));
     return FeatureSearchResult.builder()
         .totalHits(searchHitPage.getTotalHits())
         .results(featureEntries)
         .build();
   }
 
-  public FeatureEntry getSearchResultEntryById(String id) {
+  public FeatureEntry getFeatureListDetailsById(String id) {
     return repo.findById(id).map(FeatureEntry::of).orElseThrow(FeatureNotFoundException::new);
   }
 

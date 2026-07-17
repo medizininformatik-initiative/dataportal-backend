@@ -14,11 +14,12 @@ public record FeatureDocument(
     Display display,
     Display description,
     boolean selectable,
-    String module,
+    String url,
+    FeatureModule module,
     Collection<String> categories,
-    FeatureFields fields,
+    Collection<Display> fields,
     Collection<FeatureRelative> parents,
     Collection<FeatureRelative> children,
-    int availability
+    Integer availability
 ) {
 }
