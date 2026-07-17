@@ -104,9 +104,14 @@ class FeatureRestControllerIT {
         .andExpect(jsonPath("$.id").value(dummyFeatureEntry.id()))
         .andExpect(jsonPath("$.name").value(dummyFeatureEntry.name()))
         .andExpect(jsonPath("$.description.original").value(dummyFeatureEntry.description().original()))
+        .andExpect(jsonPath("$.fields.length()").value(dummyFeatureEntry.fields().size()))
+        .andExpect(jsonPath("$.fields[0].original").value(dummyFeatureEntry.fields().get(0).original()))
         .andExpect(jsonPath("$.parents.length()").value(dummyFeatureEntry.parents().size()))
         .andExpect(jsonPath("$.parents[0].id").value(dummyFeatureEntry.parents().get(0).id()))
-        .andExpect(jsonPath("$.children.length()").value(dummyFeatureEntry.children().size()));
+        .andExpect(jsonPath("$.parents[0].url").value(dummyFeatureEntry.parents().get(0).url()))
+        .andExpect(jsonPath("$.parents[0].display.original").value(dummyFeatureEntry.parents().get(0).display().original()))
+        .andExpect(jsonPath("$.children.length()").value(dummyFeatureEntry.children().size()))
+        .andExpect(jsonPath("$.children[0].url").value(dummyFeatureEntry.children().get(0).url()));
   }
 
   @Test
@@ -149,6 +154,7 @@ class FeatureRestControllerIT {
         .module(createDummyDisplayEntry())
         .categories(List.of("category-a"))
         .availability(1)
+        .fields(List.of(createDummyDisplayEntry()))
         .parents(List.of(createDummyFeatureRelativeEntry()))
         .children(List.of(createDummyFeatureRelativeEntry(), createDummyFeatureRelativeEntry()))
         .build();
@@ -158,6 +164,7 @@ class FeatureRestControllerIT {
     return FeatureRelativeEntry.builder()
         .id(UUID.randomUUID().toString())
         .display(createDummyDisplayEntry())
+        .url("https://example.org/some-relative")
         .build();
   }
 

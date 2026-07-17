@@ -3,6 +3,7 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.FeatureSearchEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.Display;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureDocument;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureField;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureModule;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureRelative;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.FeatureEsRepository;
@@ -124,8 +125,12 @@ class FeatureServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.id()).isEqualTo(id);
     assertThat(result.description()).isNotNull();
+    assertThat(result.fields()).hasSize(1);
+    assertThat(result.fields().get(0).original()).isEqualTo("Some Name");
     assertThat(result.parents()).hasSize(1);
+    assertThat(result.parents().get(0).url()).isEqualTo("https://example.org/relative");
     assertThat(result.children()).hasSize(2);
+    assertThat(result.children().get(0).url()).isEqualTo("https://example.org/relative");
   }
 
   @Test
@@ -154,6 +159,7 @@ class FeatureServiceTest {
         .module(null)
         .categories(null)
         .availability(null)
+        .fields(null)
         .parents(null)
         .children(null)
         .build();
@@ -166,6 +172,7 @@ class FeatureServiceTest {
     assertThat(result.module()).isNull();
     assertThat(result.categories()).isEmpty();
     assertThat(result.availability()).isZero();
+    assertThat(result.fields()).isEmpty();
     assertThat(result.parents()).isEmpty();
     assertThat(result.children()).isEmpty();
   }
@@ -211,8 +218,15 @@ class FeatureServiceTest {
         .module(FeatureModule.builder().display(createDummyDisplay()).build())
         .categories(List.of("category-a"))
         .availability(1)
+        .fields(List.of(createDummyField()))
         .parents(parents)
         .children(children)
+        .build();
+  }
+
+  private FeatureField createDummyField() {
+    return FeatureField.builder()
+        .display(createDummyDisplay())
         .build();
   }
 
@@ -220,6 +234,7 @@ class FeatureServiceTest {
     return FeatureRelative.builder()
         .id(UUID.randomUUID().toString())
         .display(createDummyDisplay())
+        .url("https://example.org/relative")
         .build();
   }
 

@@ -17,7 +17,7 @@ public record FeatureDocument(
     String url,
     FeatureModule module,
     Collection<String> categories,
-    Collection<Display> fields,
+    Collection<FeatureField> fields,
     Collection<FeatureRelative> parents,
     Collection<FeatureRelative> children,
     Integer availability

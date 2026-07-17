@@ -2,6 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.api;
 
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureDocument;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureField;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureRelative;
 import lombok.Builder;
 
@@ -19,6 +20,7 @@ public record FeatureEntry(
     DisplayEntry module,
     List<String> categories,
     int availability,
+    List<DisplayEntry> fields,
     List<FeatureRelativeEntry> parents,
     List<FeatureRelativeEntry> children
 ) {
@@ -33,9 +35,14 @@ public record FeatureEntry(
         .module(document.module() == null ? null : DisplayEntry.of(document.module().display()))
         .categories(document.categories() == null ? List.of() : List.copyOf(document.categories()))
         .availability(document.availability() == null ? 0 : document.availability())
+        .fields(toDisplayEntries(document.fields()))
         .parents(toRelativeEntries(document.parents()))
         .children(toRelativeEntries(document.children()))
         .build();
+  }
+
+  private static List<DisplayEntry> toDisplayEntries(Collection<FeatureField> fields) {
+    return fields == null ? List.of() : fields.stream().map(f -> DisplayEntry.of(f.display())).toList();
   }
 
   private static List<FeatureRelativeEntry> toRelativeEntries(Collection<FeatureRelative> relatives) {

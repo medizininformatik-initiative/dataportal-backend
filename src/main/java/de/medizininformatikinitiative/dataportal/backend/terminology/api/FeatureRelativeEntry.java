@@ -7,12 +7,14 @@ import lombok.Builder;
 @Builder
 public record FeatureRelativeEntry(
     String id,
-    DisplayEntry display
+    DisplayEntry display,
+    String url
 ) {
   public static FeatureRelativeEntry of(FeatureRelative relative) {
     return FeatureRelativeEntry.builder()
         .id(relative.id())
         .display(DisplayEntry.of(relative.display()))
+        .url(relative.url())
         .build();
   }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 @Builder
 public record FeatureRelative(
     String id,
-    Display display
+    Display display,
+    String url
 ) {
 }

@@ -122,6 +122,10 @@
               }
             }
           },
+          "url": {
+            "type": "text",
+            "index": false
+          },
           "id": {
             "type": "text",
             "index": false
@@ -157,6 +161,10 @@
                 "index": false
               }
             }
+          },
+          "url": {
+            "type": "text",
+            "index": false
           },
           "id": {
             "type": "text",
@@ -264,42 +272,46 @@
       },
       "fields": {
         "properties": {
-          "original": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
+          "display": {
+            "properties": {
+              "original": {
                 "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
                 "search_analyzer": "lowercase_analyzer",
-                "norms": false
-              }
-            }
-          },
-          "de": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "de": {
                 "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
                 "search_analyzer": "lowercase_analyzer",
-                "norms": false
-              }
-            }
-          },
-          "en": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "en": {
                 "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
                 "search_analyzer": "lowercase_analyzer",
-                "norms": false
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
               }
             }
           }
