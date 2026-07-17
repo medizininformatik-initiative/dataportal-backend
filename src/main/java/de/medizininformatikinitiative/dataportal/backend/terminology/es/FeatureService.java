@@ -36,7 +36,6 @@ public class FeatureService {
   public static final String FIELD_DISPLAY_EN_NGRAM = "display.en.ngram";
   public static final String FIELD_DISPLAY_ORIGINAL = "display.original";
   public static final String FIELD_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^2";
-  public static final String FIELD_NAME = "name";
   public static final String FIELD_NAME_WITH_BOOST = "name^3";
   public static final String FIELD_NAME_NGRAM = "name.ngram";
   public static final String FIELD_FIELDS_DE = "fields.display.de";
@@ -45,7 +44,6 @@ public class FeatureService {
   public static final String FIELD_FIELDS_EN_NGRAM = "fields.display.en.ngram";
   public static final String FIELD_FIELDS_ORIGINAL = "fields.display.original";
   public static final String FIELD_FIELDS_ORIGINAL_NGRAM = "fields.display.original.ngram";
-  public static final String FIELD_TERMCODE_CODE_WITH_BOOST = "termcode.code^3";
   public static final String FILTER_KEY_MODULE = "module.display.original";
   public static final String FILTER_KEY_CATEGORIES = "categories";
 
@@ -143,10 +141,10 @@ public class FeatureService {
                   .query(keyword)
                   .fields(List.of(
                       FIELD_DISPLAY_ORIGINAL_WITH_BOOST,
-                      FIELD_TERMCODE_CODE_WITH_BOOST,
+                      FIELD_NAME_WITH_BOOST,
                       FIELD_FIELDS_ORIGINAL,
                       FIELD_FIELDS_ORIGINAL_NGRAM,
-                      FIELD_NAME
+                      FIELD_NAME_NGRAM
                   ))
                   .build()._toQuery()
           )
