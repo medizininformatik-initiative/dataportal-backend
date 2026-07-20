@@ -102,23 +102,48 @@
         "index": false
       },
       "categories": {
-        "type": "keyword"
+        "properties": {
+          "display": {
+            "properties": {
+              "original": {
+                "type": "keyword"
+              },
+              "localization": {
+                "type": "object",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "index": false
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "index": false
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "children": {
         "properties": {
           "display": {
             "properties": {
-              "de": {
-                "type": "text",
-                "index": false
-              },
-              "en": {
-                "type": "text",
-                "index": false
-              },
               "original": {
-                "type": "text",
-                "index": false
+                "type": "text"
+              },
+              "localization": {
+                "type": "object",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "index": false
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "index": false
+                  }
+                }
               }
             }
           },
@@ -132,14 +157,6 @@
           },
           "selectable": {
             "type": "boolean",
-            "index": false
-          },
-          "term_code": {
-            "type": "text",
-            "index": false
-          },
-          "terminology": {
-            "type": "text",
             "index": false
           }
         }
@@ -148,17 +165,21 @@
         "properties": {
           "display": {
             "properties": {
-              "de": {
-                "type": "text",
-                "index": false
-              },
-              "en": {
-                "type": "text",
-                "index": false
-              },
               "original": {
-                "type": "text",
-                "index": false
+                "type": "text"
+              },
+              "localization": {
+                "type": "object",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "index": false
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "index": false
+                  }
+                }
               }
             }
           },
@@ -173,55 +194,57 @@
           "selectable": {
             "type": "boolean",
             "index": false
-          },
-          "term_code": {
-            "type": "text",
-            "index": false
-          },
-          "terminology": {
-            "type": "text",
-            "index": false
           }
         }
       },
       "description": {
         "properties": {
-          "original": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
+          "display": {
+            "properties": {
+              "original": {
                 "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
                 "search_analyzer": "lowercase_analyzer",
-                "norms": false
-              }
-            }
-          },
-          "de": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
-                "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
-                "search_analyzer": "lowercase_analyzer",
-                "norms": false
-              }
-            }
-          },
-          "en": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
-                "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
-                "search_analyzer": "lowercase_analyzer",
-                "norms": false
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "localization": {
+                "type": "object",
+                "dynamic": "true",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -242,29 +265,35 @@
               }
             }
           },
-          "de": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
+          "localization": {
+            "type": "object",
+            "dynamic": "true",
+            "properties": {
+              "de-DE": {
                 "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
                 "search_analyzer": "lowercase_analyzer",
-                "norms": false
-              }
-            }
-          },
-          "en": {
-            "type": "text",
-            "analyzer": "edge_ngram_analyzer_include_punctuation",
-            "search_analyzer": "lowercase_analyzer",
-            "fields": {
-              "ngram": {
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "en-US": {
                 "type": "text",
-                "analyzer": "ngram_analyzer_include_punctuation",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
                 "search_analyzer": "lowercase_analyzer",
-                "norms": false
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
               }
             }
           }
@@ -287,29 +316,35 @@
                   }
                 }
               },
-              "de": {
-                "type": "text",
-                "analyzer": "edge_ngram_analyzer_include_punctuation",
-                "search_analyzer": "lowercase_analyzer",
-                "fields": {
-                  "ngram": {
+              "localization": {
+                "type": "object",
+                "dynamic": "true",
+                "properties": {
+                  "de-DE": {
                     "type": "text",
-                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
                     "search_analyzer": "lowercase_analyzer",
-                    "norms": false
-                  }
-                }
-              },
-              "en": {
-                "type": "text",
-                "analyzer": "edge_ngram_analyzer_include_punctuation",
-                "search_analyzer": "lowercase_analyzer",
-                "fields": {
-                  "ngram": {
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
+                  },
+                  "en-US": {
                     "type": "text",
-                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
                     "search_analyzer": "lowercase_analyzer",
-                    "norms": false
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
                   }
                 }
               }
@@ -321,16 +356,22 @@
         "properties": {
           "display": {
             "properties": {
-              "de": {
-                "type": "text",
-                "index": false
-              },
-              "en": {
-                "type": "text",
-                "index": false
-              },
               "original": {
                 "type": "keyword"
+              },
+              "localization": {
+                "type": "object",
+                "dynamic": "true",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "index": false
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "index": false
+                  }
+                }
               }
             }
           }

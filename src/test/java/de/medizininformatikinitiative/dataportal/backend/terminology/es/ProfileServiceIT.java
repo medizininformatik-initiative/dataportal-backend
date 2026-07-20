@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.FeatureEsRepository;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.FeatureNotFoundException;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileEsRepository;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileNotFoundException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.elasticsearch.test.autoconfigure.DataElasticsearchTest;
@@ -26,10 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("terminology")
 @Tag("elasticsearch")
-@Import({FeatureService.class})
+@Import({ProfileService.class})
 @Testcontainers
 @DataElasticsearchTest
-public class FeatureServiceIT {
+public class ProfileServiceIT {
 
   @Container
   @ServiceConnection
@@ -44,24 +44,24 @@ public class FeatureServiceIT {
   @Autowired
   private ElasticsearchOperations operations;
   @Autowired
-  private FeatureEsRepository repo;
+  private ProfileEsRepository repo;
   @Autowired
-  private FeatureService featureService;
+  private ProfileService profileService;
 
   @BeforeAll
   static void setUp() throws InterruptedException {
     ELASTICSEARCH_CONTAINER.start();
     WebClient webClient = WebClient.builder().baseUrl("http://" + ELASTICSEARCH_CONTAINER.getHttpHostAddress()).build();
     webClient.put()
-        .uri("/feature")
-        .body(BodyInserters.fromResource(new ClassPathResource("feature_mapping.json", FeatureServiceIT.class)))
+        .uri("/profile")
+        .body(BodyInserters.fromResource(new ClassPathResource("profile_mapping.json", ProfileServiceIT.class)))
         .retrieve()
         .toBodilessEntity()
         .block();
 
     webClient.post()
-        .uri("/feature/_bulk")
-        .body(BodyInserters.fromResource(new ClassPathResource("feature_testdata.json", FeatureServiceIT.class)))
+        .uri("/profile/_bulk")
+        .body(BodyInserters.fromResource(new ClassPathResource("profile_testdata.json", ProfileServiceIT.class)))
         .retrieve()
         .toBodilessEntity()
         .block();
@@ -76,16 +76,16 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testPerformFeatureSearchWithRepoAndPaging_findsAllWithNoKeyword() {
-    var page = assertDoesNotThrow(() -> featureService.performFeatureSearchWithRepoAndPaging("", null, null, 20, 0));
+  void testPerformProfileSearchWithRepoAndPaging_findsAllWithNoKeyword() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(3L);
   }
 
   @Test
-  void testPerformFeatureSearchWithRepoAndPaging_findsNone() {
-    var page = assertDoesNotThrow(() -> featureService.performFeatureSearchWithRepoAndPaging("something-not-found", null, null, 20, 0));
+  void testPerformProfileSearchWithRepoAndPaging_findsNone() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("something-not-found", null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isZero();
@@ -93,8 +93,8 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testPerformFeatureSearchWithRepoAndPaging_findsByOriginalDisplay() {
-    var page = assertDoesNotThrow(() -> featureService.performFeatureSearchWithRepoAndPaging("Prozedur", null, null, 20, 0));
+  void testPerformProfileSearchWithRepoAndPaging_findsByOriginalDisplay() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Prozedur", null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -102,8 +102,8 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testPerformFeatureSearchWithRepoAndPaging_findsByTranslatedField() {
-    var page = assertDoesNotThrow(() -> featureService.performFeatureSearchWithRepoAndPaging("Feststellungsdatum", null, null, 20, 0));
+  void testPerformProfileSearchWithRepoAndPaging_findsByTranslatedField() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Feststellungsdatum", null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -111,8 +111,8 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testPerformFeatureSearchWithRepoAndPaging_filtersByModule() {
-    var page = assertDoesNotThrow(() -> featureService.performFeatureSearchWithRepoAndPaging("", List.of("Diagnose"), null, 20, 0));
+  void testPerformProfileSearchWithRepoAndPaging_filtersByModule() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", List.of("Diagnose"), null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(2L);
@@ -120,8 +120,8 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testPerformFeatureSearchWithRepoAndPaging_filtersByCategories() {
-    var page = assertDoesNotThrow(() -> featureService.performFeatureSearchWithRepoAndPaging("", null, List.of("element"), 20, 0));
+  void testPerformProfileSearchWithRepoAndPaging_filtersByCategories() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, List.of("element"), 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -129,8 +129,8 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testGetFeatureListDetailsById_succeedsWithChildrenOnly() {
-    var result = assertDoesNotThrow(() -> featureService.getFeatureListDetailsById("module-diagnose-id"));
+  void testGetProfileListDetailsById_succeedsWithChildrenOnly() {
+    var result = assertDoesNotThrow(() -> profileService.getProfileListDetailsById("module-diagnose-id"));
 
     assertNotNull(result);
     assertThat(result.id()).isEqualTo("module-diagnose-id");
@@ -143,8 +143,8 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testGetFeatureListDetailsById_succeedsWithParentsOnly() {
-    var result = assertDoesNotThrow(() -> featureService.getFeatureListDetailsById("diagnose-condition-id"));
+  void testGetProfileListDetailsById_succeedsWithParentsOnly() {
+    var result = assertDoesNotThrow(() -> profileService.getProfileListDetailsById("diagnose-condition-id"));
 
     assertNotNull(result);
     assertThat(result.id()).isEqualTo("diagnose-condition-id");
@@ -159,8 +159,8 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testGetFeatureListDetailsById_succeedsWithoutAnyRelations() {
-    var result = assertDoesNotThrow(() -> featureService.getFeatureListDetailsById("module-prozedur-id"));
+  void testGetProfileListDetailsById_succeedsWithoutAnyRelations() {
+    var result = assertDoesNotThrow(() -> profileService.getProfileListDetailsById("module-prozedur-id"));
 
     assertNotNull(result);
     assertThat(result.parents()).isEmpty();
@@ -168,7 +168,22 @@ public class FeatureServiceIT {
   }
 
   @Test
-  void testGetFeatureListDetailsById_throwsOnNotFound() {
-    assertThrows(FeatureNotFoundException.class, () -> featureService.getFeatureListDetailsById("does-not-exist"));
+  void testGetProfileListDetailsById_throwsOnNotFound() {
+    assertThrows(ProfileNotFoundException.class, () -> profileService.getProfileListDetailsById("does-not-exist"));
+  }
+
+  @Test
+  void testGetAvailableFilters_returnsModuleAndCategoryCounts() {
+    var filters = assertDoesNotThrow(() -> profileService.getAvailableFilters());
+
+    assertNotNull(filters);
+    assertThat(filters).extracting("name").containsExactlyInAnyOrder("module", "category");
+
+    var moduleFilter = filters.stream().filter(f -> f.name().equals("module")).findFirst().orElseThrow();
+    assertThat(moduleFilter.values()).extracting("label").containsExactlyInAnyOrder("Diagnose", "Prozedur");
+    assertThat(moduleFilter.values()).filteredOn(v -> v.label().equals("Diagnose")).extracting("count").containsExactly(2L);
+
+    var categoryFilter = filters.stream().filter(f -> f.name().equals("category")).findFirst().orElseThrow();
+    assertThat(categoryFilter.values()).extracting("label").containsExactlyInAnyOrder("module", "element");
   }
 }

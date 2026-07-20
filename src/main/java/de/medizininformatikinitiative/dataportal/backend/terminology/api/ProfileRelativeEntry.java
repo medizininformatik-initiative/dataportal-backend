@@ -1,17 +1,17 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.api;
 
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.FeatureRelative;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileRelative;
 import lombok.Builder;
 
 @Builder
-public record FeatureRelativeEntry(
+public record ProfileRelativeEntry(
     String id,
     DisplayEntry display,
     String url
 ) {
-  public static FeatureRelativeEntry of(FeatureRelative relative) {
-    return FeatureRelativeEntry.builder()
+  public static ProfileRelativeEntry of(ProfileRelative relative) {
+    return ProfileRelativeEntry.builder()
         .id(relative.id())
         .display(DisplayEntry.of(relative.display()))
         .url(relative.url())

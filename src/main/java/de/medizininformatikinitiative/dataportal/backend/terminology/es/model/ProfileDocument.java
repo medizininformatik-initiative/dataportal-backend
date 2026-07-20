@@ -7,19 +7,19 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import java.util.Collection;
 
 @Builder
-@Document(indexName = "feature")
-public record FeatureDocument(
+@Document(indexName = "profile")
+public record ProfileDocument(
     @Id String id,
     String name,
-    Display display,
-    Display description,
+    ProfileDisplay display,
+    ProfileDisplay description,
     boolean selectable,
     String url,
-    FeatureModule module,
-    Collection<String> categories,
-    Collection<FeatureField> fields,
-    Collection<FeatureRelative> parents,
-    Collection<FeatureRelative> children,
+    ProfileModule module,
+    Collection<ProfileCategory> categories,
+    Collection<ProfileField> fields,
+    Collection<ProfileRelative> parents,
+    Collection<ProfileRelative> children,
     Integer availability
 ) {
 }

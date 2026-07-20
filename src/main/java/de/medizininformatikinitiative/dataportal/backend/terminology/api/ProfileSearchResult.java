@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class FeatureSearchResult {
+public class ProfileSearchResult {
   private long totalHits;
-  private List<FeatureSearchEntry> results;
+  private List<ProfileSearchEntry> results;
 }

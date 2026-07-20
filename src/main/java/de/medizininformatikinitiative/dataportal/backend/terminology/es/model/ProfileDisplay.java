@@ -3,7 +3,8 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.es.model;
 import lombok.Builder;
 
 @Builder
-public record FeatureField(
-    Display display
+public record ProfileDisplay(
+    String original,
+    ProfileLocalization localization
 ) {
 }
