@@ -80,7 +80,8 @@ public class ProfileServiceIT {
     var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, 20, 0));
 
     assertNotNull(page);
-    assertThat(page.getTotalHits()).isEqualTo(3L);
+    assertThat(page.getTotalHits()).isEqualTo(1L);
+    assertThat(page.getResults().get(0).id()).isEqualTo("diagnose-condition-id");
   }
 
   @Test
@@ -94,11 +95,20 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_findsByOriginalDisplay() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Prozedur", null, null, 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Condition", null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
-    assertThat(page.getResults().get(0).id()).isEqualTo("module-prozedur-id");
+    assertThat(page.getResults().get(0).id()).isEqualTo("diagnose-condition-id");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_excludesNonSelectableEntries() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Prozedur", null, null, 20, 0));
+
+    assertNotNull(page);
+    assertThat(page.getTotalHits()).isZero();
+    assertThat(page.getResults()).isEmpty();
   }
 
   @Test
@@ -115,8 +125,8 @@ public class ProfileServiceIT {
     var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", List.of("Diagnose"), null, 20, 0));
 
     assertNotNull(page);
-    assertThat(page.getTotalHits()).isEqualTo(2L);
-    assertThat(page.getResults()).extracting("id").containsExactlyInAnyOrder("module-diagnose-id", "diagnose-condition-id");
+    assertThat(page.getTotalHits()).isEqualTo(1L);
+    assertThat(page.getResults().get(0).id()).isEqualTo("diagnose-condition-id");
   }
 
   @Test
@@ -126,6 +136,15 @@ public class ProfileServiceIT {
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
     assertThat(page.getResults().get(0).id()).isEqualTo("diagnose-condition-id");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_filtersByCategories_excludesNonSelectableEntries() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, List.of("module"), 20, 0));
+
+    assertNotNull(page);
+    assertThat(page.getTotalHits()).isZero();
+    assertThat(page.getResults()).isEmpty();
   }
 
   @Test

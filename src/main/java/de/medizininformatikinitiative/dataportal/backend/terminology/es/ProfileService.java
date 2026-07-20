@@ -52,6 +52,7 @@ public class ProfileService {
   public static final String FIELD_FIELDS_ORIGINAL_NGRAM = "fields.display.original.ngram";
   public static final String FILTER_KEY_MODULE = "module.display.original";
   public static final String FILTER_KEY_CATEGORIES = "categories.display.original";
+  public static final String FIELD_SELECTABLE = "selectable";
   public static final String FILTER_NAME_MODULE = "module";
   public static final String FILTER_NAME_CATEGORY = "category";
 
@@ -133,6 +134,7 @@ public class ProfileService {
                                                            List<Pair<String, List<String>>> filterList,
                                                            PageRequest pageRequest) {
     List<Query> filterTerms = new ArrayList<>();
+    filterTerms.add(new TermQuery.Builder().field(FIELD_SELECTABLE).value(true).build()._toQuery());
 
     if (!filterList.isEmpty()) {
       filterList.forEach(f -> {
@@ -148,7 +150,7 @@ public class ProfileService {
 
     if (keyword.isEmpty()) {
       boolQuery = new BoolQuery.Builder()
-          .filter(filterTerms.isEmpty() ? List.of() : filterTerms)
+          .filter(filterTerms)
           .build();
 
     } else {
@@ -197,7 +199,7 @@ public class ProfileService {
       boolQuery = new BoolQuery.Builder()
           .should(translatedMatch._toQuery(), originalMatch._toQuery())
           .minimumShouldMatch("1")
-          .filter(filterTerms.isEmpty() ? List.of() : filterTerms)
+          .filter(filterTerms)
           .build();
     }
 
