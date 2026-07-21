@@ -4,6 +4,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingInterceptor;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
+import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileDisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileRelativeEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileSearchEntry;
@@ -72,6 +73,8 @@ class ProfileRestControllerIT {
         .andExpect(jsonPath("$.results[0].id").value(dummySearchResult.getResults().get(0).id()))
         .andExpect(jsonPath("$.results[0].name").value(dummySearchResult.getResults().get(0).name()))
         .andExpect(jsonPath("$.results[0].display.original").value(dummySearchResult.getResults().get(0).display().original()))
+        .andExpect(jsonPath("$.results[0].module.display.original").value(dummySearchResult.getResults().get(0).module().display().original()))
+        .andExpect(jsonPath("$.results[0].categories[0].display.original").value(dummySearchResult.getResults().get(0).categories().get(0).display().original()))
         .andExpect(jsonPath("$.results[0].description").doesNotExist())
         .andExpect(jsonPath("$.results[0].parents").doesNotExist())
         .andExpect(jsonPath("$.results[0].children").doesNotExist());
@@ -105,9 +108,11 @@ class ProfileRestControllerIT {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(dummyProfileEntry.id()))
         .andExpect(jsonPath("$.name").value(dummyProfileEntry.name()))
-        .andExpect(jsonPath("$.description.original").value(dummyProfileEntry.description().original()))
+        .andExpect(jsonPath("$.description.display.original").value(dummyProfileEntry.description().display().original()))
+        .andExpect(jsonPath("$.module.display.original").value(dummyProfileEntry.module().display().original()))
+        .andExpect(jsonPath("$.categories[0].display.original").value(dummyProfileEntry.categories().get(0).display().original()))
         .andExpect(jsonPath("$.fields.length()").value(dummyProfileEntry.fields().size()))
-        .andExpect(jsonPath("$.fields[0].original").value(dummyProfileEntry.fields().get(0).original()))
+        .andExpect(jsonPath("$.fields[0].display.original").value(dummyProfileEntry.fields().get(0).display().original()))
         .andExpect(jsonPath("$.parents.length()").value(dummyProfileEntry.parents().size()))
         .andExpect(jsonPath("$.parents[0].id").value(dummyProfileEntry.parents().get(0).id()))
         .andExpect(jsonPath("$.parents[0].url").value(dummyProfileEntry.parents().get(0).url()))
@@ -171,8 +176,8 @@ class ProfileRestControllerIT {
         .display(createDummyDisplayEntry())
         .selectable(true)
         .url("https://example.org/some-profile")
-        .module(createDummyDisplayEntry())
-        .categories(List.of(createDummyDisplayEntry()))
+        .module(createDummyProfileDisplayEntry())
+        .categories(List.of(createDummyProfileDisplayEntry()))
         .availability(1)
         .build();
   }
@@ -182,13 +187,13 @@ class ProfileRestControllerIT {
         .id(id)
         .name("some-profile")
         .display(createDummyDisplayEntry())
-        .description(createDummyDisplayEntry())
+        .description(createDummyProfileDisplayEntry())
         .selectable(true)
         .url("https://example.org/some-profile")
-        .module(createDummyDisplayEntry())
-        .categories(List.of(createDummyDisplayEntry()))
+        .module(createDummyProfileDisplayEntry())
+        .categories(List.of(createDummyProfileDisplayEntry()))
         .availability(1)
-        .fields(List.of(createDummyDisplayEntry()))
+        .fields(List.of(createDummyProfileDisplayEntry()))
         .parents(List.of(createDummyProfileRelativeEntry()))
         .children(List.of(createDummyProfileRelativeEntry(), createDummyProfileRelativeEntry()))
         .build();
@@ -199,6 +204,12 @@ class ProfileRestControllerIT {
         .id(UUID.randomUUID().toString())
         .display(createDummyDisplayEntry())
         .url("https://example.org/some-relative")
+        .build();
+  }
+
+  private ProfileDisplayEntry createDummyProfileDisplayEntry() {
+    return ProfileDisplayEntry.builder()
+        .display(createDummyDisplayEntry())
         .build();
   }
 

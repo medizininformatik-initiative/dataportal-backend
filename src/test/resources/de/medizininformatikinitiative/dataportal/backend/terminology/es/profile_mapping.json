@@ -103,23 +103,19 @@
       },
       "categories": {
         "properties": {
-          "display": {
+          "original": {
+            "type": "keyword"
+          },
+          "localization": {
+            "type": "object",
             "properties": {
-              "original": {
-                "type": "keyword"
+              "de-DE": {
+                "type": "text",
+                "index": false
               },
-              "localization": {
-                "type": "object",
-                "properties": {
-                  "de-DE": {
-                    "type": "text",
-                    "index": false
-                  },
-                  "en-US": {
-                    "type": "text",
-                    "index": false
-                  }
-                }
+              "en-US": {
+                "type": "text",
+                "index": false
               }
             }
           }
@@ -354,24 +350,20 @@
       },
       "module": {
         "properties": {
-          "display": {
+          "original": {
+            "type": "keyword"
+          },
+          "localization": {
+            "type": "object",
+            "dynamic": "true",
             "properties": {
-              "original": {
-                "type": "keyword"
+              "de-DE": {
+                "type": "text",
+                "index": false
               },
-              "localization": {
-                "type": "object",
-                "dynamic": "true",
-                "properties": {
-                  "de-DE": {
-                    "type": "text",
-                    "index": false
-                  },
-                  "en-US": {
-                    "type": "text",
-                    "index": false
-                  }
-                }
+              "en-US": {
+                "type": "text",
+                "index": false
               }
             }
           }

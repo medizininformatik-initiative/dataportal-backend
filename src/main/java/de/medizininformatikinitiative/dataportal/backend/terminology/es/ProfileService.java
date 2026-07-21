@@ -50,8 +50,8 @@ public class ProfileService {
   public static final String FIELD_FIELDS_EN_NGRAM = "fields.display.localization.en-US.ngram";
   public static final String FIELD_FIELDS_ORIGINAL = "fields.display.original";
   public static final String FIELD_FIELDS_ORIGINAL_NGRAM = "fields.display.original.ngram";
-  public static final String FILTER_KEY_MODULE = "module.display.original";
-  public static final String FILTER_KEY_CATEGORIES = "categories.display.original";
+  public static final String FILTER_KEY_MODULE = "module.original";
+  public static final String FILTER_KEY_CATEGORIES = "categories.original";
   public static final String FIELD_SELECTABLE = "selectable";
   public static final String FILTER_NAME_MODULE = "module";
   public static final String FILTER_NAME_CATEGORY = "category";

@@ -17,6 +17,8 @@ tags:
     description: operations to work with the ontology
   - name: codeable concepts
     description: operations on codeable concepts
+  - name: profile
+    description: operations on profiles
   - name: dse
     description: Data Selection and Extraction
   - name: validation
@@ -967,6 +969,105 @@ paths:
           description: Forbidden - insufficient access rights
         404:
           description: Entry not found
+  /profile/entry/search:
+    get:
+      tags:
+        - profile
+      summary: Parametrized search for profiles in the configured elastic search service.
+      operationId: searchProfiles
+      parameters:
+        - name: searchterm
+          in: query
+          description: The term to search for. In case of an empty searchterm, return the first page of the whole index, sorted alphabetically
+          schema:
+            type: string
+          example: Diagnose
+        - name: modules
+          in: query
+          description: Limit the search to any of the given modules
+          schema:
+            type: array
+            items:
+              type: string
+              example: Diagnose
+          style: form
+          explode: false
+        - name: categories
+          in: query
+          description: Limit the search to any of the given categories
+          schema:
+            type: array
+            items:
+              type: string
+              example: element
+          style: form
+          explode: false
+        - name: page-size
+          in: query
+          description: How many results shall be returned per page
+          schema:
+            type: integer
+          example: 10
+        - name: page
+          in: query
+          description: Which page shall be returned
+          schema:
+            type: integer
+          example: 42
+      responses:
+        200:
+          description: Ok, return the page of results. Only selectable profiles are returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileSearchResult"
+      security:
+        - dataportal_auth:
+            - user
+  /profile/entry/{id}/list-details:
+    get:
+      tags:
+        - profile
+      summary: Get the detailed entry for a profile, containing children and parents
+      operationId: getProfileListDetailsById
+      parameters:
+        - name: id
+          in: path
+          description: The id of the profile entry that shall be retrieved
+          required: true
+          schema:
+            type: string
+            example: diagnose-condition-id
+      responses:
+        200:
+          description: Entry found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileEntry"
+        404:
+          description: Entry not found
+      security:
+        - dataportal_auth:
+            - user
+  /profile/search/filter:
+    get:
+      tags:
+        - profile
+      summary: Get the list of available filters for module and category, including availability counts
+      operationId: getFilter
+      responses:
+        200:
+          description: Ok, return the list of available filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Filter"
+      security:
+        - dataportal_auth:
+            - user
   /dse/profile-tree:
     get:
       tags:
@@ -1815,6 +1916,113 @@ components:
             type: string
             examples:
               - foo
+    ProfileDisplayEntry:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+    ProfileRelativeEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - module-diagnose-id
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        url:
+          type: string
+          examples:
+            - modul-diagnose
+    ProfileSearchEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - diagnose-condition-id
+        name:
+          type: string
+          examples:
+            - MII_PR_Diagnose_Condition
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        selectable:
+          type: boolean
+          examples:
+            - true
+        url:
+          type: string
+          format: uri
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
+        module:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDisplayEntry"
+        availability:
+          type: integer
+          examples:
+            - 1
+    ProfileSearchResult:
+      type: object
+      properties:
+        totalHits:
+          type: integer
+          examples:
+            - 42
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileSearchEntry"
+    ProfileEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - diagnose-condition-id
+        name:
+          type: string
+          examples:
+            - MII_PR_Diagnose_Condition
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        description:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        selectable:
+          type: boolean
+          examples:
+            - true
+        url:
+          type: string
+          format: uri
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
+        module:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDisplayEntry"
+        availability:
+          type: integer
+          examples:
+            - 1
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDisplayEntry"
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileRelativeEntry"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileRelativeEntry"
     CriteriaProfileData:
       type: object
       properties:

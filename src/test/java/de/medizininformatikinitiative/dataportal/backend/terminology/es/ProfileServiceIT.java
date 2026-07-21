@@ -168,9 +168,9 @@ public class ProfileServiceIT {
     assertNotNull(result);
     assertThat(result.id()).isEqualTo("diagnose-condition-id");
     assertThat(result.description()).isNotNull();
-    assertThat(result.description().original()).isEqualTo("Diagnose Beschreibung");
+    assertThat(result.description().display().original()).isEqualTo("Diagnose Beschreibung");
     assertThat(result.fields()).hasSize(2);
-    assertThat(result.fields()).extracting("original").containsExactlyInAnyOrder("recordedDate", "code");
+    assertThat(result.fields()).extracting("display.original").containsExactlyInAnyOrder("recordedDate", "code");
     assertThat(result.parents()).hasSize(1);
     assertThat(result.parents().get(0).id()).isEqualTo("module-diagnose-id");
     assertThat(result.parents().get(0).url()).isEqualTo("modul-diagnose");

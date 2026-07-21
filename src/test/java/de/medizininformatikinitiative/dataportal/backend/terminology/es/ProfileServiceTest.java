@@ -1,12 +1,10 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileSearchEntry;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileCategory;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDisplay;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDocument;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileField;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileLocalization;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileModule;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileRelative;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileEsRepository;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileNotFoundException;
@@ -20,6 +18,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -128,7 +127,7 @@ class ProfileServiceTest {
     assertThat(result.id()).isEqualTo(id);
     assertThat(result.description()).isNotNull();
     assertThat(result.fields()).hasSize(1);
-    assertThat(result.fields().get(0).original()).isEqualTo("Some Name");
+    assertThat(result.fields().get(0).display().original()).isEqualTo("Some Name");
     assertThat(result.parents()).hasSize(1);
     assertThat(result.parents().get(0).url()).isEqualTo("https://example.org/relative");
     assertThat(result.children()).hasSize(2);
@@ -144,7 +143,7 @@ class ProfileServiceTest {
         .display(createDummyDisplay())
         .selectable(true)
         .url("https://example.org/some-profile")
-        .categories(List.of(ProfileCategory.builder().display(null).build(), createDummyCategory()))
+        .categories(Arrays.asList(null, createDummyDisplay()))
         .fields(List.of(ProfileField.builder().display(null).build(), createDummyField()))
         .build();
     doReturn(Optional.of(dummyDocument)).when(repo).findById(id);
@@ -238,18 +237,12 @@ class ProfileServiceTest {
         .description(createDummyDisplay())
         .selectable(true)
         .url("https://example.org/some-profile")
-        .module(ProfileModule.builder().display(createDummyDisplay()).build())
-        .categories(List.of(createDummyCategory()))
+        .module(createDummyDisplay())
+        .categories(List.of(createDummyDisplay()))
         .availability(1)
         .fields(List.of(createDummyField()))
         .parents(parents)
         .children(children)
-        .build();
-  }
-
-  private ProfileCategory createDummyCategory() {
-    return ProfileCategory.builder()
-        .display(createDummyDisplay())
         .build();
   }
 

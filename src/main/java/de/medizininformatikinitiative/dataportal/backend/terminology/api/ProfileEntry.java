@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.api;
 
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileCategory;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDisplay;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDocument;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileField;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileRelative;
@@ -16,13 +16,13 @@ public record ProfileEntry(
     String id,
     String name,
     DisplayEntry display,
-    DisplayEntry description,
+    ProfileDisplayEntry description,
     boolean selectable,
     String url,
-    DisplayEntry module,
-    List<DisplayEntry> categories,
+    ProfileDisplayEntry module,
+    List<ProfileDisplayEntry> categories,
     int availability,
-    List<DisplayEntry> fields,
+    List<ProfileDisplayEntry> fields,
     List<ProfileRelativeEntry> parents,
     List<ProfileRelativeEntry> children
 ) {
@@ -31,10 +31,10 @@ public record ProfileEntry(
         .id(document.id())
         .name(document.name())
         .display(DisplayEntry.of(document.display()))
-        .description(DisplayEntry.of(document.description()))
+        .description(ProfileDisplayEntry.of(document.description()))
         .selectable(document.selectable())
         .url(document.url())
-        .module(document.module() == null ? null : DisplayEntry.of(document.module().display()))
+        .module(ProfileDisplayEntry.of(document.module()))
         .categories(toCategoryDisplayEntries(document.categories()))
         .availability(document.availability() == null ? 0 : document.availability())
         .fields(toDisplayEntries(document.fields()))
@@ -43,12 +43,12 @@ public record ProfileEntry(
         .build();
   }
 
-  private static List<DisplayEntry> toDisplayEntries(Collection<ProfileField> fields) {
-    return fields == null ? List.of() : fields.stream().map(f -> DisplayEntry.of(f.display())).filter(Objects::nonNull).toList();
+  private static List<ProfileDisplayEntry> toDisplayEntries(Collection<ProfileField> fields) {
+    return fields == null ? List.of() : fields.stream().map(f -> ProfileDisplayEntry.of(f.display())).filter(Objects::nonNull).toList();
   }
 
-  private static List<DisplayEntry> toCategoryDisplayEntries(Collection<ProfileCategory> categories) {
-    return categories == null ? List.of() : categories.stream().map(c -> DisplayEntry.of(c.display())).filter(Objects::nonNull).toList();
+  private static List<ProfileDisplayEntry> toCategoryDisplayEntries(Collection<ProfileDisplay> categories) {
+    return categories == null ? List.of() : categories.stream().map(ProfileDisplayEntry::of).filter(Objects::nonNull).toList();
   }
 
   private static List<ProfileRelativeEntry> toRelativeEntries(Collection<ProfileRelative> relatives) {
