@@ -5,8 +5,8 @@ import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
-import de.numcodex.sq2cql.Translator;
-import de.numcodex.sq2cql.model.cql.Container;
+import de.medizininformatikinitiative.cctb.Translator;
+import de.medizininformatikinitiative.cctb.model.cql.Container;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ public class CqlQueryTranslatorTest {
     doThrow(JacksonException.class).when(jsonUtil).writeValueAsString(testQuery);
 
     assertThrows(QueryTranslationException.class, () -> cqlQueryTranslator.translate(testQuery));
-    verify(jsonUtil, never()).readValue(anyString(), eq(de.numcodex.sq2cql.model.structured_query.StructuredQuery.class));
+    verify(jsonUtil, never()).readValue(anyString(), eq(de.medizininformatikinitiative.cctb.model.structured_query.StructuredQuery.class));
     verifyNoInteractions(translator);
   }
 
@@ -51,10 +51,10 @@ public class CqlQueryTranslatorTest {
     var testQuery = Ccdl.builder().build();
     doReturn("foo").when(jsonUtil).writeValueAsString(testQuery);
     doThrow(JacksonException.class).when(jsonUtil).readValue("foo",
-        de.numcodex.sq2cql.model.structured_query.StructuredQuery.class);
+        de.medizininformatikinitiative.cctb.model.structured_query.StructuredQuery.class);
 
     assertThrows(QueryTranslationException.class, () -> cqlQueryTranslator.translate(testQuery));
-    verify(jsonUtil).readValue("foo", de.numcodex.sq2cql.model.structured_query.StructuredQuery.class);
+    verify(jsonUtil).readValue("foo", de.medizininformatikinitiative.cctb.model.structured_query.StructuredQuery.class);
     verifyNoInteractions(translator);
   }
 
@@ -77,7 +77,7 @@ public class CqlQueryTranslatorTest {
         .build();
 
     doThrow(NullPointerException.class).when(translator)
-        .toCql(any(de.numcodex.sq2cql.model.structured_query.StructuredQuery.class));
+        .toCql(any(de.medizininformatikinitiative.cctb.model.structured_query.StructuredQuery.class));
 
     assertThrows(QueryTranslationException.class, () -> cqlQueryTranslator.translate(testQuery));
     verify(translator).toCql(any());
@@ -103,7 +103,7 @@ public class CqlQueryTranslatorTest {
 
     var resultLibraryMock = mock(Container.class);
     when(resultLibraryMock.print()).thenReturn("bar");
-    when(translator.toCql(any(de.numcodex.sq2cql.model.structured_query.StructuredQuery.class)))
+    when(translator.toCql(any(de.medizininformatikinitiative.cctb.model.structured_query.StructuredQuery.class)))
         .thenReturn(resultLibraryMock);
 
     var translationResult = cqlQueryTranslator.translate(testQuery);

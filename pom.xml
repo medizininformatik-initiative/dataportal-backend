@@ -223,8 +223,8 @@
 
     <dependency>
       <groupId>de.medizininformatik-initiative</groupId>
-      <artifactId>sq2cql</artifactId>
-      <version>1.4.0-alpha-pr290-5</version>
+      <artifactId>cctb-cql</artifactId>
+      <version>2.0.0</version>
     </dependency>
 
     <dependency>
