@@ -1,9 +1,9 @@
 package de.medizininformatikinitiative.dataportal.backend.query.translation;
 
+import de.medizininformatikinitiative.cctb.Translator;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
-import de.numcodex.sq2cql.Translator;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -21,10 +21,10 @@ class CqlQueryTranslator implements QueryTranslator {
 
   @Override
   public String translate(Ccdl query) throws QueryTranslationException {
-    de.numcodex.sq2cql.model.structured_query.StructuredQuery ccdl;
+    de.medizininformatikinitiative.cctb.model.structured_query.StructuredQuery ccdl;
     try {
       ccdl = jsonUtil.readValue(jsonUtil.writeValueAsString(query),
-          de.numcodex.sq2cql.model.structured_query.StructuredQuery.class);
+          de.medizininformatikinitiative.cctb.model.structured_query.StructuredQuery.class);
     } catch (JacksonException e) {
       throw new QueryTranslationException("cannot encode/decode CCDL as JSON", e);
     }
