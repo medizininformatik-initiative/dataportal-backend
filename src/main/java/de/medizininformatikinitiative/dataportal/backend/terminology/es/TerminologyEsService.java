@@ -43,23 +43,24 @@ public class TerminologyEsService {
   public static final String FILTER_KEY_CONTEXT_CODE = "context.code";
   public static final String FILTER_KEY_KDS_MODULE = "kds_module";
   public static final String FILTER_KEY_TERMINOLOGY = "terminology";
-  public static final String FIELD_NAME_DISPLAY_DE = "display.de";
-  public static final String FIELD_NAME_DISPLAY_EN = "display.en";
-  public static final String FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^0.5";
-  public static final String FIELD_NAME_TERMCODE_WITH_BOOST = "termcode^2";
   public static final String FIELD_NAME_TERMCODE_KEYWORD = "termcode.keyword";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;
 
   private String[] filterFields;
 
+  private String[] queryFields;
+
   private OntologyItemEsRepository ontologyItemEsRepository;
 
   private OntologyListItemEsRepository ontologyListItemEsRepository;
 
   @Autowired
-  public TerminologyEsService(@Value("${app.elastic.filter}") String[] filterFields, ElasticsearchOperations operations, OntologyItemEsRepository ontologyItemEsRepository, OntologyListItemEsRepository ontologyListItemEsRepository) {
+  public TerminologyEsService(@Value("${app.elastic.filter}") String[] filterFields,
+                              @Value("${app.elastic.query.terminology.fields}") String[] queryFields,
+                              ElasticsearchOperations operations, OntologyItemEsRepository ontologyItemEsRepository, OntologyListItemEsRepository ontologyListItemEsRepository) {
     this.filterFields = filterFields;
+    this.queryFields = queryFields;
     this.operations = operations;
     this.ontologyItemEsRepository = ontologyItemEsRepository;
     this.ontologyListItemEsRepository = ontologyListItemEsRepository;
@@ -230,7 +231,7 @@ public class TerminologyEsService {
     } else {
       var multiMatchQuery = new MultiMatchQuery.Builder()
           .query(keyword)
-          .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
+          .fields(List.of(queryFields))
           .build();
 
       boolQuery = new BoolQuery.Builder()
@@ -351,7 +352,7 @@ public class TerminologyEsService {
             if (hasSearchTerm) {
               b.must(m -> m.multiMatch(mm -> mm
                   .query(searchTerm)
-                  .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
+                  .fields(List.of(queryFields))
               ));
             }
 

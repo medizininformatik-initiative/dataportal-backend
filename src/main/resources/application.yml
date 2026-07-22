@@ -135,6 +135,11 @@ app:
     enabled: ${ELASTIC_SEARCH_ENABLED:true}
     host: ${ELASTIC_SEARCH_HOST:localhost:9200}
     filter: ${ELASTIC_SEARCH_FILTER:context,terminology,kds_module}
+    query:
+      terminology:
+        fields: ${ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS:display.de,display.en,termcode^2,display.original^0.5}
+      codeable_concept:
+        fields: ${ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS:display.de,display.en,termcode.code^2,display.original^0.5}
   privacy:
     threshold:
       sites: ${PRIVACY_THRESHOLD_SITES:3}

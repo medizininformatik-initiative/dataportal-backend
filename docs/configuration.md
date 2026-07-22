@@ -620,7 +620,33 @@ Host and port of the elastic search endpoint
 
 **Default:** `localhost:9200`
 
-| ELASTIC_SEARCH_FILTER         | Which parameters can be used to filter results  | `foo,bar,baz`      | `context,terminology,kds_module` |
+
+---
+
+#### `ELASTIC_SEARCH_FILTER`
+
+Which parameters can be used to filter results
+
+**Default:** `context,terminology,kds_module`
+
+
+---
+
+#### `ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS`
+
+Comma-separated list of the fields (with optional `^boost` factor) searched when querying the terminology index. Maps to `app.elastic.query.terminology.fields`.
+
+**Default:** `display.de,display.en,termcode^2,display.original^0.5`
+
+
+---
+
+#### `ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS`
+
+Comma-separated list of the fields (with optional `^boost` factor) searched when querying the codeable-concept index. Maps to `app.elastic.query.codeable_concept.fields`.
+
+**Default:** `display.de,display.en,termcode.code^2,display.original^0.5`
+
 
 ---
 

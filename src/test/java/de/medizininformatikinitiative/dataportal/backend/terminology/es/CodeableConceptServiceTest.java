@@ -37,6 +37,7 @@ import static org.mockito.Mockito.doReturn;
 class CodeableConceptServiceTest {
 
   private final ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults().build();
+  private String[] queryFields = new String[]{"display.de", "display.en", "termcode.code^2", "display.original^0.5"};
   @Mock
   ElasticsearchOperations operations;
   @Mock
@@ -56,7 +57,7 @@ class CodeableConceptServiceTest {
   }
 
   private CodeableConceptService createCodeableConceptService() {
-    return new CodeableConceptService(operations, repository);
+    return new CodeableConceptService(queryFields, operations, repository);
   }
 
   @BeforeEach
