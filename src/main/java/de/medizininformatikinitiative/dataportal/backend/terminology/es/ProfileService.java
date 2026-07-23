@@ -125,7 +125,6 @@ public class ProfileService {
 
     return TermFilter.builder()
         .name(name)
-        .type("selectable-concept")
         .values(values)
         .build();
   }
