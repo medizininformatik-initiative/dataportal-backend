@@ -283,6 +283,7 @@ public class TerminologyRestControllerIT {
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/entry/abc/relations")).with(csrf()))
         .andExpect(status().isOk())
+        .andExpect(jsonPath("$.selectable").value(dummyRelationEntry.selectable()))
         .andExpect(jsonPath("$.children[0].contextualizedTermcodeHash").value(dummyRelationEntry.children().stream().toList().get(0).contextualizedTermcodeHash()))
         .andExpect(jsonPath("$.children[0].display.original").value(dummyRelationEntry.children().stream().toList().get(0).display().original()))
         .andExpect(jsonPath("$.children[0].display.translations[0].value").value(dummyRelationEntry.children().stream().toList().get(0).display().translations().get(0).value()))
@@ -463,6 +464,7 @@ public class TerminologyRestControllerIT {
         .parents(List.of(createDummyRelative()))
         .children(List.of(createDummyRelative()))
         .display(createDummyDisplay())
+        .selectable(true)
         .build();
   }
 

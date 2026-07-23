@@ -300,6 +300,7 @@ public class TerminologyEsService {
     var ontologyItem = ontologyItemEsRepository.findById(hash).orElseThrow(OntologyItemNotFoundException::new);
     var ontologyItemRelationsDocument = OntologyItemRelationsDocument.builder()
         .display(ontologyItem.display())
+        .selectable(ontologyItem.selectable())
         .terminology(ontologyItem.terminology())
         .termcode(ontologyItem.termcode())
         .parents(ontologyItem.parents())

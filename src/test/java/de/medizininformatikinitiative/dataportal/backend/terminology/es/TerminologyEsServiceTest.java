@@ -277,6 +277,7 @@ public class TerminologyEsServiceTest {
     assertThat(relationEntry.children()).isEqualTo(dummyOntologyItem.children().stream().map(RelativeEntry::of).collect(Collectors.toList()));
     assertThat(relationEntry.parents()).isEqualTo(dummyOntologyItem.parents().stream().map(RelativeEntry::of).collect(Collectors.toList()));
     assertThat(relationEntry.display()).isEqualTo(DisplayEntry.of(dummyOntologyItem.display()));
+    assertThat(relationEntry.selectable()).isEqualTo(dummyOntologyItem.selectable());
   }
 
   @Test
