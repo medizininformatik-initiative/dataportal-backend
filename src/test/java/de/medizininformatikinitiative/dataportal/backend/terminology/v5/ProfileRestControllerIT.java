@@ -117,8 +117,10 @@ class ProfileRestControllerIT {
         .andExpect(jsonPath("$.parents[0].id").value(dummyProfileEntry.parents().get(0).id()))
         .andExpect(jsonPath("$.parents[0].url").value(dummyProfileEntry.parents().get(0).url()))
         .andExpect(jsonPath("$.parents[0].display.original").value(dummyProfileEntry.parents().get(0).display().original()))
+        .andExpect(jsonPath("$.parents[0].selectable").value(dummyProfileEntry.parents().get(0).selectable()))
         .andExpect(jsonPath("$.children.length()").value(dummyProfileEntry.children().size()))
-        .andExpect(jsonPath("$.children[0].url").value(dummyProfileEntry.children().get(0).url()));
+        .andExpect(jsonPath("$.children[0].url").value(dummyProfileEntry.children().get(0).url()))
+        .andExpect(jsonPath("$.children[0].selectable").value(dummyProfileEntry.children().get(0).selectable()));
   }
 
   @Test
@@ -204,6 +206,7 @@ class ProfileRestControllerIT {
         .id(UUID.randomUUID().toString())
         .display(createDummyDisplayEntry())
         .url("https://example.org/some-relative")
+        .selectable(true)
         .build();
   }
 

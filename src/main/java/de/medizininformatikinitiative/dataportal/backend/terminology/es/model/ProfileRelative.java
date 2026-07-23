@@ -6,6 +6,7 @@ import lombok.Builder;
 public record ProfileRelative(
     String id,
     ProfileDisplay display,
-    String url
+    String url,
+    boolean selectable
 ) {
 }

@@ -8,13 +8,15 @@ import lombok.Builder;
 public record ProfileRelativeEntry(
     String id,
     DisplayEntry display,
-    String url
+    String url,
+    boolean selectable
 ) {
   public static ProfileRelativeEntry of(ProfileRelative relative) {
     return ProfileRelativeEntry.builder()
         .id(relative.id())
         .display(DisplayEntry.of(relative.display()))
         .url(relative.url())
+        .selectable(relative.selectable())
         .build();
   }
 }

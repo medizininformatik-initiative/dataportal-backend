@@ -159,6 +159,7 @@ public class ProfileServiceIT {
     assertThat(result.children()).hasSize(1);
     assertThat(result.children().get(0).id()).isEqualTo("diagnose-condition-id");
     assertThat(result.children().get(0).url()).isEqualTo("https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose");
+    assertThat(result.children().get(0).selectable()).isTrue();
   }
 
   @Test
@@ -174,6 +175,7 @@ public class ProfileServiceIT {
     assertThat(result.parents()).hasSize(1);
     assertThat(result.parents().get(0).id()).isEqualTo("module-diagnose-id");
     assertThat(result.parents().get(0).url()).isEqualTo("modul-diagnose");
+    assertThat(result.parents().get(0).selectable()).isFalse();
     assertThat(result.children()).isEmpty();
   }
 

@@ -130,8 +130,10 @@ class ProfileServiceTest {
     assertThat(result.fields().get(0).display().original()).isEqualTo("Some Name");
     assertThat(result.parents()).hasSize(1);
     assertThat(result.parents().get(0).url()).isEqualTo("https://example.org/relative");
+    assertThat(result.parents().get(0).selectable()).isTrue();
     assertThat(result.children()).hasSize(2);
     assertThat(result.children().get(0).url()).isEqualTo("https://example.org/relative");
+    assertThat(result.children().get(0).selectable()).isTrue();
   }
 
   @Test
@@ -257,6 +259,7 @@ class ProfileServiceTest {
         .id(UUID.randomUUID().toString())
         .display(createDummyDisplay())
         .url("https://example.org/relative")
+        .selectable(true)
         .build();
   }
 
