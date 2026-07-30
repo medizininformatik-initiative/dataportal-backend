@@ -135,6 +135,13 @@ app:
     enabled: ${ELASTIC_SEARCH_ENABLED:true}
     host: ${ELASTIC_SEARCH_HOST:localhost:9200}
     filter: ${ELASTIC_SEARCH_FILTER:context,terminology,kds_module}
+    query:
+      # Be careful changing these fields. There is no check whether the fields are "valid" (as in indexed in elastic search)
+      # Only modify if you really know what you are doing! Modifying the boost factor or removing fields is no problem.
+      terminology:
+        fields: ${ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS:display.de,display.en,termcode^2,display.original^0.5}
+      codeable_concept:
+        fields: ${ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS:display.de,display.en,termcode.code^2,display.original^0.5}
   privacy:
     threshold:
       sites: ${PRIVACY_THRESHOLD_SITES:3}

@@ -47,6 +47,7 @@ import static org.mockito.Mockito.when;
 public class TerminologyEsServiceTest {
 
   private String[] filterFields = new String[]{"foo", "bar", "baz"};
+  private String[] queryFields = new String[]{"display.de", "display.en", "termcode^2", "display.original^0.5"};
   @Mock
   private ElasticsearchOperations operations;
   @Mock
@@ -102,7 +103,7 @@ public class TerminologyEsServiceTest {
   }
 
   private TerminologyEsService createTerminologyEsService() {
-    return new TerminologyEsService(filterFields, operations, ontologyItemEsRepository, ontologyListItemEsRepository);
+    return new TerminologyEsService(filterFields, queryFields, operations, ontologyItemEsRepository, ontologyListItemEsRepository);
   }
 
   @BeforeEach

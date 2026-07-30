@@ -43,7 +43,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Import({TerminologyEsService.class})
 @Testcontainers
 @DataElasticsearchTest(properties = {
-    "app.elastic.filter=context,terminology,kds_module"
+    "app.elastic.filter=context,terminology,kds_module",
+    "app.elastic.query.terminology.fields=display.de,display.en,termcode^2,display.original^0.5"
 })
 public class TerminologyEsServiceIT {
 

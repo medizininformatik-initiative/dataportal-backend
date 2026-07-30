@@ -32,7 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Import({CodeableConceptService.class})
 @Testcontainers
 @DataElasticsearchTest(properties = {
-    "app.elastic.filter=context,terminology"
+    "app.elastic.filter=context,terminology",
+    "app.elastic.query.codeable_concept.fields=display.de,display.en,termcode.code^2,display.original^0.5"
 })
 public class CodeableConceptServiceIT {
 
