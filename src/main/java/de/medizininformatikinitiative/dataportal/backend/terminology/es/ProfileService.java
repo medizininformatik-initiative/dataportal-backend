@@ -17,6 +17,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.es.reposito
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
@@ -39,21 +40,8 @@ import java.util.stream.Stream;
 @ConditionalOnExpression("${app.elastic.enabled}")
 public class ProfileService {
   public static final String FIELD_DISPLAY_DE = "display.localization.de-DE";
-  public static final String FIELD_DISPLAY_DE_WITH_BOOST = "display.localization.de-DE^2";
-  public static final String FIELD_DISPLAY_DE_NGRAM = "display.localization.de-DE.ngram";
   public static final String FIELD_DISPLAY_EN = "display.localization.en-US";
-  public static final String FIELD_DISPLAY_EN_WITH_BOOST = "display.localization.en-US^2";
-  public static final String FIELD_DISPLAY_EN_NGRAM = "display.localization.en-US.ngram";
   public static final String FIELD_DISPLAY_ORIGINAL = "display.original";
-  public static final String FIELD_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^2";
-  public static final String FIELD_NAME_WITH_BOOST = "name^3";
-  public static final String FIELD_NAME_NGRAM = "name.ngram";
-  public static final String FIELD_FIELDS_DE = "fields.display.localization.de-DE";
-  public static final String FIELD_FIELDS_DE_NGRAM = "fields.display.localization.de-DE.ngram";
-  public static final String FIELD_FIELDS_EN = "fields.display.localization.en-US";
-  public static final String FIELD_FIELDS_EN_NGRAM = "fields.display.localization.en-US.ngram";
-  public static final String FIELD_FIELDS_ORIGINAL = "fields.display.original";
-  public static final String FIELD_FIELDS_ORIGINAL_NGRAM = "fields.display.original.ngram";
   public static final String FILTER_KEY_MODULE = "module.original";
   public static final String FILTER_KEY_CATEGORIES = "categories.original";
   public static final String FILTER_KEY_RESOURCE_TYPE = "resourceType.original";
@@ -67,10 +55,18 @@ public class ProfileService {
 
   private ElasticsearchOperations operations;
 
+  private String[] translatedQueryFields;
+
+  private String[] originalQueryFields;
+
   private ProfileEsRepository repo;
 
   @Autowired
-  public ProfileService(ElasticsearchOperations operations, ProfileEsRepository repo) {
+  public ProfileService(@Value("${app.elastic.query.profile.translated_fields}") String[] translatedQueryFields,
+                        @Value("${app.elastic.query.profile.original_fields}") String[] originalQueryFields,
+                        ElasticsearchOperations operations, ProfileEsRepository repo) {
+    this.translatedQueryFields = translatedQueryFields;
+    this.originalQueryFields = originalQueryFields;
     this.operations = operations;
     this.repo = repo;
   }
@@ -312,18 +308,7 @@ public class ProfileService {
     var translatedMatch = new BoolQuery.Builder()
         .must(new MultiMatchQuery.Builder()
             .query(keyword)
-            .fields(List.of(
-                FIELD_DISPLAY_DE_WITH_BOOST,
-                FIELD_DISPLAY_EN_WITH_BOOST,
-                FIELD_NAME_WITH_BOOST,
-                FIELD_FIELDS_DE,
-                FIELD_FIELDS_EN,
-                FIELD_FIELDS_DE_NGRAM,
-                FIELD_FIELDS_EN_NGRAM,
-                FIELD_DISPLAY_DE_NGRAM,
-                FIELD_DISPLAY_EN_NGRAM,
-                FIELD_NAME_NGRAM
-            ))
+            .fields(List.of(translatedQueryFields))
             .build()._toQuery())
         .mustNot(translatedDisplayMissing._toQuery())
         .build();
@@ -333,13 +318,7 @@ public class ProfileService {
             new ExistsQuery.Builder().field(FIELD_DISPLAY_ORIGINAL).build()._toQuery(),
             new MultiMatchQuery.Builder()
                 .query(keyword)
-                .fields(List.of(
-                    FIELD_DISPLAY_ORIGINAL_WITH_BOOST,
-                    FIELD_NAME_WITH_BOOST,
-                    FIELD_FIELDS_ORIGINAL,
-                    FIELD_FIELDS_ORIGINAL_NGRAM,
-                    FIELD_NAME_NGRAM
-                ))
+                .fields(List.of(originalQueryFields))
                 .build()._toQuery()
         )
         .build();

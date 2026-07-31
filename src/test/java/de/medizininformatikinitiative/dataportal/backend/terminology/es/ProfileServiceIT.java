@@ -29,7 +29,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Tag("elasticsearch")
 @Import({ProfileService.class})
 @Testcontainers
-@DataElasticsearchTest
+@DataElasticsearchTest(properties = {
+    "app.elastic.query.profile.translated_fields=display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram",
+    "app.elastic.query.profile.original_fields=display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram"
+})
 public class ProfileServiceIT {
 
   @Container

@@ -32,6 +32,15 @@ import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class ProfileServiceTest {
 
+  private String[] translatedQueryFields = new String[]{
+      "display.localization.de-DE^2", "display.localization.en-US^2", "name^3",
+      "fields.display.localization.de-DE", "fields.display.localization.en-US",
+      "fields.display.localization.de-DE.ngram", "fields.display.localization.en-US.ngram",
+      "display.localization.de-DE.ngram", "display.localization.en-US.ngram", "name.ngram"
+  };
+  private String[] originalQueryFields = new String[]{
+      "display.original^2", "name^3", "fields.display.original", "fields.display.original.ngram", "name.ngram"
+  };
   @Mock
   private ElasticsearchOperations operations;
   @Mock
@@ -42,7 +51,7 @@ class ProfileServiceTest {
   @BeforeEach
   void setUp() {
     Mockito.reset(operations, repo);
-    profileService = new ProfileService(operations, repo);
+    profileService = new ProfileService(translatedQueryFields, originalQueryFields, operations, repo);
   }
 
   @Test

@@ -64,8 +64,12 @@ services:
       ELASTIC_SEARCH_ENABLED: true
       ELASTIC_SEARCH_HOST: dataportal-elastic:9200
       ELASTIC_SEARCH_FILTER: context,terminology,kds_module
+      # Which fields (with optional ^boost factor) are searched per index. See docs/configuration.md
+      # (search for ELASTIC_SEARCH_QUERY) for details and a script to list the fields usable here.
       ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS: display.de,display.en,termcode^2,display.original^0.5
       ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS: display.de,display.en,termcode.code^2,display.original^0.5
+      ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS: display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram
+      ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS: display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram
       # ---- logging
       LOG_LEVEL_SQL: "warn"
       LOG_LEVEL: "warn"
