@@ -20,6 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -77,7 +78,7 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_findsAllWithNoKeyword() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -86,7 +87,7 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_findsNone() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("something-not-found", null, null, 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("something-not-found", null, null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isZero();
@@ -95,7 +96,7 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_findsByOriginalDisplay() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Condition", null, null, 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Condition", null, null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -104,7 +105,7 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_excludesNonSelectableEntries() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Prozedur", null, null, 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Prozedur", null, null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isZero();
@@ -113,7 +114,7 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_findsByTranslatedField() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Feststellungsdatum", null, null, 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("Feststellungsdatum", null, null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -122,7 +123,7 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_filtersByModule() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", List.of("Diagnose"), null, 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", List.of("Diagnose"), null, null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -131,7 +132,16 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_filtersByCategories() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, List.of("element"), 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, List.of("element"), null, 20, 0));
+
+    assertNotNull(page);
+    assertThat(page.getTotalHits()).isEqualTo(1L);
+    assertThat(page.getResults().get(0).id()).isEqualTo("diagnose-condition-id");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_filtersByResourceType() {
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, List.of("Condition"), 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
@@ -140,7 +150,7 @@ public class ProfileServiceIT {
 
   @Test
   void testPerformProfileSearchWithRepoAndPaging_filtersByCategories_excludesNonSelectableEntries() {
-    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, List.of("module"), 20, 0));
+    var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, List.of("module"), null, 20, 0));
 
     assertNotNull(page);
     assertThat(page.getTotalHits()).isZero();
@@ -170,6 +180,8 @@ public class ProfileServiceIT {
     assertThat(result.id()).isEqualTo("diagnose-condition-id");
     assertThat(result.description()).isNotNull();
     assertThat(result.description().display().original()).isEqualTo("Diagnose Beschreibung");
+    assertThat(result.resourceType()).isNotNull();
+    assertThat(result.resourceType().display().original()).isEqualTo("Condition");
     assertThat(result.fields()).hasSize(2);
     assertThat(result.fields()).extracting("display.original").containsExactlyInAnyOrder("recordedDate", "code");
     assertThat(result.parents()).hasSize(1);
@@ -198,13 +210,56 @@ public class ProfileServiceIT {
     var filters = assertDoesNotThrow(() -> profileService.getAvailableFilters());
 
     assertNotNull(filters);
-    assertThat(filters).extracting("name").containsExactlyInAnyOrder("module", "category");
+    assertThat(filters).extracting("name").containsExactlyInAnyOrder("module", "category", "resourceType");
 
     var moduleFilter = filters.stream().filter(f -> f.name().equals("module")).findFirst().orElseThrow();
-    assertThat(moduleFilter.values()).extracting("label").containsExactlyInAnyOrder("Diagnose", "Prozedur");
-    assertThat(moduleFilter.values()).filteredOn(v -> v.label().equals("Diagnose")).extracting("count").containsExactly(2L);
+    assertThat(moduleFilter.values()).extracting("display.original").containsExactlyInAnyOrder("Diagnose", "Prozedur");
+    assertThat(moduleFilter.values()).filteredOn(v -> v.display().original().equals("Diagnose")).extracting("count").containsExactly(2L);
+    assertThat(moduleFilter.values()).filteredOn(v -> v.display().original().equals("Diagnose"))
+        .flatExtracting("display.translations").extracting("language", "value")
+        .containsExactlyInAnyOrder(tuple("de-DE", "Diagnose"), tuple("en-US", "Diagnosis"));
 
     var categoryFilter = filters.stream().filter(f -> f.name().equals("category")).findFirst().orElseThrow();
-    assertThat(categoryFilter.values()).extracting("label").containsExactlyInAnyOrder("module", "element");
+    assertThat(categoryFilter.values()).extracting("display.original").containsExactlyInAnyOrder("module", "element");
+
+    var resourceTypeFilter = filters.stream().filter(f -> f.name().equals("resourceType")).findFirst().orElseThrow();
+    assertThat(resourceTypeFilter.values()).extracting("display.original").containsExactly("Condition");
+    assertThat(resourceTypeFilter.values()).filteredOn(v -> v.display().original().equals("Condition")).extracting("count").containsExactly(1L);
+  }
+
+  @Test
+  void testGetAvailableFilters_withTargetFilterReturnsOnlyThatFilter() {
+    var filters = assertDoesNotThrow(() -> profileService.getAvailableFilters("resourceType", null, null, null, null));
+
+    assertNotNull(filters);
+    assertThat(filters).hasSize(1);
+    assertThat(filters.get(0).name()).isEqualTo("resourceType");
+    assertThat(filters.get(0).values()).extracting("display.original").containsExactly("Condition");
+  }
+
+  @Test
+  void testGetAvailableFilters_withTargetFilterAndCrossFilterNarrowsCounts() {
+    var filters = assertDoesNotThrow(() -> profileService.getAvailableFilters("category", null, List.of("Prozedur"), null, null));
+
+    assertNotNull(filters);
+    assertThat(filters).hasSize(1);
+    assertThat(filters.get(0).name()).isEqualTo("category");
+    assertThat(filters.get(0).values()).extracting("display.original").containsExactly("module");
+  }
+
+  @Test
+  void testGetAvailableFilters_withTargetFilterAndSearchtermNarrowsCounts() {
+    var filters = assertDoesNotThrow(() -> profileService.getAvailableFilters("module", "Feststellungsdatum", null, null, null));
+
+    assertNotNull(filters);
+    assertThat(filters).hasSize(1);
+    assertThat(filters.get(0).name()).isEqualTo("module");
+    assertThat(filters.get(0).values()).extracting("display.original").containsExactly("Diagnose");
+  }
+
+  @Test
+  void testGetAvailableFilters_withUnknownTargetFilterThrows() {
+    assertThrows(IllegalArgumentException.class,
+        () -> profileService.getAvailableFilters("not-a-filter", null, null, null, null));
   }
 }

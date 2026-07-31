@@ -6,12 +6,12 @@ import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.Rate
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileDisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileEntry;
+import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileFilter;
+import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileFilterValue;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileRelativeEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileSearchEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileSearchResult;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.ProfileService;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.TermFilter;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.TermFilterValue;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileNotFoundException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class ProfileRestControllerIT {
   void testSearchProfiles_succeedsWith200() throws Exception {
     var dummySearchResult = createDummyProfileSearchResult();
     doReturn(dummySearchResult).when(profileService)
-        .performProfileSearchWithRepoAndPaging(any(String.class), isNull(), isNull(), anyInt(), anyInt());
+        .performProfileSearchWithRepoAndPaging(any(String.class), isNull(), isNull(), isNull(), anyInt(), anyInt());
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_PROFILE + "/entry/search"))
             .param("searchterm", "foo")
@@ -74,6 +74,7 @@ class ProfileRestControllerIT {
         .andExpect(jsonPath("$.results[0].name").value(dummySearchResult.getResults().get(0).name()))
         .andExpect(jsonPath("$.results[0].display.original").value(dummySearchResult.getResults().get(0).display().original()))
         .andExpect(jsonPath("$.results[0].module.display.original").value(dummySearchResult.getResults().get(0).module().display().original()))
+        .andExpect(jsonPath("$.results[0].resourceType.display.original").value(dummySearchResult.getResults().get(0).resourceType().display().original()))
         .andExpect(jsonPath("$.results[0].categories[0].display.original").value(dummySearchResult.getResults().get(0).categories().get(0).display().original()))
         .andExpect(jsonPath("$.results[0].description").doesNotExist())
         .andExpect(jsonPath("$.results[0].parents").doesNotExist())
@@ -85,12 +86,13 @@ class ProfileRestControllerIT {
   void testSearchProfiles_succeedsWithModuleAndCategoriesFilter() throws Exception {
     var dummySearchResult = createDummyProfileSearchResult();
     doReturn(dummySearchResult).when(profileService)
-        .performProfileSearchWithRepoAndPaging(any(String.class), anyList(), anyList(), anyInt(), anyInt());
+        .performProfileSearchWithRepoAndPaging(any(String.class), anyList(), anyList(), anyList(), anyInt(), anyInt());
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_PROFILE + "/entry/search"))
             .param("searchterm", "foo")
             .param("modules", "Diagnose")
             .param("categories", "category-a")
+            .param("resource-types", "Condition")
             .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.totalHits").value(dummySearchResult.getTotalHits()));
@@ -110,6 +112,7 @@ class ProfileRestControllerIT {
         .andExpect(jsonPath("$.name").value(dummyProfileEntry.name()))
         .andExpect(jsonPath("$.description.display.original").value(dummyProfileEntry.description().display().original()))
         .andExpect(jsonPath("$.module.display.original").value(dummyProfileEntry.module().display().original()))
+        .andExpect(jsonPath("$.resourceType.display.original").value(dummyProfileEntry.resourceType().display().original()))
         .andExpect(jsonPath("$.categories[0].display.original").value(dummyProfileEntry.categories().get(0).display().original()))
         .andExpect(jsonPath("$.fields.length()").value(dummyProfileEntry.fields().size()))
         .andExpect(jsonPath("$.fields[0].display.original").value(dummyProfileEntry.fields().get(0).display().original()))
@@ -143,25 +146,57 @@ class ProfileRestControllerIT {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.length()").value(dummyFilters.size()))
         .andExpect(jsonPath("$[0].name").value("module"))
-        .andExpect(jsonPath("$[0].values[0].label").value("Diagnose"))
+        .andExpect(jsonPath("$[0].values[0].display.original").value("Diagnose"))
         .andExpect(jsonPath("$[0].values[0].count").value(2))
         .andExpect(jsonPath("$[1].name").value("category"))
-        .andExpect(jsonPath("$[1].values[0].label").value("element"));
+        .andExpect(jsonPath("$[1].values[0].display.original").value("element"))
+        .andExpect(jsonPath("$[2].name").value("resourceType"))
+        .andExpect(jsonPath("$[2].values[0].display.original").value("Condition"));
   }
 
-  private List<TermFilter> createDummyFilters() {
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  void testGetFilter_succeedsWithTargetFilterAndSearchtermAndFilters() throws Exception {
+    var dummyFilters = List.of(createDummyFilter("resourceType", "Condition", 1));
+    doReturn(dummyFilters).when(profileService)
+        .getAvailableFilters(eq("resourceType"), eq("foo"), eq(List.of("Diagnose")), isNull(), isNull());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_PROFILE + "/search/filter"))
+            .param("targetFilter", "resourceType")
+            .param("searchterm", "foo")
+            .param("modules", "Diagnose")
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].name").value("resourceType"))
+        .andExpect(jsonPath("$[0].values[0].display.original").value("Condition"));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  void testGetFilter_failsWith400WhenOptionalParamsSetWithoutTargetFilter() throws Exception {
+    mockMvc.perform(get(URI.create(PATH_API + PATH_PROFILE + "/search/filter"))
+            .param("searchterm", "foo")
+            .with(csrf()))
+        .andExpect(status().isBadRequest());
+  }
+
+  private List<ProfileFilter> createDummyFilters() {
     return List.of(
-        TermFilter.builder()
-            .name("module")
-            .type("selectable-concept")
-            .values(List.of(TermFilterValue.builder().label("Diagnose").count(2).build()))
-            .build(),
-        TermFilter.builder()
-            .name("category")
-            .type("selectable-concept")
-            .values(List.of(TermFilterValue.builder().label("element").count(1).build()))
-            .build()
+        createDummyFilter("module", "Diagnose", 2),
+        createDummyFilter("category", "element", 1),
+        createDummyFilter("resourceType", "Condition", 1)
     );
+  }
+
+  private ProfileFilter createDummyFilter(String name, String value, long count) {
+    return ProfileFilter.builder()
+        .name(name)
+        .values(List.of(ProfileFilterValue.builder()
+            .display(DisplayEntry.builder().original(value).translations(List.of()).build())
+            .count(count)
+            .build()))
+        .build();
   }
 
   private ProfileSearchResult createDummyProfileSearchResult() {
@@ -179,6 +214,7 @@ class ProfileRestControllerIT {
         .selectable(true)
         .url("https://example.org/some-profile")
         .module(createDummyProfileDisplayEntry())
+        .resourceType(createDummyProfileDisplayEntry())
         .categories(List.of(createDummyProfileDisplayEntry()))
         .availability(1)
         .build();
@@ -193,6 +229,7 @@ class ProfileRestControllerIT {
         .selectable(true)
         .url("https://example.org/some-profile")
         .module(createDummyProfileDisplayEntry())
+        .resourceType(createDummyProfileDisplayEntry())
         .categories(List.of(createDummyProfileDisplayEntry()))
         .availability(1)
         .fields(List.of(createDummyProfileDisplayEntry()))

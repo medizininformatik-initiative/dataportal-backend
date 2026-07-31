@@ -50,7 +50,7 @@ class ProfileServiceTest {
     SearchHits<ProfileDocument> dummySearchHitsPage = createDummySearchHitsPage(5);
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
-    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", null, null, 20, 0));
+    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", null, null, null, 20, 0));
 
     assertThat(result).isNotNull();
     assertThat(result.getTotalHits()).isEqualTo(dummySearchHitsPage.getTotalHits());
@@ -63,7 +63,7 @@ class ProfileServiceTest {
     SearchHits<ProfileDocument> dummySearchHitsPage = createDummySearchHitsPage(3);
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
-    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", List.of("Diagnose"), null, 20, 0));
+    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", List.of("Diagnose"), null, null, 20, 0));
 
     assertThat(result).isNotNull();
     assertThat(result.getTotalHits()).isEqualTo(dummySearchHitsPage.getTotalHits());
@@ -74,7 +74,18 @@ class ProfileServiceTest {
     SearchHits<ProfileDocument> dummySearchHitsPage = createDummySearchHitsPage(3);
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
-    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", null, List.of("category-a"), 20, 0));
+    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", null, List.of("category-a"), null, 20, 0));
+
+    assertThat(result).isNotNull();
+    assertThat(result.getTotalHits()).isEqualTo(dummySearchHitsPage.getTotalHits());
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_succeedsWithResourceTypeFilter() {
+    SearchHits<ProfileDocument> dummySearchHitsPage = createDummySearchHitsPage(3);
+    doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
+
+    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", null, null, List.of("Condition"), 20, 0));
 
     assertThat(result).isNotNull();
     assertThat(result.getTotalHits()).isEqualTo(dummySearchHitsPage.getTotalHits());
@@ -86,7 +97,7 @@ class ProfileServiceTest {
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
     var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging(
-        "foo", List.of("Diagnose"), List.of("category-a"), 20, 0));
+        "foo", List.of("Diagnose"), List.of("category-a"), List.of("Condition"), 20, 0));
 
     assertThat(result).isNotNull();
     assertThat(result.getTotalHits()).isEqualTo(dummySearchHitsPage.getTotalHits());
@@ -97,7 +108,7 @@ class ProfileServiceTest {
     SearchHits<ProfileDocument> dummySearchHitsPage = createDummySearchHitsPage(5);
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
-    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, 20, 0));
+    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, null, 20, 0));
 
     assertThat(result).isNotNull();
     assertThat(result.getTotalHits()).isEqualTo(dummySearchHitsPage.getTotalHits());
@@ -108,7 +119,7 @@ class ProfileServiceTest {
     SearchHits<ProfileDocument> dummySearchHitsPage = createDummySearchHitsPage(0);
     doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
 
-    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", null, null, 20, 0));
+    var result = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("foo", null, null, null, 20, 0));
 
     assertThat(result).isNotNull();
     assertThat(result.getTotalHits()).isZero();
@@ -126,6 +137,8 @@ class ProfileServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.id()).isEqualTo(id);
     assertThat(result.description()).isNotNull();
+    assertThat(result.resourceType()).isNotNull();
+    assertThat(result.resourceType().display().original()).isEqualTo("Some Name");
     assertThat(result.fields()).hasSize(1);
     assertThat(result.fields().get(0).display().original()).isEqualTo("Some Name");
     assertThat(result.parents()).hasSize(1);
@@ -181,6 +194,7 @@ class ProfileServiceTest {
         .selectable(true)
         .url("some-url")
         .module(null)
+        .resourceType(null)
         .categories(null)
         .availability(null)
         .fields(null)
@@ -194,6 +208,7 @@ class ProfileServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.description()).isNull();
     assertThat(result.module()).isNull();
+    assertThat(result.resourceType()).isNull();
     assertThat(result.categories()).isEmpty();
     assertThat(result.availability()).isZero();
     assertThat(result.fields()).isEmpty();
@@ -240,6 +255,7 @@ class ProfileServiceTest {
         .selectable(true)
         .url("https://example.org/some-profile")
         .module(createDummyDisplay())
+        .resourceType(createDummyDisplay())
         .categories(List.of(createDummyDisplay()))
         .availability(1)
         .fields(List.of(createDummyField()))

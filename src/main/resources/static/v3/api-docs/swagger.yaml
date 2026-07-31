@@ -1002,6 +1002,16 @@ paths:
               example: element
           style: form
           explode: false
+        - name: resource-types
+          in: query
+          description: Limit the search to any of the given FHIR resource types
+          schema:
+            type: array
+            items:
+              type: string
+              example: Condition
+          style: form
+          explode: false
         - name: page-size
           in: query
           description: How many results shall be returned per page
@@ -1054,8 +1064,53 @@ paths:
     get:
       tags:
         - profile
-      summary: Get the list of available filters for module and category, including availability counts
+      summary: Get the list of available filters for module, category and resourceType, including availability counts
+      description: Can optionally be filtered to only get the filter of one target category, depending on the selections of the other categories and/or a searchterm
       operationId: getFilter
+      parameters:
+        - name: targetFilter
+          in: query
+          description: The requested filter category. Only if this is set, the further filters for searchterm, modules, categories and resource-types are considered. If it is empty or null, ALL filters are returned unfiltered.
+          schema:
+            type: string
+            enum: [module, category, resourceType]
+          example: resourceType
+        - name: searchterm
+          in: query
+          description: Allow to take the searchterm into consideration to narrow down the results further.
+          schema:
+            type: string
+          example: Diagnose
+        - name: modules
+          in: query
+          description: Limit the search to any of the given modules
+          schema:
+            type: array
+            items:
+              type: string
+              example: Diagnose
+          style: form
+          explode: false
+        - name: categories
+          in: query
+          description: Limit the search to any of the given categories
+          schema:
+            type: array
+            items:
+              type: string
+              example: element
+          style: form
+          explode: false
+        - name: resource-types
+          in: query
+          description: Limit the search to any of the given FHIR resource types
+          schema:
+            type: array
+            items:
+              type: string
+              example: Condition
+          style: form
+          explode: false
       responses:
         200:
           description: Ok, return the list of available filters
@@ -1064,7 +1119,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Filter"
+                  $ref: "#/components/schemas/ProfileFilter"
+        400:
+          description: Bad request, e.g. optional parameters were set without targetFilter, or targetFilter is unknown
       security:
         - dataportal_auth:
             - user
@@ -1858,6 +1915,26 @@ components:
           type: integer
           examples:
             - 1234
+    ProfileFilter:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - resourceType
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileFilterValue"
+    ProfileFilterValue:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        count:
+          type: integer
+          examples:
+            - 1234
     LocalizedValue:
       type: object
       properties:
@@ -1962,6 +2039,8 @@ components:
             - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
         module:
           $ref: "#/components/schemas/ProfileDisplayEntry"
+        resourceType:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
         categories:
           type: array
           items:
@@ -2006,6 +2085,8 @@ components:
           examples:
             - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
         module:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        resourceType:
           $ref: "#/components/schemas/ProfileDisplayEntry"
         categories:
           type: array

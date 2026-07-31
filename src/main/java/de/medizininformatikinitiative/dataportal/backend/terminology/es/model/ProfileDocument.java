@@ -16,6 +16,7 @@ public record ProfileDocument(
     boolean selectable,
     String url,
     ProfileDisplay module,
+    ProfileDisplay resourceType,
     Collection<ProfileDisplay> categories,
     Collection<ProfileField> fields,
     Collection<ProfileRelative> parents,

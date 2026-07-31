@@ -20,6 +20,7 @@ public record ProfileEntry(
     boolean selectable,
     String url,
     ProfileDisplayEntry module,
+    ProfileDisplayEntry resourceType,
     List<ProfileDisplayEntry> categories,
     int availability,
     List<ProfileDisplayEntry> fields,
@@ -35,6 +36,7 @@ public record ProfileEntry(
         .selectable(document.selectable())
         .url(document.url())
         .module(ProfileDisplayEntry.of(document.module()))
+        .resourceType(ProfileDisplayEntry.of(document.resourceType()))
         .categories(toCategoryDisplayEntries(document.categories()))
         .availability(document.availability() == null ? 0 : document.availability())
         .fields(toDisplayEntries(document.fields()))

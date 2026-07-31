@@ -369,6 +369,27 @@
           }
         }
       },
+      "resourceType": {
+        "properties": {
+          "original": {
+            "type": "keyword"
+          },
+          "localization": {
+            "type": "object",
+            "dynamic": "true",
+            "properties": {
+              "de-DE": {
+                "type": "text",
+                "index": false
+              },
+              "en-US": {
+                "type": "text",
+                "index": false
+              }
+            }
+          }
+        }
+      },
       "name": {
         "type": "text",
         "analyzer": "edge_ngram_analyzer_include_punctuation",
