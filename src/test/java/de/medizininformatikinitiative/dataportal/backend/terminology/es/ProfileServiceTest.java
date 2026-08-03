@@ -1,5 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileSearchEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDisplay;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDocument;
@@ -11,12 +13,15 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.es.reposito
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ProfileServiceTest {
@@ -45,6 +51,10 @@ class ProfileServiceTest {
   private ElasticsearchOperations operations;
   @Mock
   private ProfileEsRepository repo;
+  @Mock
+  private SearchHits<ProfileDocument> aggregationSearchHits;
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private ElasticsearchAggregations elasticsearchAggregations;
 
   private ProfileService profileService;
 
@@ -230,6 +240,78 @@ class ProfileServiceTest {
     doReturn(Optional.empty()).when(repo).findById("id");
 
     assertThrows(ProfileNotFoundException.class, () -> profileService.getProfileListDetailsById("id"));
+  }
+
+  @Test
+  void testGetAvailableFiltersTargeted_appliesCategoriesFilterWhenTargetIsNotCategory() {
+    mockEmptyAggregationBuckets();
+
+    var result = assertDoesNotThrow(() -> profileService.getAvailableFilters(
+        ProfileService.FILTER_NAME_MODULE, null, null, List.of("category-a"), null));
+
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).name()).isEqualTo(ProfileService.FILTER_NAME_MODULE);
+    assertThat(result.get(0).values()).isEmpty();
+  }
+
+  @Test
+  void testGetAvailableFiltersTargeted_appliesResourceTypeFilterWhenTargetIsNotResourceType() {
+    mockEmptyAggregationBuckets();
+
+    var result = assertDoesNotThrow(() -> profileService.getAvailableFilters(
+        ProfileService.FILTER_NAME_MODULE, null, null, null, List.of("Condition")));
+
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).name()).isEqualTo(ProfileService.FILTER_NAME_MODULE);
+    assertThat(result.get(0).values()).isEmpty();
+  }
+
+  @Test
+  void testGetAvailableFilters_resolvesDefaultDisplayWhenSampleHasNoHits() {
+    var bucketWithoutSampleHits = new StringTermsBucket.Builder()
+        .key("some-key")
+        .docCount(1)
+        .aggregations("sample", Aggregate.of(a -> a.topHits(th -> th.hits(hm -> hm.hits(List.of())))))
+        .build();
+
+    doReturn(aggregationSearchHits).when(operations).search(any(NativeQuery.class), any());
+    doReturn(elasticsearchAggregations).when(aggregationSearchHits).getAggregations();
+    when(elasticsearchAggregations.aggregationsAsMap().get(any(String.class)).aggregation().getAggregate().sterms()
+        .buckets().array()).thenReturn(List.of(bucketWithoutSampleHits));
+
+    var result = assertDoesNotThrow(() -> profileService.getAvailableFilters());
+
+    var moduleFilter = result.stream().filter(f -> f.name().equals(ProfileService.FILTER_NAME_MODULE)).findFirst().orElseThrow();
+    assertThat(moduleFilter.values()).hasSize(1);
+    assertThat(moduleFilter.values().get(0).display().original()).isEqualTo("some-key");
+    assertThat(moduleFilter.values().get(0).display().translations()).isEmpty();
+  }
+
+  @Test
+  void testKeyFieldFor_throwsOnUnknownFilterName() {
+    assertThrows(IllegalArgumentException.class, () -> invokePrivateStatic("keyFieldFor", "unknown"));
+  }
+
+  @Test
+  void testBaseFieldFor_throwsOnUnknownFilterName() {
+    assertThrows(IllegalArgumentException.class, () -> invokePrivateStatic("baseFieldFor", "unknown"));
+  }
+
+  private void mockEmptyAggregationBuckets() {
+    doReturn(aggregationSearchHits).when(operations).search(any(NativeQuery.class), any());
+    doReturn(elasticsearchAggregations).when(aggregationSearchHits).getAggregations();
+    when(elasticsearchAggregations.aggregationsAsMap().get(any(String.class)).aggregation().getAggregate().sterms()
+        .buckets().array()).thenReturn(List.of());
+  }
+
+  private static void invokePrivateStatic(String methodName, String arg) throws Throwable {
+    var method = ProfileService.class.getDeclaredMethod(methodName, String.class);
+    method.setAccessible(true);
+    try {
+      method.invoke(null, arg);
+    } catch (InvocationTargetException e) {
+      throw e.getCause();
+    }
   }
 
   private SearchHits<ProfileDocument> createDummySearchHitsPage(int totalHits) {
