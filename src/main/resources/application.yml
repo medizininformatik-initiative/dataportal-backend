@@ -138,10 +138,14 @@ app:
     query:
       # Be careful changing these fields. There is no check whether the fields are "valid" (as in indexed in elastic search)
       # Only modify if you really know what you are doing! Modifying the boost factor or removing fields is no problem.
+      # See docs/configuration.md for how to determine which fields are searchable in a given index.
       terminology:
         fields: ${ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS:display.de,display.en,termcode^2,display.original^0.5}
       codeable_concept:
         fields: ${ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS:display.de,display.en,termcode.code^2,display.original^0.5}
+      profile:
+        translated_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS:display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram}
+        original_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS:display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram}
   privacy:
     threshold:
       sites: ${PRIVACY_THRESHOLD_SITES:3}

@@ -632,11 +632,17 @@ Which parameters can be used to filter results
 
 ---
 
+The `ELASTIC_SEARCH_QUERY_*_FIELDS` variables below configure which fields (with an optional `^boost` factor) are searched
+for each elastic search index. There is no check whether a configured field is "valid" (i.e. actually indexed in elastic
+search) - use [`.github/scripts/list_text_fields.sh`](../.github/scripts/list_text_fields.sh) against a running elastic
+search instance to list which text fields are searchable for the `terminology`, `codeable_concept` and `profile` indices.
+Only modify these if you really know what you are doing! Modifying the boost factor or removing fields is no problem.
+
+---
+
 #### `ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS`
 
 Comma-separated list of the fields (with optional `^boost` factor) searched when querying the terminology index. Maps to `app.elastic.query.terminology.fields`.
-Be careful changing these fields. There is no check whether the fields are "valid" (as in indexed in elastic search)
-Only modify if you really know what you are doing! Modifying the boost factor or removing fields is no problem.
 
 **Default:** `display.de,display.en,termcode^2,display.original^0.5`
 
@@ -646,10 +652,26 @@ Only modify if you really know what you are doing! Modifying the boost factor or
 #### `ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS`
 
 Comma-separated list of the fields (with optional `^boost` factor) searched when querying the codeable-concept index. Maps to `app.elastic.query.codeable_concept.fields`.
-Be careful changing these fields. There is no check whether the fields are "valid" (as in indexed in elastic search)
-Only modify if you really know what you are doing! Modifying the boost factor or removing fields is no problem.
 
 **Default:** `display.de,display.en,termcode.code^2,display.original^0.5`
+
+
+---
+
+#### `ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS`
+
+Comma-separated list of the fields (with optional `^boost` factor) searched when querying the profile index for profiles that have a translated display. Maps to `app.elastic.query.profile.translated_fields`.
+
+**Default:** `display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram`
+
+
+---
+
+#### `ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS`
+
+Comma-separated list of the fields (with optional `^boost` factor) searched when querying the profile index for profiles that only have an original (non-translated) display. Maps to `app.elastic.query.profile.original_fields`.
+
+**Default:** `display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram`
 
 
 ---
