@@ -1,9 +1,10 @@
 package de.medizininformatikinitiative.dataportal.backend.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.JsonNodeFactory;
 import com.networknt.schema.Error;
 import com.networknt.schema.path.NodePath;
 import com.networknt.schema.path.PathType;
@@ -46,7 +47,7 @@ class ValidationServiceTest {
   private JsonSchemaValidator jsonSchemaValidator;
 
   @Spy
-  private ObjectMapper jsonUtil = new ObjectMapper();
+  private ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
   private ValidationService validationService;
 
@@ -61,7 +62,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void isValidCcdl_true() throws JsonProcessingException {
+  void isValidCcdl_true() {
     doNothing().when(validator).validate(any(Ccdl.class), any(BindingResult.class));
 
     var result = validationService.isValid(createDataquery().content().cohortDefinition());
@@ -70,7 +71,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void isValidCcdl_false() throws JsonProcessingException {
+  void isValidCcdl_false() {
     doAnswer(invocation -> {
       BindingResult bindingResult = invocation.getArgument(1);
       bindingResult.rejectValue("display", "error.code", "Invalid value");
@@ -83,7 +84,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void testIsValidCrtdl_true() throws JsonProcessingException {
+  void testIsValidCrtdl_true() {
     doNothing().when(validator).validate(any(Crtdl.class), any(BindingResult.class));
 
     var result = validationService.isValid(createDataquery().content());
@@ -92,7 +93,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void testIsValidCrtdl_false() throws JsonProcessingException {
+  void testIsValidCrtdl_false() {
     doAnswer(invocation -> {
       BindingResult bindingResult = invocation.getArgument(1);
       bindingResult.rejectValue("display", "error.code", "Invalid value");
@@ -105,7 +106,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void testIsValidDataquery_true() throws JsonProcessingException {
+  void testIsValidDataquery_true() {
     doNothing().when(validator).validate(any(Dataquery.class), any(BindingResult.class));
 
     var result = validationService.isValid(createDataquery());
@@ -114,7 +115,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void testIsValidDataquery_false() throws JsonProcessingException {
+  void testIsValidDataquery_false() {
     doAnswer(invocation -> {
       BindingResult bindingResult = invocation.getArgument(1);
       bindingResult.rejectValue("label", "error.code", "Invalid value");
@@ -127,7 +128,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void testIsValidDataExtraction_true() throws JsonProcessingException {
+  void testIsValidDataExtraction_true() {
     doNothing().when(validator).validate(any(DataExtraction.class), any(BindingResult.class));
 
     var result = validationService.isValid(createDataquery().content().dataExtraction());
@@ -136,7 +137,7 @@ class ValidationServiceTest {
   }
 
   @Test
-  void testIsValidDataExtraction_false() throws JsonProcessingException {
+  void testIsValidDataExtraction_false() {
     doAnswer(invocation -> {
       BindingResult bindingResult = invocation.getArgument(1);
       bindingResult.rejectValue("attributeGroups", "error.code", "Invalid value");
@@ -319,22 +320,22 @@ class ValidationServiceTest {
 
   @Test
   void dataExtractionFromJsonNode_throwsOnInvalid() {
-    assertThrows(IllegalArgumentException.class, () -> validationService.dataExtractionFromJsonNode(JsonNodeFactory.instance.objectNode()));
+    assertThrows(DatabindException.class, () -> validationService.dataExtractionFromJsonNode(JsonNodeFactory.instance.objectNode()));
   }
 
-  private JsonNode createDataExtractionJsonNode() throws JsonProcessingException {
+  private JsonNode createDataExtractionJsonNode() {
     return createCrtdlJsonNode().get("dataExtraction");
   }
 
-  private JsonNode createCcdlJsonNode() throws JsonProcessingException {
+  private JsonNode createCcdlJsonNode() {
     return createCrtdlJsonNode().get("cohortDefinition");
   }
 
-  private JsonNode createCrtdlJsonNode() throws JsonProcessingException {
+  private JsonNode createCrtdlJsonNode() {
     return createDataqueryJsonNode().get("content");
   }
 
-  private JsonNode createDataqueryJsonNode() throws JsonProcessingException {
+  private JsonNode createDataqueryJsonNode() {
     String json = """
         {
           "label": "example crtdl full",
@@ -524,7 +525,7 @@ class ValidationServiceTest {
     return jsonUtil.readTree(json);
   }
 
-  private Dataquery createDataquery() throws JsonProcessingException {
+  private Dataquery createDataquery() {
     return validationService.dataqueryFromJsonNode(createDataqueryJsonNode());
   }
 }
