@@ -248,7 +248,7 @@ class ValidationServiceTest {
           assertDoesNotThrow(() -> validationService.validateDataExtractionSchema(createDataExtractionJsonNode()));
       case JsonSchemaValidator.SCHEMA_DATAQUERY ->
           assertDoesNotThrow(() -> validationService.validateDataquerySchema(createDataqueryJsonNode()));
-      default -> null;
+      default -> throw new IllegalArgumentException("Unexpected schema value: " + value);
     };
 
     assertThat(issueList).isInstanceOf(List.class);
@@ -281,7 +281,7 @@ class ValidationServiceTest {
           assertDoesNotThrow(() -> validationService.validateDataExtractionSchema(createDataExtractionJsonNode()));
       case JsonSchemaValidator.SCHEMA_DATAQUERY ->
           assertDoesNotThrow(() -> validationService.validateDataquerySchema(createDataqueryJsonNode()));
-      default -> null;
+      default -> throw new IllegalArgumentException("Unexpected schema value: " + value);
     };
 
     assertThat(issueList).isInstanceOf(List.class);
