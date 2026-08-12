@@ -2,9 +2,17 @@
 
 curl "$ELASTIC_HOST/_cat/indices"
 
+# Since ontology-generator v5, content files sit under elastic/content/ rather
+# than directly under elastic/. Fall back to the legacy flat layout if needed.
+if [ -d ./elastic/content ]; then
+  CONTENT_DIR=./elastic/content
+else
+  CONTENT_DIR=./elastic
+fi
+
 # Grab existing ids from both index file types to use later
-onto_example_id=$(grep '"_id":' ./elastic/onto_es__ontology_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
-cc_example_id=$(grep '"_id":' ./elastic/onto_es__codeable_concept_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
+onto_example_id=$(grep '"_id":' "$CONTENT_DIR"/onto_es__ontology_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
+cc_example_id=$(grep '"_id":' "$CONTENT_DIR"/onto_es__codeable_concept_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
 
 
 # Check if the elastic search server correctly delivers the ontology document

@@ -6,7 +6,6 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
-import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileFilter;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileFilterValue;
@@ -32,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -44,10 +44,10 @@ public class ProfileService {
   public static final String FIELD_DISPLAY_ORIGINAL = "display.original";
   public static final String FILTER_KEY_MODULE = "module.original";
   public static final String FILTER_KEY_CATEGORIES = "categories.original";
-  public static final String FILTER_KEY_RESOURCE_TYPE = "resourceType.original";
+  public static final String FILTER_KEY_RESOURCE_TYPE = "resource_type.original";
   public static final String FIELD_BASE_MODULE = "module";
   public static final String FIELD_BASE_CATEGORIES = "categories";
-  public static final String FIELD_BASE_RESOURCE_TYPE = "resourceType";
+  public static final String FIELD_BASE_RESOURCE_TYPE = "resource_type";
   public static final String FIELD_SELECTABLE = "selectable";
   public static final String FILTER_NAME_MODULE = "module";
   public static final String FILTER_NAME_CATEGORY = "category";
@@ -236,25 +236,17 @@ public class ProfileService {
     return display != null ? display.toDisplayEntry() : DisplayEntry.builder().original(key).translations(List.of()).build();
   }
 
-  private record RawLocalization(
-      @JsonProperty("de-DE") String deDe,
-      @JsonProperty("en-US") String enUs
-  ) {
-  }
-
-  private record RawDisplay(String original, RawLocalization localization) {
+  private record RawDisplay(String original, @JsonProperty("localization") Map<String, String> translations) {
     DisplayEntry toDisplayEntry() {
       return DisplayEntry.builder()
           .original(original)
-          .translations(List.of(
-              LocalizedValue.builder().language("de-DE").value(localization == null ? null : localization.deDe()).build(),
-              LocalizedValue.builder().language("en-US").value(localization == null ? null : localization.enUs()).build()
-          ))
+          .translations(DisplayEntry.toLocalizedValues(translations))
           .build();
     }
   }
 
-  private record FilterValueSample(RawDisplay module, RawDisplay resourceType, List<RawDisplay> categories) {
+  private record FilterValueSample(RawDisplay module, @JsonProperty("resource_type") RawDisplay resourceType,
+                                    List<RawDisplay> categories) {
   }
 
   private SearchHits<ProfileDocument> findByNameOrDisplay(String keyword,

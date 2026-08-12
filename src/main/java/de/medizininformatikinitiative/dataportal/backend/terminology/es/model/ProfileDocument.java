@@ -3,6 +3,7 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.es.model;
 import jakarta.persistence.Id;
 import lombok.Builder;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
 
 import java.util.Collection;
 
@@ -12,10 +13,11 @@ public record ProfileDocument(
     @Id String id,
     String name,
     ProfileDisplay display,
-    ProfileDisplay description,
+    Collection<ProfileDisplay> description,
     boolean selectable,
     String url,
     ProfileDisplay module,
+    @Field(name = "resource_type")
     ProfileDisplay resourceType,
     Collection<ProfileDisplay> categories,
     Collection<ProfileField> fields,

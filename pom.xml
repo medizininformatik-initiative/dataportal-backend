@@ -26,7 +26,7 @@
   <properties>
     <java.version>17</java.version>
     <mockwebserver.version>5.5.0</mockwebserver.version>
-    <ontology-tag>v4.1.0</ontology-tag>
+    <ontology-tag>v5.0.0</ontology-tag>
   </properties>
 
   <dependencies>
@@ -686,12 +686,6 @@
                       </sourceFile>
                       <destinationFile>
                         ${ontoDirectory.target}/migration/R__load_latest_dse_profiles.sql
-                      </destinationFile>
-                    </fileSet>
-                    <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/profile_tree.json
-                      </sourceFile>
-                      <destinationFile>${ontoDirectory.target}/dse/profile_tree.json
                       </destinationFile>
                     </fileSet>
                     <fileSet>

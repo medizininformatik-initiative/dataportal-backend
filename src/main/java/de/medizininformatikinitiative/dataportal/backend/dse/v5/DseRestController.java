@@ -2,11 +2,8 @@ package de.medizininformatikinitiative.dataportal.backend.dse.v5;
 
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
-import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfileTreeNode;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -22,16 +19,6 @@ public class DseRestController {
 
   public DseRestController(DseService dseService) {
     this.dseService = dseService;
-  }
-
-  @GetMapping(value = "profile-tree", produces = MediaType.APPLICATION_JSON_VALUE)
-  public DseProfileTreeNode getProfileTree() {
-    DseProfileTreeNode profileTree = dseService.getProfileTree();
-    if (profileTree == null) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "DSE profile tree not found");
-    } else {
-      return profileTree;
-    }
   }
 
   @GetMapping(value = "profile-data", produces = MediaType.APPLICATION_JSON_VALUE)

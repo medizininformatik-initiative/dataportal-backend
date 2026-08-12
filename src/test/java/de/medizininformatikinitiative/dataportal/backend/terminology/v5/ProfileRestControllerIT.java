@@ -162,7 +162,7 @@ class ProfileRestControllerIT {
         .getAvailableFilters(eq("resourceType"), eq("foo"), eq(List.of("Diagnose")), isNull(), isNull());
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_PROFILE + "/search/filter"))
-            .param("targetFilter", "resourceType")
+            .param("target-filter", "resourceType")
             .param("searchterm", "foo")
             .param("modules", "Diagnose")
             .with(csrf()))

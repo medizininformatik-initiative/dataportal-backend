@@ -32,7 +32,7 @@ public record ProfileEntry(
         .id(document.id())
         .name(document.name())
         .display(DisplayEntry.of(document.display()))
-        .description(ProfileDisplayEntry.of(document.description()))
+        .description(ProfileDisplayEntry.of(firstDisplay(document.description())))
         .selectable(document.selectable())
         .url(document.url())
         .module(ProfileDisplayEntry.of(document.module()))
@@ -45,8 +45,12 @@ public record ProfileEntry(
         .build();
   }
 
+  private static ProfileDisplay firstDisplay(Collection<ProfileDisplay> displays) {
+    return displays == null ? null : displays.stream().findFirst().orElse(null);
+  }
+
   private static List<ProfileDisplayEntry> toDisplayEntries(Collection<ProfileField> fields) {
-    return fields == null ? List.of() : fields.stream().map(f -> ProfileDisplayEntry.of(f.display())).filter(Objects::nonNull).toList();
+    return fields == null ? List.of() : fields.stream().map(f -> ProfileDisplayEntry.of(f.display(), f.description())).filter(Objects::nonNull).toList();
   }
 
   private static List<ProfileDisplayEntry> toCategoryDisplayEntries(Collection<ProfileDisplay> categories) {

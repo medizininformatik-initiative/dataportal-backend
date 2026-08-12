@@ -56,7 +56,7 @@ public class TerminologyRestController {
   }
 
   @GetMapping("search/filter")
-  public List<TermFilter> getFilter(@RequestParam(value = "targetFilter", required = false) String targetFilter,
+  public List<TermFilter> getFilter(@RequestParam(value = "target-filter", required = false) String targetFilter,
                                     @RequestParam(value = "searchterm", required = false) String searchTerm,
                                     @RequestParam(value = "contexts", required = false) List<String> contexts,
                                     @RequestParam(value = "kds-modules", required = false) List<String> kdsModules,
@@ -69,7 +69,7 @@ public class TerminologyRestController {
 
     if (hasOptionalParams && !StringUtils.hasText(targetFilter)) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Optional parameters (searchterm, contexts, kds-modules, terminologies) require 'targetFilter' to be set.");
+          "Optional parameters (searchterm, contexts, kds-modules, terminologies) require 'target-filter' to be set.");
     }
 
     if (StringUtils.hasText(targetFilter)) {

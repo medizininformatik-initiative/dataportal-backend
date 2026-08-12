@@ -79,7 +79,6 @@ services:
       - ./ontology/codex-code-tree.json:/opt/dataportal-backend/ontology/codex-code-tree.json
       - ./ontology/codex-term-code-mapping.json:/opt/dataportal-backend/ontology/codex-term-code-mapping.json
       - ./ontology/terminology_systems.json:/opt/dataportal-backend/ontology/terminology_systems.json
-      - ./ontology/dse/profile_tree.json:/opt/dataportal-backend/ontology/dse/profile_tree.json
       - ./ontology/migration/R__Load_latest_ui_profile.sql:/opt/dataportal-backend/ontology/migration/R__Load_latest_ui_profile.sql
       - ./secrets:/opt/dataportal-security
   dataportal-postgres:

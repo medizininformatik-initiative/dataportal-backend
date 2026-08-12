@@ -173,15 +173,6 @@ The file containing the mapping tree for CQL translation.
 
 ---
 
-#### `DSE_PROFILE_TREE_FILE`
-
-The file containing the tree of the profiles needed for **d**ata **s**election and **e**xtraction.
-
-**Default:** `ontology/dse/profile_tree.json`
-
-
----
-
 #### `TERMINOLOGY_SYSTEMS_FILE`
 
 The file containing mappings between terminology system urls and "normal" names.
