@@ -127,7 +127,7 @@ services:
       - "8092:8080"
     environment:
       FLARE_FHIR_SERVER: "http://blaze:8080/fhir"
-      JAVA_TOOL_OPTIONS: "-Xmx1g"
+      JAVA_TOOL_OPTIONS: "-Xmx4g"
       LOG_LEVEL: "debug"
     restart: unless-stopped
 
