@@ -144,8 +144,37 @@ app:
       codeable_concept:
         fields: ${ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS:display.de,display.en,termcode.code^2,display.original^0.5}
       profile:
-        translated_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS:display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram,description.localization.de-DE^0.25,description.localization.en-US^0.25,description.localization.de-DE.ngram^0.25,description.localization.en-US.ngram^0.25,fields.description.localization.de-DE^0.25,fields.description.localization.en-US^0.25,fields.description.localization.de-DE.ngram^0.25,fields.description.localization.en-US.ngram^0.25}
-        original_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS:display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram,description.original^0.25,description.original.ngram^0.25,fields.description.original^0.25,fields.description.original.ngram^0.25}
+        # Each line below folds into one comma-separated value (YAML line-folding turns the
+        # break into a space, which Spring then trims away when splitting into a String[]).
+        # Keep one field per line so this stays readable; do not add blank lines or comments
+        # between fields, as they would become part of the resolved value.
+        translated_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS:display.localization.de-DE^2,
+          display.localization.en-US^2,
+          name^3,
+          fields.display.localization.de-DE,
+          fields.display.localization.en-US,
+          fields.display.localization.de-DE.ngram,
+          fields.display.localization.en-US.ngram,
+          display.localization.de-DE.ngram,
+          display.localization.en-US.ngram,
+          name.ngram,
+          description.localization.de-DE^0.25,
+          description.localization.en-US^0.25,
+          description.localization.de-DE.ngram^0.25,
+          description.localization.en-US.ngram^0.25,
+          fields.description.localization.de-DE^0.25,
+          fields.description.localization.en-US^0.25,
+          fields.description.localization.de-DE.ngram^0.25,
+          fields.description.localization.en-US.ngram^0.25}
+        original_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS:display.original^2,
+          name^3,
+          fields.display.original,
+          fields.display.original.ngram,
+          name.ngram,
+          description.original^0.25,
+          description.original.ngram^0.25,
+          fields.description.original^0.25,
+          fields.description.original.ngram^0.25}
   privacy:
     threshold:
       sites: ${PRIVACY_THRESHOLD_SITES:3}
