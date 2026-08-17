@@ -537,6 +537,18 @@
         <artifactId>jaxb-impl</artifactId>
         <version>4.0.9</version>
       </dependency>
+
+      <!--
+        org.hl7.fhir.utilities pulls in an older okhttp-jvm (pinned by its parent
+        org.hl7.fhir.core) which, due to Maven dependency mediation, would otherwise
+        win over the okhttp-jvm version required by mockwebserver/okhttp-tls. Pin it
+        here so the version stays in sync with mockwebserver.version.
+      -->
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp-jvm</artifactId>
+        <version>${mockwebserver.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
