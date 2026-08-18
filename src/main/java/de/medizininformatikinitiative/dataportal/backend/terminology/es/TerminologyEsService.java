@@ -178,7 +178,7 @@ public class TerminologyEsService {
 
   public EsBulkSearchResult performExactSearch(TerminologyBulkSearchRequest request) {
     List<EsSearchResultEntryExtended> results = new ArrayList<>();
-    List<String> notFound = new ArrayList<>(request.searchterms());
+    List<String> notFound = new ArrayList<>(request.searchterms().stream().distinct().toList());
 
     SearchHits<OntologyItemDocument> searchHitPage = findExactMatchesByBulkSearchRequest(request);
     searchHitPage.getSearchHits().forEach(hit -> {

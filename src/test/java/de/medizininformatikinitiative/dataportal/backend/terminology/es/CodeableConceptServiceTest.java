@@ -187,6 +187,24 @@ class CodeableConceptServiceTest {
   }
 
   @Test
+  void testPerformExactSearch_duplicateSearchtermsAreNotFlaggedAsNotFound() {
+    List<String> searchterms = List.of("available-term-0", "available-term-0", "unavailable-term-0");
+    SearchHits<CodeableConceptDocument> dummySearchHitsPage = createDummySearchHitsPage(1);
+    var request = CodeableConceptBulkSearchRequest.builder()
+        .valueSet("valid-valueset")
+        .searchterms(searchterms)
+        .build();
+
+    doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
+    var searchResult = assertDoesNotThrow(
+        () -> codeableConceptService.performExactSearch(request)
+    );
+
+    assertThat(searchResult.found()).containsExactlyInAnyOrderElementsOf(dummySearchHitsPage.getSearchHits().stream().map(sh -> CodeableConceptEntry.of(sh.getContent())).toList());
+    assertThat(searchResult.notFound()).containsExactly("unavailable-term-0");
+  }
+
+  @Test
   void testGetSearchResultsEntryByIds_succeeds() {
     CodeableConceptDocument dummyCodeableConceptDocument = createDummyCodeableConceptDocument("1");
     doReturn(List.of(dummyCodeableConceptDocument)).when(repository).findAllById(any());
