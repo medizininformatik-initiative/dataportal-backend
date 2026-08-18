@@ -71,7 +71,7 @@ public class CodeableConceptService {
 
   public CodeableConceptBulkSearchResult performExactSearch(CodeableConceptBulkSearchRequest request) {
     List<CodeableConceptEntry> results = new ArrayList<>();
-    List<String> notFound = new ArrayList<>(request.searchterms());
+    List<String> notFound = new ArrayList<>(request.searchterms().stream().distinct().toList());
 
     SearchHits<CodeableConceptDocument> searchHitPage = findExactMatchesByBulkSearchRequest(request);
     searchHitPage.getSearchHits().forEach(hit -> {

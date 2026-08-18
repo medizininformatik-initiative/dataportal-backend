@@ -266,6 +266,25 @@ public class TerminologyEsServiceTest {
   }
 
   @Test
+  void testPerformExactSearch_duplicateSearchtermsAreNotFlaggedAsNotFound() {
+    List<String> searchterms = List.of("available-term-0", "available-term-0", "unavailable-term-0");
+    SearchHits<OntologyItemDocument> dummySearchHitsPage = createDummySearchHitsPageWithOntologyItemDocuments(1);
+    var request = TerminologyBulkSearchRequest.builder()
+        .terminology("valid-terminology")
+        .context("valid-context")
+        .searchterms(searchterms)
+        .build();
+
+    doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
+    var searchResult = assertDoesNotThrow(
+        () -> terminologyEsService.performExactSearch(request)
+    );
+
+    assertThat(searchResult.found()).containsExactlyInAnyOrderElementsOf(dummySearchHitsPage.getSearchHits().stream().map(sh -> EsSearchResultEntryExtended.of(sh.getContent())).toList());
+    assertThat(searchResult.notFound()).containsExactly("unavailable-term-0");
+  }
+
+  @Test
   void testGetRelationEntryByHash_succeeds() {
     String id = UUID.randomUUID().toString();
     var dummyOntologyItem = createDummyOntologyItem(id);
