@@ -266,7 +266,7 @@ public class TerminologyEsService {
         .withPageable(pageRequest)
         .build();
 
-    log.info(finalQuery.getQuery().toString());
+    log.debug(finalQuery.getQuery().toString());
 
     return operations.search(finalQuery, OntologyListItemDocument.class);
 
@@ -292,7 +292,7 @@ public class TerminologyEsService {
         .withMaxResults(500)
         .build();
 
-    log.info(finalQuery.getQuery().toString());
+    log.debug(finalQuery.getQuery().toString());
     return operations.search(finalQuery, OntologyItemDocument.class);
   }
 
