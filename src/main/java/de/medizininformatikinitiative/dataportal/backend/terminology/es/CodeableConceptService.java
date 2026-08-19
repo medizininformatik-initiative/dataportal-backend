@@ -190,7 +190,7 @@ public class CodeableConceptService {
         .withPageable(pageRequest)
         .build();
 
-    log.info(Objects.requireNonNull(query.getQuery()).toString());
+    log.debug(Objects.requireNonNull(query.getQuery()).toString());
 
     return operations.search(query, CodeableConceptDocument.class);
   }
@@ -214,7 +214,7 @@ public class CodeableConceptService {
         .withMaxResults(500)
         .build();
 
-    log.info(finalQuery.getQuery().toString());
+    log.debug(finalQuery.getQuery().toString());
     return operations.search(finalQuery, CodeableConceptDocument.class);
   }
 

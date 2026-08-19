@@ -190,7 +190,7 @@ public class ProfileService {
     var aggregationQuery = queryBuilder.build();
 
     if (aggregationQuery.getQuery() != null) {
-      log.info(aggregationQuery.getQuery().toString());
+      log.debug(aggregationQuery.getQuery().toString());
     }
 
     SearchHits<ProfileDocument> searchHits = operations.search(aggregationQuery, ProfileDocument.class);
@@ -292,7 +292,7 @@ public class ProfileService {
         .withPageable(pageRequest)
         .build();
 
-    log.info(Objects.requireNonNull(query.getQuery()).toString());
+    log.debug(Objects.requireNonNull(query.getQuery()).toString());
 
     return operations.search(query, ProfileDocument.class);
   }
