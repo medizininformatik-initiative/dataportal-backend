@@ -532,8 +532,8 @@ public class DataqueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createValidPersistenceDataqueryToGet(long id) throws JacksonException {
-    var dataquery = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery();
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity createValidPersistenceDataqueryToGet(long id) throws JacksonException {
+    var dataquery = new de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity();
     dataquery.setId(id);
     dataquery.setCrtdl(jsonUtil.writeValueAsString(createCrtdl()));
     dataquery.setLabel("TestLabel");
@@ -543,8 +543,8 @@ public class DataqueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private List<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> createValidPersistenceDataqueryListToGet(int entries) throws JacksonException {
-    var dataqueryList = new ArrayList<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery>();
+  private List<de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity> createValidPersistenceDataqueryListToGet(int entries) throws JacksonException {
+    var dataqueryList = new ArrayList<de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity>();
     for (int i = 0; i < entries; ++i) {
       dataqueryList.add(createValidPersistenceDataqueryToGet(i));
     }

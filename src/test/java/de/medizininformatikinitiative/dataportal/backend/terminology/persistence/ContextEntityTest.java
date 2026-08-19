@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-class ContextTest {
+class ContextEntityTest {
 
   @Test
   void testEqualsAndHashCode_sameContext() {
@@ -52,8 +52,8 @@ class ContextTest {
     assertNotEquals(context.hashCode(), i.hashCode());
   }
 
-  private Context createContext(Long id, String code, String display, String version, String system) {
-    var context = new Context();
+  private ContextEntity createContext(Long id, String code, String display, String version, String system) {
+    var context = new ContextEntity();
     context.setId(id);
     context.setCode(code);
     context.setDisplay(display);

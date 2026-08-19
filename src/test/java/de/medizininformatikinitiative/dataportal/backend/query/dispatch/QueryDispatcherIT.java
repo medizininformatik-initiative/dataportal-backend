@@ -6,7 +6,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerClient;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.collect.QueryCollectSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContent;
+import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContentEntity;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContentRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryDispatchRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryRepository;
@@ -87,7 +87,7 @@ public class QueryDispatcherIT {
     var serializedOtherQuery = jsonUtil.writeValueAsString(otherQuery);
     var serializedOtherQueryHash = queryHashCalculator.calculateSerializedQueryBodyHash(serializedOtherQuery);
 
-    var otherQueryContent = new QueryContent(serializedOtherQuery);
+    var otherQueryContent = new QueryContentEntity(serializedOtherQuery);
     otherQueryContent.setHash(serializedOtherQueryHash);
     queryContentRepository.save(otherQueryContent);
 
@@ -110,7 +110,7 @@ public class QueryDispatcherIT {
     var serializedTestQuery = jsonUtil.writeValueAsString(testQuery);
     var serializedTestQueryHash = queryHashCalculator.calculateSerializedQueryBodyHash(serializedTestQuery);
 
-    var queryContent = new QueryContent(serializedTestQuery);
+    var queryContent = new QueryContentEntity(serializedTestQuery);
     queryContent.setHash(serializedTestQueryHash);
     queryContentRepository.save(queryContent);
 

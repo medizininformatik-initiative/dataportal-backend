@@ -5,7 +5,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.*;
-import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfile;
+import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,8 +87,8 @@ class DseServiceTest {
     assertThrows(RuntimeException.class, () -> dseService.getProfileData(List.of("1")));
   }
 
-  private DseProfile createDummyDseProfile() throws JacksonException {
-    var dseProfile = new DseProfile();
+  private DseProfileEntity createDummyDseProfile() throws JacksonException {
+    var dseProfile = new DseProfileEntity();
 
     dseProfile.setId(1L);
     dseProfile.setUrl("http://example.com");
@@ -97,8 +97,8 @@ class DseServiceTest {
     return dseProfile;
   }
 
-  private DseProfile createDummyDseProfileWithBogusEntry() {
-    var dseProfile = new DseProfile();
+  private DseProfileEntity createDummyDseProfileWithBogusEntry() {
+    var dseProfile = new DseProfileEntity();
 
     dseProfile.setId(1L);
     dseProfile.setUrl("http://example.com");

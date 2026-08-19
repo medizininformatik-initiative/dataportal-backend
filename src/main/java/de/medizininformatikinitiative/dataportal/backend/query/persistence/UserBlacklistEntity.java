@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.terminology.persistence;
+package de.medizininformatikinitiative.dataportal.backend.query.persistence;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,30 +7,25 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
 
+import java.sql.Timestamp;
 import java.util.Objects;
 
-@Entity
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class Context {
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+@Entity(name = "UserBlacklist")
+public class UserBlacklistEntity {
+
   @Id
-  @Column(name = "id", nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-  @Basic
-  @Column(name = "system", nullable = false, length = -1)
-  private String system;
-  @Basic
-  @Column(name = "code", nullable = false, length = -1)
-  private String code;
-  @Basic
-  @Column(name = "version", nullable = true, length = -1)
-  private String version;
-  @Basic
-  @Column(name = "display", nullable = false, length = -1)
-  private String display;
+
+  @Column(name = "user_id", nullable = false, unique = true)
+  private String userId;
+
+  @Column(name = "blacklisted_at", insertable = false)
+  private Timestamp blacklistedAt;
 
   @Override
   public final boolean equals(Object o) {
@@ -39,12 +34,12 @@ public class Context {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    Context context = (Context) o;
-    return getId() != null && Objects.equals(getId(), context.getId());
+    UserBlacklistEntity that = (UserBlacklistEntity) o;
+    return getId() != null && Objects.equals(getId(), that.getId());
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hash(id, system, code, version, display);
+  public final int hashCode() {
+    return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
   }
 }

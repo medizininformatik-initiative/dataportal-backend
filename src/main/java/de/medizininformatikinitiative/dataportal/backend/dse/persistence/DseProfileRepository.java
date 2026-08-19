@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface DseProfileRepository extends JpaRepository<DseProfile, Long> {
+public interface DseProfileRepository extends JpaRepository<DseProfileEntity, Long> {
 
-  Optional<DseProfile> findByUrl(String url);
+  Optional<DseProfileEntity> findByUrl(String url);
 }

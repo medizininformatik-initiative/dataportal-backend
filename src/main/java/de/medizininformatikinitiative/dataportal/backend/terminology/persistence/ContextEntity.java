@@ -9,26 +9,28 @@ import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
 
-@Entity
-@Table(name = "contextualized_termcode", schema = "public")
+@Entity(name = "Context")
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class ContextualizedTermCode {
+public class ContextEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Id
-  @Column(name = "context_termcode_hash", nullable = false, length = -1)
-  private String contextTermcodeHash;
+  @Column(name = "id", nullable = false)
+  private Long id;
   @Basic
-  @Column(name = "context_id", nullable = false)
-  private int contextId;
+  @Column(name = "system", nullable = false, length = -1)
+  private String system;
   @Basic
-  @Column(name = "termcode_id", nullable = false)
-  private int termCodeId;
+  @Column(name = "code", nullable = false, length = -1)
+  private String code;
   @Basic
-  @Column(name = "ui_profile_id", nullable = true)
-  private Integer uiProfileId;
+  @Column(name = "version", nullable = true, length = -1)
+  private String version;
+  @Basic
+  @Column(name = "display", nullable = false, length = -1)
+  private String display;
 
   @Override
   public final boolean equals(Object o) {
@@ -37,12 +39,12 @@ public class ContextualizedTermCode {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    ContextualizedTermCode that = (ContextualizedTermCode) o;
-    return getContextTermcodeHash() != null && Objects.equals(getContextTermcodeHash(), that.getContextTermcodeHash());
+    ContextEntity context = (ContextEntity) o;
+    return getId() != null && Objects.equals(getId(), context.getId());
   }
 
   @Override
-  public final int hashCode() {
-    return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+  public int hashCode() {
+    return Objects.hash(id, system, code, version, display);
   }
 }

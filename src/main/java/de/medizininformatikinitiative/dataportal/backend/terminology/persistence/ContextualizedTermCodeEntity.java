@@ -1,34 +1,34 @@
-package de.medizininformatikinitiative.dataportal.backend.query.persistence;
+package de.medizininformatikinitiative.dataportal.backend.terminology.persistence;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
 
+@Entity(name = "ContextualizedTermCode")
+@Table(name = "contextualized_termcode", schema = "public")
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
-@Entity
-public class QueryContent {
-
-  @Id
+@RequiredArgsConstructor
+public class ContextualizedTermCodeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @Column(name = "query_content", nullable = false)
-  private String queryContent;
-
-  @Column(columnDefinition = "TEXT")
-  private String hash;
-
-  public QueryContent(String queryContent) {
-    this.queryContent = queryContent;
-  }
+  @Id
+  @Column(name = "context_termcode_hash", nullable = false, length = -1)
+  private String contextTermcodeHash;
+  @Basic
+  @Column(name = "context_id", nullable = false)
+  private int contextId;
+  @Basic
+  @Column(name = "termcode_id", nullable = false)
+  private int termCodeId;
+  @Basic
+  @Column(name = "ui_profile_id", nullable = true)
+  private Integer uiProfileId;
 
   @Override
   public final boolean equals(Object o) {
@@ -37,8 +37,8 @@ public class QueryContent {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    QueryContent that = (QueryContent) o;
-    return getId() != null && Objects.equals(getId(), that.getId());
+    ContextualizedTermCodeEntity that = (ContextualizedTermCodeEntity) o;
+    return getContextTermcodeHash() != null && Objects.equals(getContextTermcodeHash(), that.getContextTermcodeHash());
   }
 
   @Override

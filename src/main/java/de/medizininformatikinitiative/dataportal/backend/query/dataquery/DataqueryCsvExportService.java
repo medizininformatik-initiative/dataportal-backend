@@ -8,7 +8,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
-import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfile;
+import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.AttributeDefinition;
@@ -16,7 +16,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.api.Codeabl
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
-import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfile;
+import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileRepository;
 import lombok.Builder;
 import lombok.Getter;
@@ -118,7 +118,7 @@ public class DataqueryCsvExportService {
 
   ;
 
-  private String[] getRow(AttributeGroup attributeGroup, Map<String, String> idMap, Optional<DseProfile> dseProfileOptional, DataExtraction dataExtraction, SUPPORTED_LANGUAGES lang) {
+  private String[] getRow(AttributeGroup attributeGroup, Map<String, String> idMap, Optional<DseProfileEntity> dseProfileOptional, DataExtraction dataExtraction, SUPPORTED_LANGUAGES lang) {
     String id = idMap.get(attributeGroup.id());
     String module = getModule(dseProfileOptional, lang);
     String profileType = getProfile(dseProfileOptional, lang);
@@ -133,7 +133,7 @@ public class DataqueryCsvExportService {
     return new String[]{id, module, profileType, featureName, fieldsAndLinks.fields(), filter, timeRestriction, fieldsAndLinks.links(), onlyExtractIfLinked, isRequired};
   }
 
-  private FieldsAndLinks getFieldsAndLinks(AttributeGroup attributeGroup, Map<String, String> idMap, Optional<DseProfile> dseProfileOptional, SUPPORTED_LANGUAGES lang) {
+  private FieldsAndLinks getFieldsAndLinks(AttributeGroup attributeGroup, Map<String, String> idMap, Optional<DseProfileEntity> dseProfileOptional, SUPPORTED_LANGUAGES lang) {
     List<String> fieldsList = new ArrayList<>();
     List<String> linksList = new ArrayList<>();
 
@@ -223,7 +223,7 @@ public class DataqueryCsvExportService {
     return "";
   }
 
-  private String getProfile(Optional<DseProfile> dseProfileOptional, SUPPORTED_LANGUAGES lang) {
+  private String getProfile(Optional<DseProfileEntity> dseProfileOptional, SUPPORTED_LANGUAGES lang) {
     if (dseProfileOptional.isPresent()) {
       try {
         var dseProfile = jsonUtil.readValue(dseProfileOptional.get().getEntry(), de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class);
@@ -236,7 +236,7 @@ public class DataqueryCsvExportService {
     }
   }
 
-  private String getModule(Optional<DseProfile> dseProfileOptional, SUPPORTED_LANGUAGES lang) {
+  private String getModule(Optional<DseProfileEntity> dseProfileOptional, SUPPORTED_LANGUAGES lang) {
     if (dseProfileOptional.isPresent()) {
       try {
         var dseProfile = jsonUtil.readValue(dseProfileOptional.get().getEntry(), de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class);
@@ -328,7 +328,7 @@ public class DataqueryCsvExportService {
     }
   }
 
-  private String attributeFilterToString(AttributeFilter filter, Optional<UiProfile> uiProfileOptional, SUPPORTED_LANGUAGES lang) {
+  private String attributeFilterToString(AttributeFilter filter, Optional<UiProfileEntity> uiProfileOptional, SUPPORTED_LANGUAGES lang) {
     String filterAcEntryString = getAttributeCodeTranslation(filter, uiProfileOptional, lang);
     switch (filter.type()) {
       case CONCEPT:
@@ -397,7 +397,7 @@ public class DataqueryCsvExportService {
     return getLocalizedDisplayEntry(displayEntry, lang, true);
   }
 
-  private String getAttributeCodeTranslation(AttributeFilter filter, Optional<UiProfile> uiProfileOptional, SUPPORTED_LANGUAGES lang) {
+  private String getAttributeCodeTranslation(AttributeFilter filter, Optional<UiProfileEntity> uiProfileOptional, SUPPORTED_LANGUAGES lang) {
     String filterAcEntryString = "";
     if (uiProfileOptional.isPresent()) {
       var uiProfile = uiProfileOptional.get();

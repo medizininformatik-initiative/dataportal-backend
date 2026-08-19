@@ -123,10 +123,10 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testGetQuery_succeeds() throws JacksonException {
-    var fakeContent = new QueryContent("{}");
+    var fakeContent = new QueryContentEntity("{}");
     fakeContent.setHash("a2189dffb");
     queryContentRepository.save(fakeContent);
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     query.setQueryContent(fakeContent);
     var queryId = queryRepository.save(query).getId();
@@ -146,10 +146,10 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testGetQueryContent_succeeds() throws JacksonException {
-    var fakeContent = new QueryContent("{}");
+    var fakeContent = new QueryContentEntity("{}");
     fakeContent.setHash("a2189dffb");
     queryContentRepository.save(fakeContent);
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     query.setQueryContent(fakeContent);
     var queryId = queryRepository.save(query).getId();
@@ -182,7 +182,7 @@ public class QueryHandlerServiceIT {
   @ParameterizedTest
   @EnumSource
   public void testGetQueryResult_ErrorResultsAreIgnored(ResultDetail resultDetail) {
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     var queryId = queryRepository.save(query).getId();
     resultService.addResultLine(query.getId(),
@@ -200,7 +200,7 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testGetQueryResult_SummaryContainsOnlyTheTotal() {
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     var queryId = queryRepository.save(query).getId();
     resultService.addResultLine(query.getId(),
@@ -225,7 +225,7 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testGetQueryResult_DetailedObfuscatedDoesNotContainTheSiteNames() {
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     var queryId = queryRepository.save(query).getId();
     resultService.addResultLine(query.getId(),
@@ -255,7 +255,7 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testGetQueryResult_DetailedContainsTheSiteNames() {
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     var queryId = queryRepository.save(query).getId();
     resultService.addResultLine(query.getId(),
@@ -293,9 +293,9 @@ public class QueryHandlerServiceIT {
   public void testGetQuery_succeess() throws JacksonException {
     var queryContentString = jsonUtil.writeValueAsString(createValidCcdl());
     var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
-    var queryContent = new QueryContent(queryContentString);
+    var queryContent = new QueryContentEntity(queryContentString);
     queryContent.setHash(queryContentHash);
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     query.setQueryContent(queryContent);
     var queryId = queryRepository.save(query).getId();
@@ -311,9 +311,9 @@ public class QueryHandlerServiceIT {
   public void testGetQueryContent_nullIfNotFound() throws JacksonException {
     var queryContentString = jsonUtil.writeValueAsString(createValidCcdl());
     var queryContentHash = queryHashCalculator.calculateSerializedQueryBodyHash(queryContentString);
-    var queryContent = new QueryContent(queryContentString);
+    var queryContent = new QueryContentEntity(queryContentString);
     queryContent.setHash(queryContentHash);
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     query.setQueryContent(queryContent);
     var queryId = queryRepository.save(query).getId();
@@ -331,7 +331,7 @@ public class QueryHandlerServiceIT {
 
   @Test
   public void testGetAmountOfQueriesByUserAndInterval() throws JacksonException {
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     queryRepository.save(query).getId();
 
@@ -352,7 +352,7 @@ public class QueryHandlerServiceIT {
   @Test
   @DisplayName("getRetryAfterTime() -> return >0 on non empty")
   public void getRetryAfterTime_nonZeroOnNotEmpty() {
-    var query = new Query();
+    var query = new QueryEntity();
     query.setCreatedBy(CREATOR);
     queryRepository.save(query);
     Long retryAfterTime = queryHandlerService.getRetryAfterTime(CREATOR, 0, "PT1000000M");
@@ -383,30 +383,30 @@ public class QueryHandlerServiceIT {
                                                          @Value("${app.privacy.quota.soft.create.interval}") String softInterval,
                                                          @Value("${app.privacy.quota.hard.create.amount}") int hardLimit,
                                                          @Value("${app.privacy.quota.soft.create.amount}") int softLimit) {
-    var fakeContent = new QueryContent("{}");
+    var fakeContent = new QueryContentEntity("{}");
     fakeContent.setHash("a2189dffb");
     queryContentRepository.save(fakeContent);
 
     // This query is from "right now", so it should count towards both limits
-    var currentQuery = new Query();
+    var currentQuery = new QueryEntity();
     currentQuery.setCreatedBy(CREATOR);
     currentQuery.setQueryContent(fakeContent);
     queryRepository.save(currentQuery);
 
     // This query is from another user and should not be included in any of the limits
-    var queryFromAnotherUser = new Query();
+    var queryFromAnotherUser = new QueryEntity();
     queryFromAnotherUser.setCreatedBy("not-the-original-" + CREATOR);
     queryFromAnotherUser.setQueryContent(fakeContent);
     queryRepository.save(queryFromAnotherUser);
 
     // This query is very old and should not count towards any of the limits
-    var veryOldQuery = new Query();
+    var veryOldQuery = new QueryEntity();
     veryOldQuery.setCreatedBy(CREATOR);
     veryOldQuery.setQueryContent(fakeContent);
     var veryOldQueryId = queryRepository.save(veryOldQuery).getId();
 
     // This query is older than the soft limit but younger than the hard limit, so it should only count towards the hard limit
-    var queryOnlyCountingToHardLimit = new Query();
+    var queryOnlyCountingToHardLimit = new QueryEntity();
     queryOnlyCountingToHardLimit.setCreatedBy(CREATOR);
     queryOnlyCountingToHardLimit.setQueryContent(fakeContent);
     var inbetweenQueryId = queryRepository.save(queryOnlyCountingToHardLimit).getId();

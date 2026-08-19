@@ -123,7 +123,7 @@ class DataqueryHandlerTest {
   @DisplayName("storeDataquery() -> trying to store a dataquery when no slots are free throws")
   void storeDataquery_throwsOnNoFreeSlots(boolean withResult) throws JacksonException {
     lenient().doReturn(MAX_QUERIES_PER_USER + 1L).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
-    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
+    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class));
 
     if (withResult) {
       assertThrows(DataqueryStorageFullException.class, () -> dataqueryHandler.storeDataquery(createDataquery(withResult), CREATOR));
@@ -137,7 +137,7 @@ class DataqueryHandlerTest {
   @DisplayName("storeDataquery() -> checking around the query limit")
   void storeDataquery_testFreeSlotOnEdgeCases(boolean withResult, long offset) throws JacksonException {
     lenient().doReturn(MAX_QUERIES_PER_USER + offset).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
-    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
+    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class));
 
     if (withResult) {
       if (offset < 0) {
@@ -155,9 +155,9 @@ class DataqueryHandlerTest {
   void storeDataquery_throwsOnJsonSerializationError() throws JacksonException {
     var dataquery = createDataquery();
 
-    try (MockedStatic<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> mockedStaticDataquery
-             = mockStatic(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class)) {
-      mockedStaticDataquery.when(() -> de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(any(Dataquery.class))).thenThrow(JacksonException.class);
+    try (MockedStatic<de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity> mockedStaticDataquery
+             = mockStatic(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class)) {
+      mockedStaticDataquery.when(() -> de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.of(any(Dataquery.class))).thenThrow(JacksonException.class);
       assertThrows(DataqueryException.class, () -> dataqueryHandler.storeDataquery(dataquery, CREATOR));
     }
   }
@@ -247,7 +247,7 @@ class DataqueryHandlerTest {
 
     lenient().doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
     lenient().doReturn((long) MAX_QUERIES_PER_USER).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
-    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
+    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class));
 
     // When the new dataquery has no result, this should never throw. It should only throw if the old had no result and the new has a result
     if (withResultNew && !withResultOld) {
@@ -270,7 +270,7 @@ class DataqueryHandlerTest {
 
     lenient().doReturn(Optional.of(dataqueryEntity)).when(dataqueryRepository).findById(any(Long.class));
     lenient().doReturn(MAX_QUERIES_PER_USER + offset).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
-    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
+    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class));
 
     // It should only throw when the new query has a result, the old didn't have one and the storage is full
     // If the storage is full but the old query already had a result, it should not fail.
@@ -316,7 +316,7 @@ class DataqueryHandlerTest {
     var dataqueryEntity = createDataqueryEntity();
 
     try (MockedStatic<Dataquery> mockedStaticDataquery = mockStatic(Dataquery.class)) {
-      mockedStaticDataquery.when(() -> Dataquery.of(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class))).thenThrow(JacksonException.class);
+      mockedStaticDataquery.when(() -> Dataquery.of(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class))).thenThrow(JacksonException.class);
       doReturn(List.of(dataqueryEntity)).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
       assertThrows(DataqueryException.class, () -> dataqueryHandler.getDataqueriesByAuthor(CREATOR, includeTemporary));
     }
@@ -360,7 +360,7 @@ class DataqueryHandlerTest {
   void testDataqueryPersistenceOfDataQueryApi() throws JacksonException {
     var dataQuery = createDataquery();
 
-    var convertedDataquery = de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(dataQuery);
+    var convertedDataquery = de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.of(dataQuery);
     var convertedCrtdl = jsonUtil.readValue(convertedDataquery.getCrtdl(), Crtdl.class);
 
     assertEquals(convertedDataquery.getId(), dataQuery.id());
@@ -426,9 +426,9 @@ class DataqueryHandlerTest {
   void storeExpiringDataquery_throwsOnJsonSerializationError() throws JacksonException {
     var dataquery = createDataquery();
 
-    try (MockedStatic<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> mockedStaticDataquery
-             = mockStatic(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class)) {
-      mockedStaticDataquery.when(() -> de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(any(Dataquery.class))).thenThrow(JacksonException.class);
+    try (MockedStatic<de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity> mockedStaticDataquery
+             = mockStatic(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class)) {
+      mockedStaticDataquery.when(() -> de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.of(any(Dataquery.class))).thenThrow(JacksonException.class);
       assertThrows(DataqueryException.class, () -> dataqueryHandler.storeExpiringDataquery(dataquery, CREATOR, DURATION));
     }
   }
@@ -438,7 +438,7 @@ class DataqueryHandlerTest {
   @DisplayName("storeExpiringDataquery() -> trying to store an expiring dataquery when no slots are free does not throw")
   void storeExpiringDataquery_ignoresFreeSlots(boolean withResult) throws JacksonException {
     lenient().doReturn(MAX_QUERIES_PER_USER + 1L).when(dataqueryRepository).countByCreatedByWhereResultIsNotNull(any(String.class));
-    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.class));
+    lenient().doReturn(createDataqueryEntity()).when(dataqueryRepository).save(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class));
 
     assertDoesNotThrow(() -> dataqueryHandler.storeExpiringDataquery(createDataquery(withResult), CREATOR, DURATION));
   }
@@ -669,8 +669,8 @@ class DataqueryHandlerTest {
         .build();
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult, boolean expiring) throws JacksonException {
-    de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery out = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery();
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity createDataqueryEntity(boolean withResult, boolean expiring) throws JacksonException {
+    de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity out = new de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity();
     out.setId(1L);
     out.setLabel(LABEL);
     out.setComment(COMMENT);
@@ -682,11 +682,11 @@ class DataqueryHandlerTest {
     return out;
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult) throws JacksonException {
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity createDataqueryEntity(boolean withResult) throws JacksonException {
     return createDataqueryEntity(withResult, false);
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity() throws JacksonException {
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity createDataqueryEntity() throws JacksonException {
     return createDataqueryEntity(false, false);
   }
 }

@@ -210,8 +210,8 @@ public class DataqueryHandlerIT {
         .build();
   }
 
-  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createDataqueryEntity(boolean withResult) throws JacksonException {
-    de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery out = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery();
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity createDataqueryEntity(boolean withResult) throws JacksonException {
+    de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity out = new de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity();
     out.setLabel(LABEL);
     out.setComment(COMMENT);
     out.setLastModified(Timestamp.valueOf(TIME_STRING));

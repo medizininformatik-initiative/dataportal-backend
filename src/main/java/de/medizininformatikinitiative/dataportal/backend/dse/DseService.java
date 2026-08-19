@@ -3,6 +3,7 @@ package de.medizininformatikinitiative.dataportal.backend.dse;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
+import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,7 +30,7 @@ public class DseService {
     var results = new ArrayList<DseProfile>();
 
     for (String profileId : profileIds) {
-      Optional<de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfile> dseProfile;
+      Optional<DseProfileEntity> dseProfile;
       try {
         dseProfile = dseProfileRepository.findByUrl(profileId);
       } catch (DataIntegrityViolationException e) {

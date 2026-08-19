@@ -5,6 +5,7 @@ import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
+import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
@@ -56,7 +57,7 @@ public class DataqueryHandler {
         .build();
 
     try {
-      de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataqueryEntity = de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(tmp);
+      DataqueryEntity dataqueryEntity = DataqueryEntity.of(tmp);
       dataqueryEntity = dataqueryRepository.save(dataqueryEntity);
       return dataqueryEntity.getId();
     } catch (JacksonException e) {
@@ -76,7 +77,7 @@ public class DataqueryHandler {
         .build();
 
     try {
-      de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataqueryEntity = de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(tmp);
+      DataqueryEntity dataqueryEntity = DataqueryEntity.of(tmp);
       dataqueryEntity = dataqueryRepository.save(dataqueryEntity);
       return dataqueryEntity.getId();
     } catch (JacksonException e) {
@@ -85,7 +86,7 @@ public class DataqueryHandler {
   }
 
   public Dataquery getDataqueryById(Long dataqueryId, Authentication userAuthentication) throws DataqueryException, JacksonException {
-    de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery = dataqueryRepository.findById(dataqueryId).orElseThrow(DataqueryException::new);
+    DataqueryEntity dataquery = dataqueryRepository.findById(dataqueryId).orElseThrow(DataqueryException::new);
     if (hasAccess(dataquery, userAuthentication)) {
       return Dataquery.of(dataquery);
     } else {
@@ -105,7 +106,7 @@ public class DataqueryHandler {
     }
 
     if (existingDataquery.getCreatedBy().equals(userId)) {
-      var dataqueryToUpdate = de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery.of(dataquery);
+      var dataqueryToUpdate = DataqueryEntity.of(dataquery);
       dataqueryToUpdate.setId(existingDataquery.getId());
       dataqueryToUpdate.setCreatedBy(userId);
       dataqueryToUpdate.setLastModified(Timestamp.valueOf(LocalDateTime.now()));
@@ -116,13 +117,13 @@ public class DataqueryHandler {
   }
 
   public List<Dataquery> getDataqueriesByAuthor(String userId, boolean includeTemporary) throws DataqueryException {
-    List<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> dataqueries;
+    List<DataqueryEntity> dataqueries;
 
     dataqueries = dataqueryRepository.findAllByCreatedBy(userId, includeTemporary);
 
     List<Dataquery> ret = new ArrayList<>();
 
-    for (de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery : dataqueries) {
+    for (DataqueryEntity dataquery : dataqueries) {
       try {
         ret.add(Dataquery.of(dataquery));
       } catch (JacksonException e) {
@@ -138,7 +139,7 @@ public class DataqueryHandler {
   }
 
   public void deleteDataquery(Long dataqueryId, String userId) throws DataqueryException {
-    de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery = dataqueryRepository.findById(dataqueryId).orElseThrow(DataqueryException::new);
+    DataqueryEntity dataquery = dataqueryRepository.findById(dataqueryId).orElseThrow(DataqueryException::new);
     if (!dataquery.getCreatedBy().equals(userId)) {
       throw new DataqueryException();
     } else {
@@ -194,7 +195,7 @@ public class DataqueryHandler {
     return byteArrayOutputStream;
   }
 
-  private boolean hasAccess(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery dataquery, Authentication authentication) {
+  private boolean hasAccess(DataqueryEntity dataquery, Authentication authentication) {
     var creator = dataquery.getCreatedBy();
     if (creator == null || creator.isBlank()) {
       return false;
