@@ -2,9 +2,17 @@
 
 curl "$ELASTIC_HOST/_cat/indices"
 
+# Since ontology-generator v5, content files sit under elastic/content/ rather
+# than directly under elastic/. Fall back to the legacy flat layout if needed.
+if [ -d ./elastic/content ]; then
+  CONTENT_DIR=./elastic/content
+else
+  CONTENT_DIR=./elastic
+fi
+
 # Grab existing ids from both index file types to use later
-onto_example_id=$(grep '"_id":' ./elastic/onto_es__ontology_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
-cc_example_id=$(grep '"_id":' ./elastic/onto_es__codeable_concept_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
+onto_example_id=$(grep '"_id":' "$CONTENT_DIR"/onto_es__ontology_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
+cc_example_id=$(grep '"_id":' "$CONTENT_DIR"/onto_es__codeable_concept_* | awk -F'"_id": "' '{print $2}' | awk -F'"' '{print $1}' | head -n 1)
 
 
 # Check if the elastic search server correctly delivers the ontology document
@@ -52,7 +60,7 @@ access_token="$(curl -s --request POST \
 
 
 # Check if the terminology search is working correctly (curl->backend->elastic)
-response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v5/terminology/entry/search?searchterm=Blutdruck")
+response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v6/terminology/entry/search?searchterm=Blutdruck")
 http_code="${response: -3}"
 json_body=$(cat response_body)
 
@@ -70,7 +78,7 @@ fi
 
 
 # Check if the ontology document retrieval is working correctly (curl->backend->elastic)
-response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v5/terminology/entry/$onto_example_id")
+response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v6/terminology/entry/$onto_example_id")
 http_code="${response: -3}"
 json_body=$(cat response_body)
 
@@ -88,7 +96,7 @@ fi
 
 
 # Check if the codeable concept search is working correctly (curl->backend->elastic)
-response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v5/codeable-concept/entry/search?searchterm=Vectorcardiogram")
+response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v6/codeable-concept/entry/search?searchterm=Vectorcardiogram")
 http_code="${response: -3}"
 json_body=$(cat response_body)
 
@@ -106,7 +114,7 @@ fi
 
 
 # Check if the codeable concept document retrieval is working correctly (curl->backend->elastic)
-response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v5/codeable-concept/entry?ids=$cc_example_id")
+response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v6/codeable-concept/entry?ids=$cc_example_id")
 http_code="${response: -3}"
 json_body=$(cat response_body)
 
@@ -125,10 +133,10 @@ fi
 
 # Check if searching for an exact code returns the same amount of results whether a filter (for the correct terminology)
 # is set or not. In this case, the LOINC code 104683-8 is used
-response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v5/terminology/entry/search?searchterm=104683-8&availability=&contexts=&kds-modules=&terminologies=&page-size=50")
+response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v6/terminology/entry/search?searchterm=104683-8&availability=&contexts=&kds-modules=&terminologies=&page-size=50")
 results_without_filter=$(cat response_body | jq -e '.totalHits')
 
-response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v5/terminology/entry/search?searchterm=104683-8&availability=&contexts=&kds-modules=&terminologies=http://loinc.org&page-size=50")
+response=$(curl -s -w "%{http_code}" --header "Authorization: Bearer $access_token" -o response_body "http://localhost:8091/api/v6/terminology/entry/search?searchterm=104683-8&availability=&contexts=&kds-modules=&terminologies=http://loinc.org&page-size=50")
 results_with_filter=$(cat response_body | jq -e '.totalHits')
 
 if [ "$results_without_filter" -ge "$results_with_filter" ]; then

@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dataquery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.opencsv.CSVWriter;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Comparator;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
@@ -158,7 +158,7 @@ public class DataqueryCsvExportService {
                     attribute.mustHave() ? " (" + MultiMessageBundle.getEntry("required", lang) + ")" : "")
             );
           }
-        } catch (JsonProcessingException | NoSuchElementException e) {
+        } catch (JacksonException | NoSuchElementException e) {
           throw new DataqueryCsvExportException();
         }
       } else {
@@ -228,7 +228,7 @@ public class DataqueryCsvExportService {
       try {
         var dseProfile = jsonUtil.readValue(dseProfileOptional.get().getEntry(), de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class);
         return getLocalizedDisplayEntry(dseProfile.display(), lang);
-      } catch (JsonProcessingException e) {
+      } catch (JacksonException e) {
         throw new DataqueryCsvExportException();
       }
     } else {
@@ -241,7 +241,7 @@ public class DataqueryCsvExportService {
       try {
         var dseProfile = jsonUtil.readValue(dseProfileOptional.get().getEntry(), de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class);
         return getLocalizedDisplayEntry(dseProfile.module(), lang);
-      } catch (JsonProcessingException e) {
+      } catch (JacksonException e) {
         throw new DataqueryCsvExportException();
       }
     } else {
@@ -409,7 +409,7 @@ public class DataqueryCsvExportService {
         if (attributeDefinition.isPresent()) {
           filterAcEntryString = getLocalizedDisplayEntry(attributeDefinition.get().display(), lang);
         }
-      } catch (JsonProcessingException e) {
+      } catch (JacksonException e) {
         throw new DataqueryCsvExportException();
       }
     } else {

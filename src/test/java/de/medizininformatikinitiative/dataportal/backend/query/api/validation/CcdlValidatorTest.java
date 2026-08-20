@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
@@ -27,6 +28,7 @@ import java.util.List;
 import static de.medizininformatikinitiative.dataportal.backend.common.api.Comparator.GREATER_EQUAL;
 import static de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilterType.QUANTITY_COMPARATOR;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -57,7 +59,7 @@ public class CcdlValidatorTest {
 
   @BeforeEach
   public void setUp() throws IOException {
-    var jsonUtil = new ObjectMapper();
+    var jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
     lenient().when(constraintValidatorContext.buildConstraintViolationWithTemplate(anyString()))
         .thenReturn(violationBuilder);
     lenient().when(violationBuilder.addConstraintViolation())
@@ -104,6 +106,14 @@ public class CcdlValidatorTest {
     var queryWithTimeRestrictionsWithoutDates = buildInvalidQueryWithTimeRestrictionsWithoutDates();
     assertFalse(
         validator.isValid(queryWithTimeRestrictionsWithoutDates, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_throwsOnMalformedUiProfile() {
+    var ccdl = buildValidQuery();
+    doReturn("{ this is not valid json").when(terminologyService).getUiProfile(anyString());
+
+    assertThrows(RuntimeException.class, () -> validator.isValid(ccdl, constraintValidatorContext));
   }
 
   private Ccdl buildValidQuery() {

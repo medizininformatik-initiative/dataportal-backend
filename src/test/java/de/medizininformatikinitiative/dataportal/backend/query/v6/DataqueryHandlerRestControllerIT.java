@@ -1,0 +1,666 @@
+package de.medizininformatikinitiative.dataportal.backend.query.v6;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
+import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
+import de.medizininformatikinitiative.dataportal.backend.query.api.CrtdlSectionInfo;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssue;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.SavedQuerySlots;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueValue;
+import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryCsvExportException;
+import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryException;
+import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryHandler;
+import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryStorageFullException;
+import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
+import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
+import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
+import org.hamcrest.Matchers;
+import org.hl7.fhir.utilities.tests.TestConfig;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.sql.Timestamp;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static de.medizininformatikinitiative.dataportal.backend.config.WebSecurityConfig.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@Tag("query")
+@ExtendWith(SpringExtension.class)
+@Import({RateLimitingServiceSpringConfig.class, TestConfig.class})
+@WebMvcTest(
+    controllers = DataqueryHandlerRestController.class
+)
+public class DataqueryHandlerRestControllerIT {
+
+  @Autowired
+  private MockMvc mockMvc;
+
+  @Autowired
+  private ObjectMapper jsonUtil;
+
+  @MockitoBean
+  private DataqueryHandler dataqueryHandler;
+
+  @MockitoBean
+  private ValidationService validationService;
+
+  @MockitoBean
+  private AuthenticationHelper authenticationHelper;
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testStoreDataquery_succeedsWith201() throws Exception {
+    long queryId = 1L;
+    doReturn(queryId).when(dataqueryHandler).storeDataquery(any(Dataquery.class), any(String.class));
+    doReturn(createSavedQuerySlots()).when(dataqueryHandler).getDataquerySlotsJson(any(String.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA)).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(queryId))))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("location"))
+        .andExpect(header().string("location", "http://localhost" + PATH_API + PATH_QUERY + PATH_DATA + "/" + queryId))
+        .andExpect(jsonPath("$.used").exists())
+        .andExpect(jsonPath("$.total").exists());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testStoreDataquery_respectsContextPath() throws Exception {
+    var contextPath = "/foo/bar";
+    long queryId = 1L;
+    doReturn(queryId).when(dataqueryHandler).storeDataquery(any(Dataquery.class), any(String.class));
+    doReturn(createSavedQuerySlots()).when(dataqueryHandler).getDataquerySlotsJson(any(String.class));
+
+    mockMvc.perform(post(URI.create(contextPath + PATH_API + PATH_QUERY + PATH_DATA)).with(csrf())
+            .contextPath(contextPath)
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(queryId))))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("location"))
+        .andExpect(header().string("location", "http://localhost" + contextPath + PATH_API + PATH_QUERY + PATH_DATA + "/" + queryId))
+        .andExpect(jsonPath("$.used").exists())
+        .andExpect(jsonPath("$.total").exists());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testStoreDataqueryExceptionWith500() throws Exception {
+    doThrow(DataqueryException.class).when(dataqueryHandler).storeDataquery(any(Dataquery.class), any(String.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA)).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testStoreDataqueryExceptionWith403() throws Exception {
+    doThrow(DataqueryStorageFullException.class).when(dataqueryHandler).storeDataquery(any(Dataquery.class), any(String.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA)).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataquery_succeeds() throws Exception {
+    long dataqueryId = 1L;
+
+    doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId)).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(dataqueryId));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataquery_failsOnNotFound() throws Exception {
+    long dataqueryId = 1;
+
+    doThrow(DataqueryException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId)).with(csrf()))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataquery_failsOnJsonError() throws Exception {
+    long dataqueryId = 1;
+
+    doThrow(JacksonException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId)).with(csrf()))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryCrtdl_succeeds() throws Exception {
+    long dataqueryId = 1L;
+    var annotatedQuery = createValidAnnotatedCcdl(false);
+
+    doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl")).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.cohortDefinition.display").value(annotatedQuery.display()));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryCrtdl_failsOnNotFound() throws Exception {
+    long dataqueryId = 1;
+
+    doThrow(DataqueryException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl")).with(csrf()))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryCrtdl_failsOnJsonError() throws Exception {
+    long dataqueryId = 1;
+
+    doThrow(JacksonException.class).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl")).with(csrf()))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryCrtdlCsv_succeeds() throws Exception {
+    long dataqueryId = 1L;
+
+    doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+    doReturn(createValidByteArrayOutputStream()).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl"))
+            .header(HttpHeaders.ACCEPT, "application/zip")
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType("application/zip"))
+        .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/zip"))
+        .andExpect(header().string(HttpHeaders.CONTENT_LENGTH, Matchers.not("0")));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryCrtdlCsv_failsOnNotFound() throws Exception {
+    long dataqueryId = 1;
+
+    doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+    doThrow(DataqueryException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl"))
+            .header(HttpHeaders.ACCEPT, "application/zip")
+            .with(csrf()))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryCrtdlCsv_failsOnJsonError() throws Exception {
+    long dataqueryId = 1;
+
+    doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+    doThrow(JacksonException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl"))
+            .header(HttpHeaders.ACCEPT, "application/zip")
+            .with(csrf()))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryCrtdlCsv_failsOnIoException() throws Exception {
+    long dataqueryId = 1;
+
+    doReturn(createValidApiDataqueryToGet(dataqueryId)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+    doThrow(IOException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/" + dataqueryId + "/crtdl"))
+            .header(HttpHeaders.ACCEPT, "application/zip")
+            .with(csrf()))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testConvertCrtdlToCsv_succeeds() throws Exception {
+    long dataqueryId = 1L;
+
+    doReturn(createValidByteArrayOutputStream()).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType("application/zip"))
+        .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/zip"))
+        .andExpect(header().string(HttpHeaders.CONTENT_LENGTH, Matchers.not("0")));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testConvertCrtdlToCsv_failsOnNotFound() throws Exception {
+    long dataqueryId = 1L;
+
+    doThrow(DataqueryException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testConvertCrtdlToCsv_failsOnJsonError() throws Exception {
+    long dataqueryId = 1L;
+
+    doThrow(JacksonException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testConvertCrtdlToCsv_failsOnIoException() throws Exception {
+    long dataqueryId = 1L;
+
+    doThrow(IOException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testConvertCrtdlToCsv_failsOnDataqueryCsvExportException() throws Exception {
+    long dataqueryId = 1L;
+
+    doThrow(DataqueryCsvExportException.class).when(dataqueryHandler).createCsvExportZipfile(any(Dataquery.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+        .andExpect(status().isUnprocessableEntity());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testConvertCrtdlToCsv_failsOnValidationErrors() throws Exception {
+    long dataqueryId = 1L;
+
+    doReturn(List.of(
+        ValidationIssue.builder()
+            .path("/foo")
+            .value(ValidationIssueValue.builder()
+                .code("VAL-000")
+                .message("bar")
+                .build())
+            .build()
+    )).when(validationService).validateCrtdlSchema(any(JsonNode.class));
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
+        .andExpect(status().isBadRequest());
+  }
+
+  @ParameterizedTest
+  @CsvSource({"true", "false"})
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryList_succeeds(String skipValidation) throws Exception {
+    int listSize = 5;
+    doReturn(createValidApiDataqueryListToGet(listSize)).when(dataqueryHandler).getDataqueriesByAuthor(any(String.class), anyBoolean());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "?skip-validation=" + skipValidation)).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(listSize))
+        .andExpect(jsonPath("$.[0].id").exists());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryList_500onDataqueryException() throws Exception {
+    doThrow(DataqueryException.class).when(dataqueryHandler).getDataqueriesByAuthor(any(String.class), anyBoolean());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "?skip-validation=true")).with(csrf()))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @ParameterizedTest
+  @CsvSource({"true", "false"})
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testGetDataqueryListByUser_succeeds(String skipValidation) throws Exception {
+    int listSize = 5;
+    doReturn(createValidApiDataqueryListToGet(listSize)).when(dataqueryHandler).getDataqueriesByAuthor(any(String.class), anyBoolean());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123" + "?skip-validation=" + skipValidation)).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(listSize))
+        .andExpect(jsonPath("$.[0].id").exists());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testGetDataqueryListByUser_500onDataqueryException() throws Exception {
+    doThrow(DataqueryException.class).when(dataqueryHandler).getDataqueriesByAuthor(any(String.class), anyBoolean());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123" + "?skip-validation=true")).with(csrf()))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_succeeds() throws Exception {
+    doReturn(1L).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_respectsContextPath() throws Exception {
+    var contextPath = "/foo/bar";
+    doReturn(1L).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(contextPath + PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .contextPath(contextPath)
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("location"))
+        .andExpect(header().string("location", "http://localhost" + contextPath + PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123/1"));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_500OnDataqueryException() throws Exception {
+    doThrow(DataqueryException.class).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testStoreDataqueryForUser_403OnStorageExceeded() throws Exception {
+    doThrow(DataqueryStorageFullException.class).when(dataqueryHandler).storeExpiringDataquery(any(Dataquery.class), anyString(), anyString());
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123")).with(csrf())
+            .param("ttl", "PT1M")
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testUpdateDataquery_succeeds() throws Exception {
+    doNothing().when(dataqueryHandler).updateDataquery(any(Long.class), any(Dataquery.class), any(String.class));
+    doReturn(createSavedQuerySlots()).when(dataqueryHandler).getDataquerySlotsJson(any(String.class));
+
+    mockMvc.perform(put(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.used").exists())
+        .andExpect(jsonPath("$.total").exists());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testUpdateDataquery_failsOnNotFound() throws Exception {
+    doThrow(DataqueryException.class).when(dataqueryHandler).updateDataquery(any(Long.class), any(Dataquery.class), any(String.class));
+    mockMvc.perform(put(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testUpdateDataquery_failsOnJsonProcessingException() throws Exception {
+    doThrow(JacksonException.class).when(dataqueryHandler).updateDataquery(any(Long.class), any(Dataquery.class), any(String.class));
+    mockMvc.perform(put(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isUnprocessableEntity());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testUpdateDataquery_failsOnStorageFull() throws Exception {
+    doThrow(DataqueryStorageFullException.class).when(dataqueryHandler).updateDataquery(any(Long.class), any(Dataquery.class), any(String.class));
+    mockMvc.perform(put(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
+        .andExpect(status().isForbidden());
+  }
+
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testDeleteDataquery_succeeds() throws Exception {
+    doNothing().when(dataqueryHandler).deleteDataquery(any(Long.class), any(String.class));
+
+    mockMvc.perform(delete(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf()))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testDeleteDataquery_failsWith404OnNotFound() throws Exception {
+    doThrow(DataqueryException.class).when(dataqueryHandler).deleteDataquery(any(Long.class), any(String.class));
+
+    mockMvc.perform(delete(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf()))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataquerySlots_succeeds() throws Exception {
+    doReturn(createSavedQuerySlots()).when(dataqueryHandler).getDataquerySlotsJson(any(String.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/query-slots")).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.used").exists())
+        .andExpect(jsonPath("$.total").exists());
+  }
+
+  @NotNull
+  private Dataquery createValidDataqueryToStore(long id) {
+    return Dataquery.builder()
+        .id(id)
+        .content(createCrtdl())
+        .label("TestLabel")
+        .comment("TestComment")
+        .build();
+  }
+
+  @NotNull
+  private de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery createValidPersistenceDataqueryToGet(long id) throws JacksonException {
+    var dataquery = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery();
+    dataquery.setId(id);
+    dataquery.setCrtdl(jsonUtil.writeValueAsString(createCrtdl()));
+    dataquery.setLabel("TestLabel");
+    dataquery.setComment("TestComment");
+    dataquery.setLastModified(new Timestamp(new java.util.Date().getTime()));
+    return dataquery;
+  }
+
+  @NotNull
+  private List<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery> createValidPersistenceDataqueryListToGet(int entries) throws JacksonException {
+    var dataqueryList = new ArrayList<de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery>();
+    for (int i = 0; i < entries; ++i) {
+      dataqueryList.add(createValidPersistenceDataqueryToGet(i));
+    }
+    return dataqueryList;
+  }
+
+  @NotNull
+  private Dataquery createValidApiDataqueryToGet(long id) {
+    return Dataquery.builder()
+        .id(id)
+        .content(createCrtdl())
+        .label("TestLabel")
+        .comment("TestComment")
+        .lastModified(new Timestamp(new Date().getTime()).toString())
+        .createdBy("someone")
+        .ccdl(CrtdlSectionInfo.builder()
+            .isValid(true)
+            .exists(true)
+            .build())
+        .dataExtraction(CrtdlSectionInfo.builder()
+            .isValid(true)
+            .exists(true)
+            .build())
+        .build();
+  }
+
+  @NotNull
+  private List<Dataquery> createValidApiDataqueryListToGet(int entries) throws JacksonException {
+    var dataqueryList = new ArrayList<Dataquery>();
+    for (int i = 0; i < entries; ++i) {
+      dataqueryList.add(createValidApiDataqueryToGet(i));
+    }
+    return dataqueryList;
+  }
+
+  @NotNull
+  private Crtdl createCrtdl() {
+    return Crtdl.builder()
+        .cohortDefinition(createValidCcdl())
+        .display("foo")
+        .build();
+  }
+
+  @NotNull
+  private Ccdl createValidCcdl() {
+    var inclusionCriterion = Criterion.builder()
+        .termCodes(List.of(createTermCode()))
+        .attributeFilters(List.of())
+        .context(createTermCode())
+        .build();
+    return Ccdl.builder()
+        .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
+        .inclusionCriteria(List.of(List.of(inclusionCriterion)))
+        .exclusionCriteria(List.of())
+        .display("foo")
+        .build();
+  }
+
+  @NotNull
+  private Ccdl createValidAnnotatedCcdl(boolean withIssues) {
+    var termCode = TermCode.builder()
+        .code("LL2191-6")
+        .system("http://loinc.org")
+        .display("Geschlecht")
+        .build();
+    var inclusionCriterion = Criterion.builder()
+        .termCodes(List.of(termCode))
+        .attributeFilters(List.of())
+        .context(termCode)
+        .validationIssueTypes(withIssues ? List.of(ValidationIssueType.TERMCODE_CONTEXT_COMBINATION_INVALID) : List.of())
+        .build();
+    return Ccdl.builder()
+        .version(URI.create("http://to_be_decided.com/draft-2/schema#"))
+        .inclusionCriteria(List.of(List.of(inclusionCriterion)))
+        .exclusionCriteria(List.of())
+        .display("foo")
+        .build();
+  }
+
+  @NotNull
+  private TermCode createTermCode() {
+    return TermCode.builder()
+        .code("LL2191-6")
+        .system("http://loinc.org")
+        .display("Geschlecht")
+        .build();
+  }
+
+  @NotNull
+  private Criterion createInvalidCriterion() {
+    return Criterion.builder()
+        .context(null)
+        .termCodes(List.of(createTermCode()))
+        .build();
+  }
+
+  private SavedQuerySlots createSavedQuerySlots() {
+    return SavedQuerySlots.builder()
+        .used(5)
+        .total(10)
+        .build();
+  }
+
+  private ByteArrayOutputStream createValidByteArrayOutputStream() throws IOException {
+    var byteArrayOutputStream = new ByteArrayOutputStream();
+    var zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
+    Map<String, String> files = new HashMap<>();
+    files.put("foo.json", "{}");
+    for (Map.Entry<String, String> file : files.entrySet()) {
+      ZipEntry entry = new ZipEntry(file.getKey());
+      zipOutputStream.putNextEntry(entry);
+      zipOutputStream.write(file.getValue().getBytes());
+      zipOutputStream.closeEntry();
+    }
+    zipOutputStream.close();
+    byteArrayOutputStream.close();
+    return byteArrayOutputStream;
+  }
+}

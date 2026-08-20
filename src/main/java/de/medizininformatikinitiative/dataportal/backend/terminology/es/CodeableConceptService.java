@@ -12,6 +12,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.Co
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.CodeableConceptEsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
@@ -31,19 +32,19 @@ import java.util.*;
 @Slf4j
 @ConditionalOnExpression("${app.elastic.enabled}")
 public class CodeableConceptService {
-  public static final String FIELD_NAME_DISPLAY_DE = "display.de";
-  public static final String FIELD_NAME_DISPLAY_EN = "display.en";
-  public static final String FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^0.5";
-  public static final String FIELD_NAME_TERMCODE_WITH_BOOST = "termcode.code^2";
   public static final String FIELD_NAME_TERMCODE_KEYWORD = "termcode.code.keyword";
   public static final String FILTER_KEY_VALUE_SETS = "value_sets";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;
 
+  private String[] queryFields;
+
   private CodeableConceptEsRepository repo;
 
   @Autowired
-  public CodeableConceptService(ElasticsearchOperations operations, CodeableConceptEsRepository repo) {
+  public CodeableConceptService(@Value("${app.elastic.query.codeable_concept.fields}") String[] queryFields,
+                                ElasticsearchOperations operations, CodeableConceptEsRepository repo) {
+    this.queryFields = queryFields;
     this.operations = operations;
     this.repo = repo;
   }
@@ -70,7 +71,7 @@ public class CodeableConceptService {
 
   public CodeableConceptBulkSearchResult performExactSearch(CodeableConceptBulkSearchRequest request) {
     List<CodeableConceptEntry> results = new ArrayList<>();
-    List<String> notFound = new ArrayList<>(request.searchterms());
+    List<String> notFound = new ArrayList<>(request.searchterms().stream().distinct().toList());
 
     SearchHits<CodeableConceptDocument> searchHitPage = findExactMatchesByBulkSearchRequest(request);
     searchHitPage.getSearchHits().forEach(hit -> {
@@ -174,7 +175,7 @@ public class CodeableConceptService {
     } else {
       var multiMatchQuery = new MultiMatchQuery.Builder()
           .query(keyword)
-          .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
+          .fields(List.of(queryFields))
           .build();
 
       boolQuery = new BoolQuery.Builder()
@@ -189,7 +190,7 @@ public class CodeableConceptService {
         .withPageable(pageRequest)
         .build();
 
-    log.info(Objects.requireNonNull(query.getQuery()).toString());
+    log.debug(Objects.requireNonNull(query.getQuery()).toString());
 
     return operations.search(query, CodeableConceptDocument.class);
   }
@@ -213,7 +214,7 @@ public class CodeableConceptService {
         .withMaxResults(500)
         .build();
 
-    log.info(finalQuery.getQuery().toString());
+    log.debug(finalQuery.getQuery().toString());
     return operations.search(finalQuery, CodeableConceptDocument.class);
   }
 

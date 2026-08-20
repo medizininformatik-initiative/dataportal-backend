@@ -4,15 +4,10 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 8.6.1
+  version: 9.0.0
 externalDocs:
   description: Check out the github repository
-  url: https://github.com/medizininformatik-initiative/feasibility-backend
-servers:
-  - url: https://to.be.defined
-    variables:
-      basePath:
-        default: /api/v5
+  url: https://github.com/medizininformatik-initiative/dataportal-backend
 tags:
   - name: dataquery
     description: operations for dataqueries
@@ -22,6 +17,8 @@ tags:
     description: operations to work with the ontology
   - name: codeable concepts
     description: operations on codeable concepts
+  - name: profile
+    description: operations on profiles
   - name: dse
     description: Data Selection and Extraction
   - name: validation
@@ -579,7 +576,7 @@ paths:
       description: Can optionally be filtered to only get the filters of one category, depending on the selections of other categories
       operationId: getFilters
       parameters:
-        - name: targetFilter
+        - name: target-filter
           in: query
           description: The requested filter category. Only if this is set, the further filters for contexts, kds-modules and terminologies are considered. If it is empty or null, ALL entries are returned.
           schema:
@@ -972,20 +969,159 @@ paths:
           description: Forbidden - insufficient access rights
         404:
           description: Entry not found
-  /dse/profile-tree:
+  /profile/entry/search:
     get:
       tags:
-        - dse
-      summary: Get the complete DSE profile tree
-      description: This can not be filtered or paginated or anything since for now it is rather small. All filtering will be done in the frontend for now. Might change if problems with that approach occur.
-      operationId: getProfileTree
+        - profile
+      summary: Parametrized search for profiles in the configured elastic search service.
+      operationId: searchProfiles
+      parameters:
+        - name: searchterm
+          in: query
+          description: The term to search for. In case of an empty searchterm, return the first page of the whole index, sorted alphabetically
+          schema:
+            type: string
+          example: Diagnose
+        - name: modules
+          in: query
+          description: Limit the search to any of the given modules
+          schema:
+            type: array
+            items:
+              type: string
+              example: Diagnose
+          style: form
+          explode: false
+        - name: categories
+          in: query
+          description: Limit the search to any of the given categories
+          schema:
+            type: array
+            items:
+              type: string
+              example: element
+          style: form
+          explode: false
+        - name: resource-types
+          in: query
+          description: Limit the search to any of the given FHIR resource types
+          schema:
+            type: array
+            items:
+              type: string
+              example: Condition
+          style: form
+          explode: false
+        - name: page-size
+          in: query
+          description: How many results shall be returned per page
+          schema:
+            type: integer
+          example: 10
+        - name: page
+          in: query
+          description: Which page shall be returned
+          schema:
+            type: integer
+          example: 42
       responses:
         200:
-          description: Profile tree file found and readable
+          description: Ok, return the page of results. Only selectable profiles are returned.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProfileTreeNode"
+                $ref: "#/components/schemas/ProfileSearchResult"
+      security:
+        - dataportal_auth:
+            - user
+  /profile/entry/{id}/list-details:
+    get:
+      tags:
+        - profile
+      summary: Get the detailed entry for a profile, containing children and parents
+      operationId: getProfileListDetailsById
+      parameters:
+        - name: id
+          in: path
+          description: The id of the profile entry that shall be retrieved
+          required: true
+          schema:
+            type: string
+            example: diagnose-condition-id
+      responses:
+        200:
+          description: Entry found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileEntry"
+        404:
+          description: Entry not found
+      security:
+        - dataportal_auth:
+            - user
+  /profile/search/filter:
+    get:
+      tags:
+        - profile
+      summary: Get the list of available filters for module, category and resourceType, including availability counts
+      description: Can optionally be filtered to only get the filter of one target category, depending on the selections of the other categories and/or a searchterm
+      operationId: getFilter
+      parameters:
+        - name: target-filter
+          in: query
+          description: The requested filter category. Only if this is set, the further filters for searchterm, modules, categories and resource-types are considered. If it is empty or null, ALL filters are returned unfiltered.
+          schema:
+            type: string
+            enum: [module, category, resourceType]
+          example: resourceType
+        - name: searchterm
+          in: query
+          description: Allow to take the searchterm into consideration to narrow down the results further.
+          schema:
+            type: string
+          example: Diagnose
+        - name: modules
+          in: query
+          description: Limit the search to any of the given modules
+          schema:
+            type: array
+            items:
+              type: string
+              example: Diagnose
+          style: form
+          explode: false
+        - name: categories
+          in: query
+          description: Limit the search to any of the given categories
+          schema:
+            type: array
+            items:
+              type: string
+              example: element
+          style: form
+          explode: false
+        - name: resource-types
+          in: query
+          description: Limit the search to any of the given FHIR resource types
+          schema:
+            type: array
+            items:
+              type: string
+              example: Condition
+          style: form
+          explode: false
+      responses:
+        200:
+          description: Ok, return the list of available filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProfileFilter"
+        400:
+          description: Bad request, e.g. optional parameters were set without target-filter, or target-filter is unknown
       security:
         - dataportal_auth:
             - user
@@ -1762,6 +1898,26 @@ components:
           type: integer
           examples:
             - 1234
+    ProfileFilter:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - resourceType
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileFilterValue"
+    ProfileFilterValue:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        count:
+          type: integer
+          examples:
+            - 1234
     LocalizedValue:
       type: object
       properties:
@@ -1820,6 +1976,123 @@ components:
             type: string
             examples:
               - foo
+    ProfileDisplayEntry:
+      type: object
+      properties:
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        description:
+          $ref: "#/components/schemas/DisplayEntry"
+    ProfileRelativeEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - module-diagnose-id
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        url:
+          type: string
+          examples:
+            - modul-diagnose
+        selectable:
+          type: boolean
+          examples:
+            - true
+    ProfileSearchEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - diagnose-condition-id
+        name:
+          type: string
+          examples:
+            - MII_PR_Diagnose_Condition
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        selectable:
+          type: boolean
+          examples:
+            - true
+        url:
+          type: string
+          format: uri
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
+        module:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        resourceType:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDisplayEntry"
+        availability:
+          type: integer
+          examples:
+            - 1
+    ProfileSearchResult:
+      type: object
+      properties:
+        totalHits:
+          type: integer
+          examples:
+            - 42
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileSearchEntry"
+    ProfileEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          examples:
+            - diagnose-condition-id
+        name:
+          type: string
+          examples:
+            - MII_PR_Diagnose_Condition
+        display:
+          $ref: "#/components/schemas/DisplayEntry"
+        description:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        selectable:
+          type: boolean
+          examples:
+            - true
+        url:
+          type: string
+          format: uri
+          examples:
+            - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
+        module:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        resourceType:
+          $ref: "#/components/schemas/ProfileDisplayEntry"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDisplayEntry"
+        availability:
+          type: integer
+          examples:
+            - 1
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileDisplayEntry"
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileRelativeEntry"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileRelativeEntry"
     CriteriaProfileData:
       type: object
       properties:
@@ -1917,41 +2190,6 @@ components:
             type: string
             examples:
               - OPS
-    ProfileTreeNode:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          examples:
-            - aee6afe1-3b96-4449-85cd-be8046ccbb84
-        children:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProfileTreeNode"
-        name:
-          type: string
-          examples:
-            - ProfileObservationLaboruntersuchung
-        display:
-          $ref: "#/components/schemas/DisplayEntry"
-        module:
-          type: string
-          examples:
-            - modul-labor
-        url:
-          type: string
-          format: uri
-          examples:
-            - https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab
-        leaf:
-          type: boolean
-          examples:
-            - true
-        selectable:
-          type: boolean
-          examples:
-            - false
     ProfileDataField:
       type: object
       properties:
@@ -2123,7 +2361,7 @@ components:
         uiBackendApiPath:
           type: string
           examples:
-            - /api/v5
+            - /api/v6
         readResultSummaryPollingInterval:
           type: string
           format: duration

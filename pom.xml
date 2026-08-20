@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.14</version>
+    <version>4.1.0</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <groupId>de.medizininformatik-initiative</groupId>
   <artifactId>DataportalBackend</artifactId>
-  <version>8.7.0</version>
+  <version>9.0.0</version>
 
   <name>Dataportal Backend</name>
   <description>Backend of the Dataportal</description>
@@ -25,44 +25,22 @@
 
   <properties>
     <java.version>17</java.version>
-    <mockwebserver.version>5.3.2</mockwebserver.version>
-    <ontology-tag>v4.1.0</ontology-tag>
+    <mockwebserver.version>5.5.0</mockwebserver.version>
+    <ontology-tag>v5.0.0</ontology-tag>
   </properties>
 
   <dependencies>
+    <!-- Spring Boot 4 dropped Undertow support; use the default Tomcat server. -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-starter-tomcat</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
+    <!-- Spring Boot 4 moved RestTemplateBuilder/RestClient support into a dedicated module. -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-undertow</artifactId>
+      <artifactId>spring-boot-restclient</artifactId>
     </dependency>
-
-    <!-- Manually override undertow version due to CVE-2025-9784, remove when updated in springboot -->
-    <dependency>
-      <groupId>io.undertow</groupId>
-      <artifactId>undertow-core</artifactId>
-      <version>2.4.0.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>io.undertow</groupId>
-      <artifactId>undertow-servlet</artifactId>
-      <version>2.3.24.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>io.undertow</groupId>
-      <artifactId>undertow-websockets-jsr</artifactId>
-      <version>2.3.24.Final</version>
-    </dependency>
-    <!-- Until here -->
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -102,12 +80,19 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>oauth2-oidc-sdk</artifactId>
-      <version>11.37</version>
+      <version>11.38.2</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
+    </dependency>
+
+    <!-- Spring Boot 4 split Flyway auto-configuration out of spring-boot-autoconfigure
+         into this dedicated module; required for migrations to run at startup. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-flyway</artifactId>
     </dependency>
 
     <dependency>
@@ -118,7 +103,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.7.11</version>
+      <version>42.7.13</version>
       <scope>runtime</scope>
     </dependency>
 
@@ -131,19 +116,19 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>2.8.17</version>
+      <version>3.1.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>2.0.1</version>
+      <version>3.0.6</version>
     </dependency>
 
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
-      <version>2.14.2</version>
+      <version>2.14.3</version>
     </dependency>
 
     <dependency>
@@ -161,7 +146,7 @@
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-client</artifactId>
-      <version>7.6.1</version>
+      <version>8.10.1</version>
       <exclusions>
         <exclusion>
           <groupId>com.google</groupId>
@@ -173,13 +158,13 @@
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-structures-r4</artifactId>
-      <version>7.6.1</version>
+      <version>8.10.1</version>
     </dependency>
 
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>org.hl7.fhir.utilities</artifactId>
-      <version>6.9.7</version>
+      <version>6.10.2</version>
     </dependency>
 
     <dependency>
@@ -217,17 +202,17 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.84</version>
+      <version>1.85.2</version>
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcutil-jdk18on</artifactId>
-      <version>1.84</version>
+      <version>1.85</version>
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk18on</artifactId>
-      <version>1.84</version>
+      <version>1.85</version>
     </dependency>
 
     <dependency>
@@ -238,8 +223,8 @@
 
     <dependency>
       <groupId>de.medizininformatik-initiative</groupId>
-      <artifactId>sq2cql</artifactId>
-      <version>1.3.0</version>
+      <artifactId>cctb-cql</artifactId>
+      <version>2.0.0</version>
     </dependency>
 
     <dependency>
@@ -254,9 +239,11 @@
       <version>3.1.12</version>
     </dependency>
 
+    <!-- Jackson 3 (managed by the Spring Boot tools.jackson BOM). The JSR-310/java-time
+         support is built into jackson-databind in Jackson 3, so no separate datatype module. -->
     <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-jsr310</artifactId>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
 
     <dependency>
@@ -268,7 +255,7 @@
     <dependency>
       <groupId>org.threeten</groupId>
       <artifactId>threeten-extra</artifactId>
-      <version>1.8.0</version>
+      <version>1.10.0</version>
     </dependency>
 
     <dependency>
@@ -280,6 +267,29 @@
           <artifactId>android-json</artifactId>
         </exclusion>
       </exclusions>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Spring Boot 4 split the test slices (@WebMvcTest, @DataJpaTest, @AutoConfigureTestDatabase,
+         @DataElasticsearchTest) out of spring-boot-test-autoconfigure into per-technology modules. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-data-jpa-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-jdbc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-data-elasticsearch-test</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -313,7 +323,7 @@
     <dependency>
       <groupId>com.github.dasniko</groupId>
       <artifactId>testcontainers-keycloak</artifactId>
-      <version>4.2.1</version>
+      <version>4.3.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -327,19 +337,19 @@
 
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
+      <artifactId>testcontainers-postgresql</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>elasticsearch</artifactId>
+      <artifactId>testcontainers-elasticsearch</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -349,17 +359,26 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Spring Boot 4 moved the @WebMvcTest security auto-configuration (which applies
+         MockMvc springSecurity() so the filter chain and @WithMockUser work) into this
+         dedicated module; in SB3 it was part of the web-servlet test slice. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-test</artifactId>
-      <version>3.8.5</version>
+      <version>3.8.7</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers-toxiproxy</artifactId>
-      <version>2.0.4</version>
+      <version>2.0.5</version>
       <scope>test</scope>
     </dependency>
 
@@ -376,7 +395,7 @@
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
-      <version>4.0.7</version>
+      <version>4.0.9</version>
     </dependency>
 
   </dependencies>
@@ -405,6 +424,20 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
 
+      <!-- Spring Boot 4.1 bumped maven-resources-plugin to 3.5.0, whose default
+     changeDetection is now "content" instead of "timestamp". That makes
+     process-resources unconditionally overwrite target/classes/maven.properties
+     with the empty src/main/resources/maven.properties placeholder, wiping out
+     what properties-maven-plugin wrote during generate-resources. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+          <changeDetection>timestamp</changeDetection>
+        </configuration>
+      </plugin>
+
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
@@ -419,7 +452,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.5.5</version>
+        <version>3.5.6</version>
         <executions>
           <execution>
             <goals>
@@ -433,7 +466,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.14</version>
+        <version>0.8.15</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -502,7 +535,19 @@
       <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-impl</artifactId>
-        <version>4.0.7</version>
+        <version>4.0.9</version>
+      </dependency>
+
+      <!--
+        org.hl7.fhir.utilities pulls in an older okhttp-jvm (pinned by its parent
+        org.hl7.fhir.core) which, due to Maven dependency mediation, would otherwise
+        win over the okhttp-jvm version required by mockwebserver/okhttp-tls. Pin it
+        here so the version stays in sync with mockwebserver.version.
+      -->
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp-jvm</artifactId>
+        <version>${mockwebserver.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -641,12 +686,6 @@
                       </sourceFile>
                       <destinationFile>
                         ${ontoDirectory.target}/migration/R__load_latest_dse_profiles.sql
-                      </destinationFile>
-                    </fileSet>
-                    <fileSet>
-                      <sourceFile>${ontoDirectory.download}/backend_unzipped/profile_tree.json
-                      </sourceFile>
-                      <destinationFile>${ontoDirectory.target}/dse/profile_tree.json
                       </destinationFile>
                     </fileSet>
                     <fileSet>

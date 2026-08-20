@@ -17,4 +17,4 @@ as well as the one of the [FDPG Dataportal](https://medizininformatik-initiative
 
 ## Api Documentation
 
-The OpenAPI documentation is available at <baseurl>/api/v5/swagger-ui/index.html
+The OpenAPI documentation is available at <baseurl>/api/v6/swagger-ui/index.html

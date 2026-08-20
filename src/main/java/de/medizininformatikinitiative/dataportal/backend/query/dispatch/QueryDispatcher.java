@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.dispatch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerClient;
@@ -204,7 +204,7 @@ public class QueryDispatcher {
   private String serializedCcdl(Ccdl query) throws QueryDispatchException {
     try {
       return jsonUtil.writeValueAsString(query);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new QueryDispatchException("could not serialize query in order to enqueue it", e);
     }
   }
@@ -239,7 +239,7 @@ public class QueryDispatcher {
   private Ccdl getCcdlFromEnqueuedQuery(Query enqueuedQuery) throws QueryDispatchException {
     try {
       return jsonUtil.readValue(enqueuedQuery.getQueryContent().getQueryContent(), Ccdl.class);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new QueryDispatchException("cannot deserialize enqueued query body as CCDL", e);
     }
   }

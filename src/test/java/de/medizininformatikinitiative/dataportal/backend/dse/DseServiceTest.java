@@ -1,8 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.dse;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.*;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfile;
@@ -15,8 +15,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,45 +26,15 @@ import static org.mockito.Mockito.doThrow;
 @ExtendWith(MockitoExtension.class)
 class DseServiceTest {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults().build();
   @Mock
   private DseProfileRepository dseProfileRepository;
   private DseService dseService;
 
-  private DseService createDseService() throws IOException {
-    return new DseService("src/test/resources/ontology/dse/profile_tree.json", dseProfileRepository, objectMapper);
-  }
-
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup() {
     Mockito.reset(dseProfileRepository);
-    dseService = createDseService();
-  }
-
-  @Test
-  void testCreateProfileTreeInstance_throwsOnProfileTreeNotFound() {
-    assertThrows(FileNotFoundException.class, ()
-        -> new DseService("src/test/this/is/not/found.json", dseProfileRepository, objectMapper));
-  }
-
-  @Test
-  void testGetProfileTree_succeeds() {
-
-    var profileTree = assertDoesNotThrow(() -> dseService.getProfileTree());
-
-    assertNotNull(profileTree);
-    assertInstanceOf(DseProfileTreeNode.class, profileTree);
-    assertEquals(profileTree.name(), "Root");
-    assertEquals(profileTree.module(), "no-module");
-    assertEquals(profileTree.url(), "no-url");
-    assertEquals(profileTree.children().size(), 1);
-    assertEquals(profileTree.children().get(0).id(), "de3323a2-7289-45e9-8a89-53c594f190e8");
-  }
-
-  @Test
-  void testGetProfileTree_throwsOnObjectMapperError() {
-    assertThrows(UnrecognizedPropertyException.class, ()
-        -> new DseService("src/test/resources/ontology/dse/bogus_profile_tree.json", dseProfileRepository, objectMapper));
+    dseService = new DseService(dseProfileRepository, objectMapper);
   }
 
   @Test
@@ -78,7 +46,7 @@ class DseServiceTest {
   }
 
   @Test
-  void testGetProfileData_succeedsWithoutErrors() throws JsonProcessingException {
+  void testGetProfileData_succeedsWithoutErrors() throws JacksonException {
     doReturn(Optional.of(createDummyDseProfile())).when(dseProfileRepository).findByUrl(any(String.class));
 
     var results = assertDoesNotThrow(() -> dseService.getProfileData(List.of("1")));
@@ -88,7 +56,7 @@ class DseServiceTest {
   }
 
   @Test
-  void testGetProfileData_succeedsWithErrorEntryOnCaughtException() throws JsonProcessingException {
+  void testGetProfileData_succeedsWithErrorEntryOnCaughtException() throws JacksonException {
     doThrow(DataIntegrityViolationException.class).when(dseProfileRepository).findByUrl(any(String.class));
 
     var results = assertDoesNotThrow(() -> dseService.getProfileData(List.of("1")));
@@ -101,7 +69,7 @@ class DseServiceTest {
   }
 
   @Test
-  void testGetProfileData_succeedsWithErrors() throws JsonProcessingException {
+  void testGetProfileData_succeedsWithErrors() throws JacksonException {
     doReturn(Optional.of(createDummyDseProfile())).when(dseProfileRepository).findByUrl("found");
     doReturn(Optional.empty()).when(dseProfileRepository).findByUrl("not-found");
 
@@ -119,7 +87,7 @@ class DseServiceTest {
     assertThrows(RuntimeException.class, () -> dseService.getProfileData(List.of("1")));
   }
 
-  private DseProfile createDummyDseProfile() throws JsonProcessingException {
+  private DseProfile createDummyDseProfile() throws JacksonException {
     var dseProfile = new DseProfile();
 
     dseProfile.setId(1L);

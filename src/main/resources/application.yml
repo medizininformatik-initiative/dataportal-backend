@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: dataportal-backend
+  jackson:
+    # Preserve Jackson 2 serialization defaults after the Jackson 3 upgrade
+    # (no alphabetical property sorting, lenient trailing tokens, etc.).
+    use-jackson2-defaults: true
   datasource:
     url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_DBNAME:dataportal}
     username: ${DATABASE_USER:dataportaluser}
@@ -31,8 +35,9 @@ springdoc:
   swagger-ui:
     disable-swagger-default-url: true
     tryItOutEnabled: false
-    path: /api/v5/swagger-ui
+    path: /api/v6/swagger-ui
     url: /v3/api-docs/swagger.yaml
+    supported-submit-methods: []
 management:
   endpoints:
     web:
@@ -42,7 +47,7 @@ management:
         allowed-headers: "*"
       exposure:
         include: "health, info"
-      base-path: /api/v5/actuator
+      base-path: /api/v6/actuator
     access:
       default: none
   endpoint:
@@ -60,7 +65,6 @@ management:
       enabled: true
       mode: full
 app:
-  dseProfileTreeFile: ${DSE_PROFILE_TREE_FILE:ontology/dse/profile_tree.json}
   terminologySystemsFile: ${TERMINOLOGY_SYSTEMS_FILE:ontology/terminology_systems.json}
   mappingsFile: ${MAPPINGS_FILE:ontology/mapping_cql.json}
   conceptTreeFile: ${CONCEPT_TREE_FILE:ontology/mapping_tree.json}
@@ -130,6 +134,52 @@ app:
     enabled: ${ELASTIC_SEARCH_ENABLED:true}
     host: ${ELASTIC_SEARCH_HOST:localhost:9200}
     filter: ${ELASTIC_SEARCH_FILTER:context,terminology,kds_module}
+    query:
+      # Be careful changing these fields. There is no check whether the fields are "valid" (as in indexed in elastic search)
+      # Only modify if you really know what you are doing! Modifying the boost factor or removing fields is no problem.
+      # See docs/configuration.md for how to determine which fields are searchable in a given index.
+      # Each line below folds into one comma-separated value (YAML line-folding turns the
+      # break into a space, which Spring then trims away when splitting into a String[]).
+      # Keep one field per line so this stays readable; do not add blank lines or comments
+      # between fields, as they would become part of the resolved value.
+      terminology:
+        fields: ${ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS:display.de,
+          display.en,
+          termcode^2,
+          display.original^0.5}
+      codeable_concept:
+        fields: ${ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS:display.de,
+          display.en,
+          termcode.code^2,
+          display.original^0.5}
+      profile:
+        translated_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS:name^3,
+          display.localization.de-DE^2,
+          display.localization.en-US^2,
+          fields.display.localization.de-DE,
+          fields.display.localization.en-US,
+          fields.display.localization.de-DE.ngram,
+          fields.display.localization.en-US.ngram,
+          display.localization.de-DE.ngram,
+          display.localization.en-US.ngram,
+          name.ngram,
+          description.localization.de-DE^0.25,
+          description.localization.en-US^0.25,
+          description.localization.de-DE.ngram^0.25,
+          description.localization.en-US.ngram^0.25,
+          fields.description.localization.de-DE^0.25,
+          fields.description.localization.en-US^0.25,
+          fields.description.localization.de-DE.ngram^0.25,
+          fields.description.localization.en-US.ngram^0.25}
+        original_fields: ${ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS:name^3,
+          display.original^2,
+          fields.display.original,
+          fields.display.original.ngram,
+          name.ngram,
+          description.original^0.25,
+          description.original.ngram^0.25,
+          fields.description.original^0.25,
+          fields.description.original.ngram^0.25}
   privacy:
     threshold:
       sites: ${PRIVACY_THRESHOLD_SITES:3}

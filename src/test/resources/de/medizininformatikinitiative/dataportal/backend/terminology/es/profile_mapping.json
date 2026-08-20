@@ -1,0 +1,461 @@
+{
+  "settings": {
+    "index": {
+      "max_ngram_diff": 49
+    },
+    "analysis": {
+      "tokenizer": {
+        "edge_ngram_tokenizer": {
+          "type": "edge_ngram",
+          "min_gram": 1,
+          "max_gram": 50,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        },
+        "edge_ngram_tokenizer_include_punctuation": {
+          "type": "edge_ngram",
+          "min_gram": 1,
+          "max_gram": 50,
+          "token_chars": [
+            "letter",
+            "digit",
+            "punctuation",
+            "custom"
+          ],
+          "custom_token_chars": [
+            "+-_"
+          ]
+        },
+        "ngram_tokenizer": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 25,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        },
+        "ngram_tokenizer_include_punctuation": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 25,
+          "token_chars": [
+            "letter",
+            "digit",
+            "punctuation",
+            "custom"
+          ],
+          "custom_token_chars": [
+            "+-_"
+          ]
+        },
+        "whitespace_tokenizer": {
+          "type": "simple_pattern_split",
+          "pattern": " "
+        }
+      },
+      "analyzer": {
+        "edge_ngram_analyzer": {
+          "type": "custom",
+          "tokenizer": "edge_ngram_tokenizer",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "edge_ngram_analyzer_include_punctuation": {
+          "type": "custom",
+          "tokenizer": "edge_ngram_tokenizer_include_punctuation",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "ngram_analyzer": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "ngram_analyzer_include_punctuation": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer_include_punctuation",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "lowercase_analyzer": {
+          "type": "custom",
+          "tokenizer": "whitespace_tokenizer",
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "availability": {
+        "type": "long",
+        "index": false
+      },
+      "categories": {
+        "properties": {
+          "original": {
+            "type": "keyword"
+          },
+          "localization": {
+            "type": "object",
+            "properties": {
+              "de-DE": {
+                "type": "text",
+                "index": false
+              },
+              "en-US": {
+                "type": "text",
+                "index": false
+              }
+            }
+          }
+        }
+      },
+      "children": {
+        "properties": {
+          "display": {
+            "properties": {
+              "original": {
+                "type": "text"
+              },
+              "localization": {
+                "type": "object",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "index": false
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "index": false
+                  }
+                }
+              }
+            }
+          },
+          "url": {
+            "type": "text",
+            "index": false
+          },
+          "id": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
+          }
+        }
+      },
+      "parents": {
+        "properties": {
+          "display": {
+            "properties": {
+              "original": {
+                "type": "text"
+              },
+              "localization": {
+                "type": "object",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "index": false
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "index": false
+                  }
+                }
+              }
+            }
+          },
+          "url": {
+            "type": "text",
+            "index": false
+          },
+          "id": {
+            "type": "text",
+            "index": false
+          },
+          "selectable": {
+            "type": "boolean",
+            "index": false
+          }
+        }
+      },
+      "description": {
+        "properties": {
+          "original": {
+            "type": "text",
+            "analyzer": "edge_ngram_analyzer_include_punctuation",
+            "search_analyzer": "lowercase_analyzer",
+            "fields": {
+              "ngram": {
+                "type": "text",
+                "analyzer": "ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "norms": false
+              }
+            }
+          },
+          "localization": {
+            "type": "object",
+            "dynamic": "true",
+            "properties": {
+              "de-DE": {
+                "type": "text",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "en-US": {
+                "type": "text",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "display": {
+        "properties": {
+          "original": {
+            "type": "text",
+            "analyzer": "edge_ngram_analyzer_include_punctuation",
+            "search_analyzer": "lowercase_analyzer",
+            "fields": {
+              "ngram": {
+                "type": "text",
+                "analyzer": "ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "norms": false
+              }
+            }
+          },
+          "localization": {
+            "type": "object",
+            "dynamic": "true",
+            "properties": {
+              "de-DE": {
+                "type": "text",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "en-US": {
+                "type": "text",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "fields": {
+        "properties": {
+          "display": {
+            "properties": {
+              "original": {
+                "type": "text",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "localization": {
+                "type": "object",
+                "dynamic": "true",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "description": {
+            "properties": {
+              "original": {
+                "type": "text",
+                "analyzer": "edge_ngram_analyzer_include_punctuation",
+                "search_analyzer": "lowercase_analyzer",
+                "fields": {
+                  "ngram": {
+                    "type": "text",
+                    "analyzer": "ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "norms": false
+                  }
+                }
+              },
+              "localization": {
+                "type": "object",
+                "dynamic": "true",
+                "properties": {
+                  "de-DE": {
+                    "type": "text",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
+                  },
+                  "en-US": {
+                    "type": "text",
+                    "analyzer": "edge_ngram_analyzer_include_punctuation",
+                    "search_analyzer": "lowercase_analyzer",
+                    "fields": {
+                      "ngram": {
+                        "type": "text",
+                        "analyzer": "ngram_analyzer_include_punctuation",
+                        "search_analyzer": "lowercase_analyzer",
+                        "norms": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "module": {
+        "properties": {
+          "original": {
+            "type": "keyword"
+          },
+          "localization": {
+            "type": "object",
+            "dynamic": "true",
+            "properties": {
+              "de-DE": {
+                "type": "text",
+                "index": false
+              },
+              "en-US": {
+                "type": "text",
+                "index": false
+              }
+            }
+          }
+        }
+      },
+      "resource_type": {
+        "properties": {
+          "original": {
+            "type": "keyword"
+          },
+          "localization": {
+            "type": "object",
+            "dynamic": "true",
+            "properties": {
+              "de-DE": {
+                "type": "text",
+                "index": false
+              },
+              "en-US": {
+                "type": "text",
+                "index": false
+              }
+            }
+          }
+        }
+      },
+      "name": {
+        "type": "text",
+        "analyzer": "edge_ngram_analyzer_include_punctuation",
+        "search_analyzer": "lowercase_analyzer",
+        "fields": {
+          "ngram": {
+            "type": "text",
+            "analyzer": "ngram_analyzer_include_punctuation",
+            "search_analyzer": "lowercase_analyzer",
+            "norms": false
+          }
+        }
+      },
+      "selectable": {
+        "type": "boolean",
+        "index": false
+      },
+      "url": {
+        "type": "text",
+        "index": false
+      }
+    }
+  }
+}

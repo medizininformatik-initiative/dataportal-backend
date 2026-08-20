@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.CodeableConceptBulkSearchRequest;
@@ -35,7 +36,8 @@ import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class CodeableConceptServiceTest {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults().build();
+  private String[] queryFields = new String[]{"display.de", "display.en", "termcode.code^2", "display.original^0.5"};
   @Mock
   ElasticsearchOperations operations;
   @Mock
@@ -55,7 +57,7 @@ class CodeableConceptServiceTest {
   }
 
   private CodeableConceptService createCodeableConceptService() {
-    return new CodeableConceptService(operations, repository);
+    return new CodeableConceptService(queryFields, operations, repository);
   }
 
   @BeforeEach
@@ -182,6 +184,24 @@ class CodeableConceptServiceTest {
     assertThat(searchResult.notFound().size()).isEqualTo(searchtermsNotFound.size());
     assertThat(searchResult.found()).containsExactlyInAnyOrderElementsOf(dummySearchHitsPage.getSearchHits().stream().map(sh -> CodeableConceptEntry.of(sh.getContent())).toList());
     assertThat(searchResult.notFound()).containsExactlyInAnyOrderElementsOf(searchtermsNotFound);
+  }
+
+  @Test
+  void testPerformExactSearch_duplicateSearchtermsAreNotFlaggedAsNotFound() {
+    List<String> searchterms = List.of("available-term-0", "available-term-0", "unavailable-term-0");
+    SearchHits<CodeableConceptDocument> dummySearchHitsPage = createDummySearchHitsPage(1);
+    var request = CodeableConceptBulkSearchRequest.builder()
+        .valueSet("valid-valueset")
+        .searchterms(searchterms)
+        .build();
+
+    doReturn(dummySearchHitsPage).when(operations).search(any(NativeQuery.class), any(Class.class));
+    var searchResult = assertDoesNotThrow(
+        () -> codeableConceptService.performExactSearch(request)
+    );
+
+    assertThat(searchResult.found()).containsExactlyInAnyOrderElementsOf(dummySearchHitsPage.getSearchHits().stream().map(sh -> CodeableConceptEntry.of(sh.getContent())).toList());
+    assertThat(searchResult.notFound()).containsExactly("unavailable-term-0");
   }
 
   @Test

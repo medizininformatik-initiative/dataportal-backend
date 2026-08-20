@@ -2,7 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.query.ratelimiting;
 
 import de.medizininformatikinitiative.dataportal.backend.config.WebSecurityConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.FeasibilityIssue;
-import de.medizininformatikinitiative.dataportal.backend.query.v5.FeasibilityQueryHandlerRestController;
+import de.medizininformatikinitiative.dataportal.backend.query.v6.FeasibilityQueryHandlerRestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;

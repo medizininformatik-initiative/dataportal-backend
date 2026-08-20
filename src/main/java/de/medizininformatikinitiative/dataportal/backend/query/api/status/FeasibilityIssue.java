@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.status;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 

@@ -6,7 +6,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.api.Codeabl
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.CodeableConceptEsRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.elasticsearch.DataElasticsearchTest;
+import org.springframework.boot.data.elasticsearch.test.autoconfigure.DataElasticsearchTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
@@ -32,7 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Import({CodeableConceptService.class})
 @Testcontainers
 @DataElasticsearchTest(properties = {
-    "app.elastic.filter=context,terminology"
+    "app.elastic.filter=context,terminology",
+    "app.elastic.query.codeable_concept.fields=display.de,display.en,termcode.code^2,display.original^0.5"
 })
 public class CodeableConceptServiceIT {
 

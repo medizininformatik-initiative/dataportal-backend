@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
@@ -25,7 +26,7 @@ public class CcdlValidatorSpringConfig {
       TerminologyEsService terminologyEsService,
       CodeableConceptService codeableConceptService) {
     return enabled
-        ? new CcdlValidator(terminologyService, terminologyEsService, codeableConceptService, new ObjectMapper())
+        ? new CcdlValidator(terminologyService, terminologyEsService, codeableConceptService, JsonMapper.builderWithJackson2Defaults().build())
         : new CcdlPassValidator();
   }
 }

@@ -1,6 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.query.api.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;

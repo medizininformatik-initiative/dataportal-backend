@@ -43,23 +43,24 @@ public class TerminologyEsService {
   public static final String FILTER_KEY_CONTEXT_CODE = "context.code";
   public static final String FILTER_KEY_KDS_MODULE = "kds_module";
   public static final String FILTER_KEY_TERMINOLOGY = "terminology";
-  public static final String FIELD_NAME_DISPLAY_DE = "display.de";
-  public static final String FIELD_NAME_DISPLAY_EN = "display.en";
-  public static final String FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST = "display.original^0.5";
-  public static final String FIELD_NAME_TERMCODE_WITH_BOOST = "termcode^2";
   public static final String FIELD_NAME_TERMCODE_KEYWORD = "termcode.keyword";
   private static final UUID NAMESPACE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
   private ElasticsearchOperations operations;
 
   private String[] filterFields;
 
+  private String[] queryFields;
+
   private OntologyItemEsRepository ontologyItemEsRepository;
 
   private OntologyListItemEsRepository ontologyListItemEsRepository;
 
   @Autowired
-  public TerminologyEsService(@Value("${app.elastic.filter}") String[] filterFields, ElasticsearchOperations operations, OntologyItemEsRepository ontologyItemEsRepository, OntologyListItemEsRepository ontologyListItemEsRepository) {
+  public TerminologyEsService(@Value("${app.elastic.filter}") String[] filterFields,
+                              @Value("${app.elastic.query.terminology.fields}") String[] queryFields,
+                              ElasticsearchOperations operations, OntologyItemEsRepository ontologyItemEsRepository, OntologyListItemEsRepository ontologyListItemEsRepository) {
     this.filterFields = filterFields;
+    this.queryFields = queryFields;
     this.operations = operations;
     this.ontologyItemEsRepository = ontologyItemEsRepository;
     this.ontologyListItemEsRepository = ontologyListItemEsRepository;
@@ -177,7 +178,7 @@ public class TerminologyEsService {
 
   public EsBulkSearchResult performExactSearch(TerminologyBulkSearchRequest request) {
     List<EsSearchResultEntryExtended> results = new ArrayList<>();
-    List<String> notFound = new ArrayList<>(request.searchterms());
+    List<String> notFound = new ArrayList<>(request.searchterms().stream().distinct().toList());
 
     SearchHits<OntologyItemDocument> searchHitPage = findExactMatchesByBulkSearchRequest(request);
     searchHitPage.getSearchHits().forEach(hit -> {
@@ -230,7 +231,7 @@ public class TerminologyEsService {
     } else {
       var multiMatchQuery = new MultiMatchQuery.Builder()
           .query(keyword)
-          .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
+          .fields(List.of(queryFields))
           .build();
 
       boolQuery = new BoolQuery.Builder()
@@ -245,7 +246,7 @@ public class TerminologyEsService {
         .build();
 
     var availabilityScoreScript = new Script.Builder()
-        .source("doc['availability'].value == 0 ? _score : _score + 100")
+        .source(s -> s.scriptString("doc['availability'].value == 0 ? _score : _score + 100"))
         .build();
 
     var function = FunctionScoreBuilders.scriptScore()
@@ -265,7 +266,7 @@ public class TerminologyEsService {
         .withPageable(pageRequest)
         .build();
 
-    log.info(finalQuery.getQuery().toString());
+    log.debug(finalQuery.getQuery().toString());
 
     return operations.search(finalQuery, OntologyListItemDocument.class);
 
@@ -291,7 +292,7 @@ public class TerminologyEsService {
         .withMaxResults(500)
         .build();
 
-    log.info(finalQuery.getQuery().toString());
+    log.debug(finalQuery.getQuery().toString());
     return operations.search(finalQuery, OntologyItemDocument.class);
   }
 
@@ -299,6 +300,7 @@ public class TerminologyEsService {
     var ontologyItem = ontologyItemEsRepository.findById(hash).orElseThrow(OntologyItemNotFoundException::new);
     var ontologyItemRelationsDocument = OntologyItemRelationsDocument.builder()
         .display(ontologyItem.display())
+        .selectable(ontologyItem.selectable())
         .terminology(ontologyItem.terminology())
         .termcode(ontologyItem.termcode())
         .parents(ontologyItem.parents())
@@ -351,7 +353,7 @@ public class TerminologyEsService {
             if (hasSearchTerm) {
               b.must(m -> m.multiMatch(mm -> mm
                   .query(searchTerm)
-                  .fields(List.of(FIELD_NAME_DISPLAY_DE, FIELD_NAME_DISPLAY_EN, FIELD_NAME_TERMCODE_WITH_BOOST, FIELD_NAME_DISPLAY_ORIGINAL_WITH_BOOST))
+                  .fields(List.of(queryFields))
               ));
             }
 

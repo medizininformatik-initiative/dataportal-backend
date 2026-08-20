@@ -1,7 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.*;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.Context;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.TermCode;
@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.URL;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,8 +42,10 @@ public class TerminologyService {
     this.uiProfileRepository = uiProfileRepository;
     this.termCodeRepository = termCodeRepository;
     this.jsonUtil = jsonUtil;
-    this.terminologySystems = jsonUtil.readValue(new URL("file:" + terminologySystemsFilename), new TypeReference<>() {
-    });
+    try (var in = new FileInputStream(terminologySystemsFilename)) {
+      this.terminologySystems = jsonUtil.readValue(in, new TypeReference<>() {
+      });
+    }
   }
 
   public static int min(int... numbers) {

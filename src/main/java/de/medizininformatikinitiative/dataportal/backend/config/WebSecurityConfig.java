@@ -1,7 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -36,7 +35,7 @@ public class WebSecurityConfig {
   public static final String KEY_SPRING_ADDONS_PUBLIC = "spring-addons-public";
   public static final String PATH_ACTUATOR_HEALTH = "/actuator/health";
   public static final String PATH_ACTUATOR_INFO = "/actuator/info";
-  public static final String PATH_API = "/api/v5";
+  public static final String PATH_API = "/api/v6";
   public static final String PATH_VALIDATION = "/validation";
   public static final String PATH_UPGRADE = "/upgrade";
   public static final String PATH_QUERY = "/query";
@@ -52,6 +51,7 @@ public class WebSecurityConfig {
   public static final String PATH_TERMINOLOGY = "/terminology";
   public static final String PATH_DSE = "/dse";
   public static final String PATH_CODEABLE_CONCEPT = "/codeable-concept";
+  public static final String PATH_PROFILE = "/profile";
   public static final String PATH_SWAGGER_UI = "/swagger-ui/**";
   public static final String PATH_SWAGGER_CONFIG = "/v3/api-docs/**";
   public static final String PATH_SETTINGS = "/.settings";
@@ -60,6 +60,9 @@ public class WebSecurityConfig {
 
   @Value("${app.keycloakAdminRole}")
   private String keycloakAdminRole;
+
+  @Value("${server.ssl.enabled:false}")
+  private boolean sslEnabled;
 
   @SuppressWarnings("unchecked")
   @Bean
@@ -90,7 +93,6 @@ public class WebSecurityConfig {
   @Bean
   public SecurityFilterChain apiFilterChain(
       HttpSecurity http,
-      ServerProperties serverProperties,
       Converter<Jwt, ? extends AbstractAuthenticationToken> authenticationConverter) throws Exception {
 
     http.authorizeHttpRequests(authorize -> authorize
@@ -110,6 +112,7 @@ public class WebSecurityConfig {
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_DSE + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
             .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_CODEABLE_CONCEPT + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
+            .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(PATH_API + PATH_PROFILE + "/**")).hasAnyAuthority(keycloakAdminRole, keycloakAllowedRole)
             .anyRequest().authenticated()
         )
         .oauth2ResourceServer(oauth2 -> oauth2
@@ -123,7 +126,7 @@ public class WebSecurityConfig {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
 
-    if (serverProperties.getSsl() != null && serverProperties.getSsl().isEnabled()) {
+    if (sslEnabled) {
       http.redirectToHttps(Customizer.withDefaults());
     }
     return http.build();

@@ -1,8 +1,8 @@
-FROM eclipse-temurin:25.0.2_10-jre-alpine@sha256:5fcc27581b238efbfda93da3a103f59e0b5691fe522a7ac03fe8057b0819c888
+FROM eclipse-temurin:25.0.3_9-jre-alpine@sha256:28db6fdf60e38945e43d840c0333aeaec66c15943070104f7586fd3c9d1665b0
 
 WORKDIR /opt/dataportal-backend
 
-ARG VERSION=6.0.0
+ARG VERSION=9.0.0
 ENV APP_VERSION=${VERSION}
 ENV DATABASE_HOST="dataportal-network"
 ENV DATABASE_PORT=5432
@@ -19,7 +19,7 @@ RUN mkdir logging && \
     apk --no-cache add curl bash
 USER 10001
 
-HEALTHCHECK --interval=5s --start-period=10s CMD curl -s -f http://localhost:8090/api/v5/actuator/health || exit 1
+HEALTHCHECK --interval=5s --start-period=10s CMD curl -s -f http://localhost:8090/api/v6/actuator/health || exit 1
 
 COPY ./target/*.jar ./dataportal-backend.jar
 COPY ontology ontology

@@ -18,7 +18,7 @@ and the corresponding middlewares.
 To send a feasibility query to the backend, use the following example query:
 
 ```
-curl --location --request POST 'http://localhost:8090/api/v5/query/feasibility' \
+curl --location --request POST 'http://localhost:8090/api/v6/query/feasibility' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "version": "http://to_be_decided.com/draft-1/schema#",
@@ -48,7 +48,7 @@ curl --location --request POST 'http://localhost:8090/api/v5/query/feasibility' 
 ```
 another example
 ```
-curl --location --request POST 'http://localhost:8090/api/v5/query/feasibility' \
+curl --location --request POST 'http://localhost:8090/api/v6/query/feasibility' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "version": "http://to_be_decided.com/draft-1/schema#",
@@ -73,7 +73,7 @@ curl --location --request POST 'http://localhost:8090/api/v5/query/feasibility' 
 The response to this call will return a location header, which links to the endpoint where the result
 for the query can be collected with one of the available sub-paths.
 For a full description of the api, please refer to the swagger documentation (either in static/v3/api-docs/swagger.yaml
-or at http://localhost:8090/api/v5/swagger-ui/index.html when running)
+or at http://localhost:8090/api/v6/swagger-ui/index.html when running)
 
 
 ## Starting with Docker
@@ -96,7 +96,7 @@ DATAPORTAL_DATABASE_PORT=<your-desired-port> docker-compose up -d
 
 ### Testing if the Container is Running Properly
 ```
-GET http://localhost:8090/api/v5/actuator/health
+GET http://localhost:8090/api/v6/actuator/health
 ```
 
 Should reply with status 200 and a JSON object

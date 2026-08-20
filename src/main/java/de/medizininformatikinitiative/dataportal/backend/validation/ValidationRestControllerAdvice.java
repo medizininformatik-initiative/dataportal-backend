@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -14,12 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice({
-    "de.medizininformatikinitiative.dataportal.backend.validation.v5",
-    "de.medizininformatikinitiative.dataportal.backend.query.v5"
+    "de.medizininformatikinitiative.dataportal.backend.validation.v6",
+    "de.medizininformatikinitiative.dataportal.backend.query.v6"
 })
 public class ValidationRestControllerAdvice {
 
-  private final ObjectMapper jsonUtil = new ObjectMapper();
+  private final ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
   @ExceptionHandler(ContentValidationException.class)
   public ResponseEntity<List<Map<String, Object>>> handleValidationExceptions(MethodArgumentNotValidException ex) {

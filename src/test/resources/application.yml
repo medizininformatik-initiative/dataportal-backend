@@ -1,4 +1,6 @@
 spring:
+  jackson:
+    use-jackson2-defaults: true
   datasource:
     url: "jdbc:tc:postgresql:16-alpine:///dataportal_test"
 security:
@@ -27,13 +29,12 @@ management:
       enabled: true
       mode: full
 app:
-  dseProfileTreeFile: ontology/dse/profile_tree.json
   terminologySystemsFile: ontology/terminology_systems.json
   mappingsFile: ontology/mapping_cql.json
   conceptTreeFile: ontology/mapping_tree.json
   fhirTranslationEnabled: false
   cqlTranslationEnabled: true
-  apiBaseUrl: /api/v5
+  apiBaseUrl: /api/v6
   enableQueryValidation: true
   purgeExpiredQueries: 0 0 * * * *
   queryResultExpiry: PT1M

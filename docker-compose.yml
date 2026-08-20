@@ -33,7 +33,6 @@ services:
       ONTOLOGY_DB_MIGRATION_FOLDER: ${DATAPORTAL_BACKEND_ONTOLOGY_DB_MIGRATION_FOLDER:-/opt/dataportal-backend/ontology/migration}
       MAPPINGS_FILE: ${DATAPORTAL_BACKEND_ONTOLOGY_FILES_FOLDER:-/opt/dataportal-backend/ontology}/mapping_cql.json
       CONCEPT_TREE_FILE: ${DATAPORTAL_BACKEND_ONTOLOGY_FILES_FOLDER:-/opt/dataportal-backend/ontology}/mapping_tree.json
-      DSE_PROFILE_TREE_FILE: ${DATAPORTAL_BACKEND_ONTOLOGY_FILES_FOLDER:-/opt/dataportal-backend/ontology}/dse/profile_tree.json
       TERMINOLOGY_SYSTEMS_FILE: ${DATAPORTAL_BACKEND_ONTOLOGY_FILES_FOLDER:-/opt/dataportal-backend/ontology}/terminology_systems.json
       # ---- auth
       KEYCLOAK_ENABLED: ${DATAPORTAL_BACKEND_KEYCLOAK_ENABLED:-true}
@@ -89,6 +88,12 @@ services:
       ELASTIC_SEARCH_ENABLED: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_ENABLED:-true}
       ELASTIC_SEARCH_HOST: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_HOST:-dataportal-elastic}
       ELASTIC_SEARCH_FILTER: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_FILTER:-context,terminology,kds_module}
+      # Which fields (with optional ^boost factor) are searched per index. See docs/configuration.md
+      # (search for ELASTIC_SEARCH_QUERY) for details and a script to list the fields usable here.
+      ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS:-display.de,display.en,termcode^2,display.original^0.5}
+      ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS:-display.de,display.en,termcode.code^2,display.original^0.5}
+      ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS:-display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram}
+      ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS:-display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram}
       # ---- logging
       LOG_LEVEL_SQL: ${DATAPORTAL_BACKEND_LOG_LEVEL_SQL:-warn}
       LOG_LEVEL: ${DATAPORTAL_BACKEND_LOG_LEVEL:-warn}
@@ -111,7 +116,7 @@ services:
         source: dataportal-postgres-data
         target: /var/lib/postgresql/data
   dataportal-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.2
     restart: unless-stopped
     container_name: dataportal-elastic
     ports:
@@ -140,10 +145,17 @@ services:
     environment:
       ES_HOST: http://dataportal-elastic
       ES_PORT: 9200
-      ONTO_GIT_TAG: v4.1.0
+      ONTO_GIT_TAG: v5.0.0
       ONTO_REPO: https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download
       DOWNLOAD_FILENAME: elastic.zip
-      EXIT_ON_EXISTING_INDICES: false
+      FORCE_REINSTALL: false
+# In case you want to mount a local file, uncomment the following lines and adjust the source path accordingly
+# Leave target path untouched!
+#    volumes:
+#      - type: bind
+#        source: /tmp/elastic.zip
+#        target: /work/mounted_onto.zip
+#        read_only: true
 
 volumes:
   dataportal-postgres-data:

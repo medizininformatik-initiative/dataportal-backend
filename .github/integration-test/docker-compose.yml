@@ -64,6 +64,12 @@ services:
       ELASTIC_SEARCH_ENABLED: true
       ELASTIC_SEARCH_HOST: dataportal-elastic:9200
       ELASTIC_SEARCH_FILTER: context,terminology,kds_module
+      # Which fields (with optional ^boost factor) are searched per index. See docs/configuration.md
+      # (search for ELASTIC_SEARCH_QUERY) for details and a script to list the fields usable here.
+      ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS: display.de,display.en,termcode^2,display.original^0.5
+      ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS: display.de,display.en,termcode.code^2,display.original^0.5
+      ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS: display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram
+      ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS: display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram
       # ---- logging
       LOG_LEVEL_SQL: "warn"
       LOG_LEVEL: "warn"
@@ -73,7 +79,6 @@ services:
       - ./ontology/codex-code-tree.json:/opt/dataportal-backend/ontology/codex-code-tree.json
       - ./ontology/codex-term-code-mapping.json:/opt/dataportal-backend/ontology/codex-term-code-mapping.json
       - ./ontology/terminology_systems.json:/opt/dataportal-backend/ontology/terminology_systems.json
-      - ./ontology/dse/profile_tree.json:/opt/dataportal-backend/ontology/dse/profile_tree.json
       - ./ontology/migration/R__Load_latest_ui_profile.sql:/opt/dataportal-backend/ontology/migration/R__Load_latest_ui_profile.sql
       - ./secrets:/opt/dataportal-security
   dataportal-postgres:
@@ -87,7 +92,7 @@ services:
       POSTGRES_DB: "dataportal"
 
   dataportal-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.2
     container_name: dataportal-elastic
     ports:
       - '9200:9200'
@@ -105,7 +110,7 @@ services:
       xpack.security.enabled: false
 
   blaze:
-    image: "samply/blaze:1.4.2"
+    image: "samply/blaze:1.10.1"
     environment:
       BASE_URL: "http://blaze:8080"
       JAVA_TOOL_OPTIONS: "-Xmx1g"
@@ -116,12 +121,12 @@ services:
       - "blaze-data:/app/data"
 
   flare:
-    image: ghcr.io/medizininformatik-initiative/flare:2.6.0
+    image: ghcr.io/medizininformatik-initiative/flare:2.8.0
     ports:
       - "8092:8080"
     environment:
       FLARE_FHIR_SERVER: "http://blaze:8080/fhir"
-      JAVA_TOOL_OPTIONS: "-Xmx1g"
+      JAVA_TOOL_OPTIONS: "-Xmx4g"
       LOG_LEVEL: "debug"
     restart: unless-stopped
 
@@ -136,7 +141,7 @@ services:
       - "dataportal-auth-db:/var/lib/postgresql/data"
 
   auth:
-    image: keycloak/keycloak:26.5
+    image: keycloak/keycloak:26.7
     command: ["start", "--import-realm"]
     restart: unless-stopped
     environment:
