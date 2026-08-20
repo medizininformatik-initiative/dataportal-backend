@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Unreleased]
+
+### Changed
+- **breaking** moved rest api from v5 to v6 ([#1073](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1073))
+
 ## [8.7.0] - 2026-05-08
 
 - Based on ontology **[v4.1.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.1.0)**

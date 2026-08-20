@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.terminology.v5;
+package de.medizininformatikinitiative.dataportal.backend.terminology.v6;
 
 
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
@@ -22,7 +22,7 @@ import java.util.List;
  */
 
 
-@RequestMapping("api/v5/terminology")
+@RequestMapping("api/v6/terminology")
 @RestController
 @CrossOrigin
 @ConditionalOnExpression("${app.elastic.enabled}")

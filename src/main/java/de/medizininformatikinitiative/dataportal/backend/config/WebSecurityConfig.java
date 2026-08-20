@@ -35,7 +35,7 @@ public class WebSecurityConfig {
   public static final String KEY_SPRING_ADDONS_PUBLIC = "spring-addons-public";
   public static final String PATH_ACTUATOR_HEALTH = "/actuator/health";
   public static final String PATH_ACTUATOR_INFO = "/actuator/info";
-  public static final String PATH_API = "/api/v5";
+  public static final String PATH_API = "/api/v6";
   public static final String PATH_VALIDATION = "/validation";
   public static final String PATH_UPGRADE = "/upgrade";
   public static final String PATH_QUERY = "/query";

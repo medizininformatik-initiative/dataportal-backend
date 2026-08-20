@@ -3,10 +3,10 @@ package de.medizininformatikinitiative.dataportal.backend.config;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryHandler;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.query.v5.DataqueryHandlerRestController;
+import de.medizininformatikinitiative.dataportal.backend.query.v6.DataqueryHandlerRestController;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
-import de.medizininformatikinitiative.dataportal.backend.terminology.v5.TerminologyRestController;
+import de.medizininformatikinitiative.dataportal.backend.terminology.v6.TerminologyRestController;
 import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -68,7 +68,7 @@ class WebSecurityConfigSslIT {
 
   @Test
   void shouldRedirectHttpToHttps() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/query/data")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data")).with(csrf()))
         .andExpect(status().is3xxRedirection())
         .andExpect(header().string("Location", Matchers.startsWith("https://")));
   }
@@ -76,7 +76,7 @@ class WebSecurityConfigSslIT {
   @Test
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_USER")
   void shouldNotRedirectHttps() throws Exception {
-    mockMvc.perform(get(URI.create("https://localhost/api/v5/query/data")).with(csrf()))
+    mockMvc.perform(get(URI.create("https://localhost/api/v6/query/data")).with(csrf()))
         .andExpect(status().isOk());
   }
 

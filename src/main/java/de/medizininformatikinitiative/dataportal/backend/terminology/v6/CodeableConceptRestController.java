@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.terminology.v5;
+package de.medizininformatikinitiative.dataportal.backend.terminology.v6;
 
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.CcSearchResult;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.CodeableConceptBulkSearchRequest;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/v5/codeable-concept")
+@RequestMapping("api/v6/codeable-concept")
 @ConditionalOnExpression("${app.elastic.enabled}")
 @CrossOrigin
 public class CodeableConceptRestController {

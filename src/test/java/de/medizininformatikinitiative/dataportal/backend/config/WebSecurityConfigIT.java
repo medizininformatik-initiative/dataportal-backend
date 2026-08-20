@@ -11,11 +11,11 @@ import de.medizininformatikinitiative.dataportal.backend.query.dataquery.Dataque
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingServiceSpringConfig;
-import de.medizininformatikinitiative.dataportal.backend.query.v5.DataqueryHandlerRestController;
+import de.medizininformatikinitiative.dataportal.backend.query.v6.DataqueryHandlerRestController;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
-import de.medizininformatikinitiative.dataportal.backend.terminology.v5.TerminologyRestController;
+import de.medizininformatikinitiative.dataportal.backend.terminology.v6.TerminologyRestController;
 import de.medizininformatikinitiative.dataportal.backend.validation.ValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -85,7 +85,7 @@ class WebSecurityConfigIT {
   @Test
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_USER")
   void getCriteriaProfileData_authenticatedAllowed() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/terminology/criteria-profile-data")).with(csrf())
+    mockMvc.perform(get(URI.create("/api/v6/terminology/criteria-profile-data")).with(csrf())
             .param("ids", "")
         )
         .andExpect(status().isOk());
@@ -93,54 +93,54 @@ class WebSecurityConfigIT {
 
   @Test
   void getCriteriaProfileData_unauthenticatedDenied() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/terminology/criteria-profile-data")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/terminology/criteria-profile-data")).with(csrf()))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_ADMIN")
   void getCriteriaProfileData_adminAccessDenied() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/terminology/criteria-profile-data")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/terminology/criteria-profile-data")).with(csrf()))
         .andExpect(status().isForbidden());
   }
 
   @Test
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_USER")
   void getDataqueryList_authenticatedAllowed() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/query/data")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data")).with(csrf()))
         .andExpect(status().isOk());
   }
 
   @Test
   void getDataqueryList_unauthenticatedDenied() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/query/data")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data")).with(csrf()))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_ADMIN")
   void getDataqueryList_adminAccessDenied() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/query/data")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data")).with(csrf()))
         .andExpect(status().isForbidden());
   }
 
   @Test
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_USER")
   void getDataqueryListByUser_regularUserDenied() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/query/data/by-user/abc-123")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data/by-user/abc-123")).with(csrf()))
         .andExpect(status().isForbidden());
   }
 
   @Test
   void getDataqueryListByUser_unauthenticatedDenied() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/query/data/by-user/abc-123")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data/by-user/abc-123")).with(csrf()))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_ADMIN")
   void getDataqueryListByUser_adminAccessAllowed() throws Exception {
-    mockMvc.perform(get(URI.create("/api/v5/query/data/by-user/abc-123")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data/by-user/abc-123")).with(csrf()))
         .andExpect(status().isOk());
   }
 
@@ -150,14 +150,14 @@ class WebSecurityConfigIT {
   void getDataquery_authenticatedAllowed() throws Exception {
     doReturn(createDataquery(false)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
 
-    mockMvc.perform(get(URI.create("/api/v5/query/data/1")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data/1")).with(csrf()))
         .andExpect(status().isOk());
   }
 
   @Test
   void getDataquery_unauthenticatedDenied() throws Exception {
     doReturn(createDataquery(false)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-    mockMvc.perform(get(URI.create("/api/v5/query/data/1")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data/1")).with(csrf()))
         .andExpect(status().isUnauthorized());
   }
 
@@ -165,7 +165,7 @@ class WebSecurityConfigIT {
   @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_ADMIN")
   void getDataquery_adminAccessAllowed() throws Exception {
     doReturn(createDataquery(false)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
-    mockMvc.perform(get(URI.create("/api/v5/query/data/1")).with(csrf()))
+    mockMvc.perform(get(URI.create("/api/v6/query/data/1")).with(csrf()))
         .andExpect(status().isOk());
   }
 

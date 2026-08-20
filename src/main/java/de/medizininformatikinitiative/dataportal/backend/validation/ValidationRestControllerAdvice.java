@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice({
-    "de.medizininformatikinitiative.dataportal.backend.validation.v5",
-    "de.medizininformatikinitiative.dataportal.backend.query.v5"
+    "de.medizininformatikinitiative.dataportal.backend.validation.v6",
+    "de.medizininformatikinitiative.dataportal.backend.query.v6"
 })
 public class ValidationRestControllerAdvice {
 

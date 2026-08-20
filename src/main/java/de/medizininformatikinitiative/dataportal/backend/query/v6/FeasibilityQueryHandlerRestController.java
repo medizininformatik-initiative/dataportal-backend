@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.query.v5;
+package de.medizininformatikinitiative.dataportal.backend.query.v6;
 
 import tools.jackson.databind.JsonNode;
 import de.medizininformatikinitiative.dataportal.backend.config.WebSecurityConfig;
@@ -48,7 +48,7 @@ import static de.medizininformatikinitiative.dataportal.backend.config.WebSecuri
 Rest Interface for the UI to send queries from the ui to the ui backend.
 */
 @RequestMapping(PATH_API + PATH_QUERY + PATH_FEASIBILITY)
-@RestController("FeasibilityQueryHandlerRestController-v5")
+@RestController("FeasibilityQueryHandlerRestController-v6")
 @Slf4j
 @CrossOrigin(origins = "${cors.allowedOrigins}", exposedHeaders = {HttpHeaders.LOCATION, HttpHeaders.RETRY_AFTER})
 public class FeasibilityQueryHandlerRestController {

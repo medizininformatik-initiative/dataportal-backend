@@ -35,7 +35,7 @@ springdoc:
   swagger-ui:
     disable-swagger-default-url: true
     tryItOutEnabled: false
-    path: /api/v5/swagger-ui
+    path: /api/v6/swagger-ui
     url: /v3/api-docs/swagger.yaml
     supported-submit-methods: []
 management:
@@ -47,7 +47,7 @@ management:
         allowed-headers: "*"
       exposure:
         include: "health, info"
-      base-path: /api/v5/actuator
+      base-path: /api/v6/actuator
     access:
       default: none
   endpoint:

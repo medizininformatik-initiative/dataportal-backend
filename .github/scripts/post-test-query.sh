@@ -10,7 +10,7 @@ access_token="$(curl -s --request POST \
   --data scope=openid | jq '.access_token' | tr -d '"')"
 
 response=$(curl -s -i \
-  --url http://localhost:8091/api/v5/query/feasibility \
+  --url http://localhost:8091/api/v6/query/feasibility \
   --header "Authorization: Bearer $access_token" \
   --header 'Content-Type: application/json' \
   --data '{
