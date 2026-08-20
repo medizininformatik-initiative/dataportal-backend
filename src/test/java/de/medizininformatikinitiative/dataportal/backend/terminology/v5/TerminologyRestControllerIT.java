@@ -139,7 +139,7 @@ public class TerminologyRestControllerIT {
     doReturn(termFilterList).when(terminologyEsService).getAvailableFilters(anyString(), anyString(), anyList(), anyList(), anyList());
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter"))
-            .param("targetFilter", "context")
+            .param("target-filter", "context")
             .param("searchterm", "")
             .param("contexts", "")
             .param("terminologies", "foo")
@@ -157,7 +157,7 @@ public class TerminologyRestControllerIT {
     doReturn(termFilterList).when(terminologyEsService).getAvailableFilters(anyString(), anyString(), anyList(), anyList(), anyList());
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter"))
-            .param("targetFilter", "context")
+            .param("target-filter", "context")
             .param("searchterm", "Verbr")
             .param("contexts", "")
             .param("terminologies", "")
@@ -175,7 +175,7 @@ public class TerminologyRestControllerIT {
     doReturn(termFilterList).when(terminologyEsService).getAvailableFilters(anyString(), isNull(), isNull(), isNull(), isNull());
 
     mockMvc.perform(get(URI.create(PATH_API + PATH_TERMINOLOGY + "/search/filter"))
-            .param("targetFilter", "context")
+            .param("target-filter", "context")
             .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(content().json(jsonUtil.writeValueAsString(termFilterList)));

@@ -576,7 +576,7 @@ paths:
       description: Can optionally be filtered to only get the filters of one category, depending on the selections of other categories
       operationId: getFilters
       parameters:
-        - name: targetFilter
+        - name: target-filter
           in: query
           description: The requested filter category. Only if this is set, the further filters for contexts, kds-modules and terminologies are considered. If it is empty or null, ALL entries are returned.
           schema:
@@ -1068,7 +1068,7 @@ paths:
       description: Can optionally be filtered to only get the filter of one target category, depending on the selections of the other categories and/or a searchterm
       operationId: getFilter
       parameters:
-        - name: targetFilter
+        - name: target-filter
           in: query
           description: The requested filter category. Only if this is set, the further filters for searchterm, modules, categories and resource-types are considered. If it is empty or null, ALL filters are returned unfiltered.
           schema:
@@ -1121,24 +1121,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/ProfileFilter"
         400:
-          description: Bad request, e.g. optional parameters were set without targetFilter, or targetFilter is unknown
-      security:
-        - dataportal_auth:
-            - user
-  /dse/profile-tree:
-    get:
-      tags:
-        - dse
-      summary: Get the complete DSE profile tree
-      description: This can not be filtered or paginated or anything since for now it is rather small. All filtering will be done in the frontend for now. Might change if problems with that approach occur.
-      operationId: getProfileTree
-      responses:
-        200:
-          description: Profile tree file found and readable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProfileTreeNode"
+          description: Bad request, e.g. optional parameters were set without target-filter, or target-filter is unknown
       security:
         - dataportal_auth:
             - user
@@ -1998,6 +1981,8 @@ components:
       properties:
         display:
           $ref: "#/components/schemas/DisplayEntry"
+        description:
+          $ref: "#/components/schemas/DisplayEntry"
     ProfileRelativeEntry:
       type: object
       properties:
@@ -2205,41 +2190,6 @@ components:
             type: string
             examples:
               - OPS
-    ProfileTreeNode:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          examples:
-            - aee6afe1-3b96-4449-85cd-be8046ccbb84
-        children:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProfileTreeNode"
-        name:
-          type: string
-          examples:
-            - ProfileObservationLaboruntersuchung
-        display:
-          $ref: "#/components/schemas/DisplayEntry"
-        module:
-          type: string
-          examples:
-            - modul-labor
-        url:
-          type: string
-          format: uri
-          examples:
-            - https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab
-        leaf:
-          type: boolean
-          examples:
-            - true
-        selectable:
-          type: boolean
-          examples:
-            - false
     ProfileDataField:
       type: object
       properties:

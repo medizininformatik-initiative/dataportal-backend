@@ -45,7 +45,7 @@ public class ProfileRestController {
   }
 
   @GetMapping(value = "/search/filter", produces = MediaType.APPLICATION_JSON_VALUE)
-  public List<ProfileFilter> getFilter(@RequestParam(value = "targetFilter", required = false) String targetFilter,
+  public List<ProfileFilter> getFilter(@RequestParam(value = "target-filter", required = false) String targetFilter,
                                         @RequestParam(value = "searchterm", required = false) String searchTerm,
                                         @RequestParam(value = "modules", required = false) List<String> modules,
                                         @RequestParam(value = "categories", required = false) List<String> categories,
@@ -58,7 +58,7 @@ public class ProfileRestController {
 
     if (hasOptionalParams && !StringUtils.hasText(targetFilter)) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Optional parameters (searchterm, modules, categories, resource-types) require 'targetFilter' to be set.");
+          "Optional parameters (searchterm, modules, categories, resource-types) require 'target-filter' to be set.");
     }
 
     if (StringUtils.hasText(targetFilter)) {

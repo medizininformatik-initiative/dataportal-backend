@@ -8,6 +8,8 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.Pr
 import lombok.Builder;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
@@ -36,19 +38,29 @@ public record DisplayEntry(
     if (display == null) {
       return null;
     }
-    var localization = display.localization();
     return DisplayEntry.builder()
         .original(display.original())
-        .translations(List.of(
-            LocalizedValue.builder()
-                .language("de-DE")
-                .value(localization == null ? null : localization.deDe())
-                .build(),
-            LocalizedValue.builder()
-                .language("en-US")
-                .value(localization == null ? null : localization.enUs())
-                .build()
-        ))
+        .translations(toLocalizedValues(display.translations()))
         .build();
+  }
+
+  /**
+   * Turns a language-code-keyed translation map into a list of {@link LocalizedValue}s. "de-DE" and "en-US" are
+   * always present (with a null value if missing) to keep the API shape stable; any additional languages present in
+   * the source data are appended in alphabetical order.
+   */
+  public static List<LocalizedValue> toLocalizedValues(Map<String, String> translations) {
+    var languages = new TreeSet<String>();
+    languages.add("de-DE");
+    languages.add("en-US");
+    if (translations != null) {
+      languages.addAll(translations.keySet());
+    }
+    return languages.stream()
+        .map(language -> LocalizedValue.builder()
+            .language(language)
+            .value(translations == null ? null : translations.get(language))
+            .build())
+        .toList();
   }
 }

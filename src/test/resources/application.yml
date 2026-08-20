@@ -29,7 +29,6 @@ management:
       enabled: true
       mode: full
 app:
-  dseProfileTreeFile: ontology/dse/profile_tree.json
   terminologySystemsFile: ontology/terminology_systems.json
   mappingsFile: ontology/mapping_cql.json
   conceptTreeFile: ontology/mapping_tree.json

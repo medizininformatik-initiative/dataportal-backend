@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record ProfileField(
-    ProfileDisplay display
+    ProfileDisplay display,
+    ProfileDisplay description
 ) {
 }

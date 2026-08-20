@@ -3,7 +3,6 @@ package de.medizininformatikinitiative.dataportal.backend.dse;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.exc.UnrecognizedPropertyException;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.*;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfile;
@@ -16,8 +15,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,40 +31,10 @@ class DseServiceTest {
   private DseProfileRepository dseProfileRepository;
   private DseService dseService;
 
-  private DseService createDseService() throws IOException {
-    return new DseService("src/test/resources/ontology/dse/profile_tree.json", dseProfileRepository, objectMapper);
-  }
-
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup() {
     Mockito.reset(dseProfileRepository);
-    dseService = createDseService();
-  }
-
-  @Test
-  void testCreateProfileTreeInstance_throwsOnProfileTreeNotFound() {
-    assertThrows(FileNotFoundException.class, ()
-        -> new DseService("src/test/this/is/not/found.json", dseProfileRepository, objectMapper));
-  }
-
-  @Test
-  void testGetProfileTree_succeeds() {
-
-    var profileTree = assertDoesNotThrow(() -> dseService.getProfileTree());
-
-    assertNotNull(profileTree);
-    assertInstanceOf(DseProfileTreeNode.class, profileTree);
-    assertEquals(profileTree.name(), "Root");
-    assertEquals(profileTree.module(), "no-module");
-    assertEquals(profileTree.url(), "no-url");
-    assertEquals(profileTree.children().size(), 1);
-    assertEquals(profileTree.children().get(0).id(), "de3323a2-7289-45e9-8a89-53c594f190e8");
-  }
-
-  @Test
-  void testGetProfileTree_throwsOnObjectMapperError() {
-    assertThrows(UnrecognizedPropertyException.class, ()
-        -> new DseService("src/test/resources/ontology/dse/bogus_profile_tree.json", dseProfileRepository, objectMapper));
+    dseService = new DseService(dseProfileRepository, objectMapper);
   }
 
   @Test

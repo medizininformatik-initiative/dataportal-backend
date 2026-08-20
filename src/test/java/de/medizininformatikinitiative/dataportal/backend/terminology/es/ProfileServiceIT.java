@@ -185,8 +185,13 @@ public class ProfileServiceIT {
     assertThat(result.description().display().original()).isEqualTo("Diagnose Beschreibung");
     assertThat(result.resourceType()).isNotNull();
     assertThat(result.resourceType().display().original()).isEqualTo("Condition");
+    assertThat(result.resourceType().display().translations()).extracting("language", "value")
+        .containsExactlyInAnyOrder(tuple("de-DE", "Condition"), tuple("en-US", "Condition"), tuple("fr-FR", "État"));
     assertThat(result.fields()).hasSize(2);
     assertThat(result.fields()).extracting("display.original").containsExactlyInAnyOrder("recordedDate", "code");
+    var codeField = result.fields().stream().filter(f -> f.display().original().equals("code")).findFirst().orElseThrow();
+    assertThat(codeField.description()).isNotNull();
+    assertThat(codeField.description().original()).isEqualTo("Code der Diagnose");
     assertThat(result.parents()).hasSize(1);
     assertThat(result.parents().get(0).id()).isEqualTo("module-diagnose-id");
     assertThat(result.parents().get(0).url()).isEqualTo("modul-diagnose");

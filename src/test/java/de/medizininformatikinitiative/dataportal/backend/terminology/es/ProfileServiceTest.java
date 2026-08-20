@@ -6,7 +6,6 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.api.Profile
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDisplay;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDocument;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileField;
-import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileLocalization;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileRelative;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileEsRepository;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileNotFoundException;
@@ -25,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -342,7 +342,7 @@ class ProfileServiceTest {
         .id(id)
         .name("some-profile")
         .display(createDummyDisplay())
-        .description(createDummyDisplay())
+        .description(List.of(createDummyDisplay()))
         .selectable(true)
         .url("https://example.org/some-profile")
         .module(createDummyDisplay())
@@ -373,10 +373,7 @@ class ProfileServiceTest {
   private ProfileDisplay createDummyDisplay() {
     return ProfileDisplay.builder()
         .original("Some Name")
-        .localization(ProfileLocalization.builder()
-            .deDe("Some German Name")
-            .enUs("Some English Name")
-            .build())
+        .translations(Map.of("de-DE", "Some German Name", "en-US", "Some English Name"))
         .build();
   }
 }

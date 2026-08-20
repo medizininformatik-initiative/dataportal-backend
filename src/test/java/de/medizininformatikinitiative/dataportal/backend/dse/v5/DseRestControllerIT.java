@@ -1,10 +1,8 @@
 package de.medizininformatikinitiative.dataportal.backend.dse.v5;
 
-import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
-import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfileTreeNode;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingInterceptor;
 import org.junit.jupiter.api.Tag;
@@ -19,7 +17,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.net.URI;
-import java.io.File;
 import java.util.List;
 
 import static de.medizininformatikinitiative.dataportal.backend.config.WebSecurityConfig.PATH_API;
@@ -41,36 +38,11 @@ class DseRestControllerIT {
   @Autowired
   private MockMvc mockMvc;
 
-  @Autowired
-  private ObjectMapper jsonUtil;
-
   @MockitoBean
   private DseService dseService;
 
   @MockitoBean
   private RateLimitingInterceptor rateLimitingInterceptor;
-
-  @Test
-  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
-  public void testGetProfileTree_succeedsWith200() throws Exception {
-    doReturn(jsonUtil.readValue(new File("src/test/resources/ontology/dse/profile_tree.json"), DseProfileTreeNode.class)).when(dseService).getProfileTree();
-
-    mockMvc.perform(get(URI.create(PATH_API + PATH_DSE + "/profile-tree")).with(csrf()))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.name").value("Root"))
-        .andExpect(jsonPath("$.children", hasSize(1)))
-        .andExpect(jsonPath("$.children.[0].children", hasSize(5)));
-  }
-
-  @Test
-  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
-  public void testGetProfileTree_failsOnFileNotFound() throws Exception {
-    doReturn(null).when(dseService).getProfileTree();
-
-    mockMvc.perform(get(URI.create(PATH_API + PATH_DSE + "/profile-tree")).with(csrf()))
-        .andExpect(status().isNotFound());
-  }
 
   @Test
   @WithMockUser(roles = "DATAPORTAL_TEST_USER")
