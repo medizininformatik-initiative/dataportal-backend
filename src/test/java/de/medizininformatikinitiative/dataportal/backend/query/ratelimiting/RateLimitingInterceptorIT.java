@@ -8,7 +8,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResultLi
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.CcdlValidatorSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine;
-import de.medizininformatikinitiative.dataportal.backend.query.v5.FeasibilityQueryHandlerRestController;
+import de.medizininformatikinitiative.dataportal.backend.query.v6.FeasibilityQueryHandlerRestController;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;

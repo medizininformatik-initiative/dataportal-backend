@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.validation.v5;
+package de.medizininformatikinitiative.dataportal.backend.validation.v6;
 
 import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;

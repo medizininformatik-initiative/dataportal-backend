@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.query.v5;
+package de.medizininformatikinitiative.dataportal.backend.query.v6;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;

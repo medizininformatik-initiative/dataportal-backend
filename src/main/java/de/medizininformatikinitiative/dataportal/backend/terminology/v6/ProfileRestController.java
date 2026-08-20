@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.terminology.v5;
+package de.medizininformatikinitiative.dataportal.backend.terminology.v6;
 
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileFilter;
@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/v5/profile")
+@RequestMapping("api/v6/profile")
 @ConditionalOnExpression("${app.elastic.enabled}")
 @CrossOrigin
 public class ProfileRestController {

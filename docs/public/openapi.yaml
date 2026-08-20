@@ -2361,7 +2361,7 @@ components:
         uiBackendApiPath:
           type: string
           examples:
-            - /api/v5
+            - /api/v6
         readResultSummaryPollingInterval:
           type: string
           format: duration

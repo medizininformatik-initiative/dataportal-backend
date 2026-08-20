@@ -196,13 +196,13 @@ jobs:
         run: docker compose -f .github/integration-test/docker-compose.yml up -d
 
       - name: Wait for Dataportal Backend
-        run: .github/scripts/wait-for-url.sh  http://localhost:8091/api/v5/actuator/health
+        run: .github/scripts/wait-for-url.sh  http://localhost:8091/api/v6/actuator/health
 
       - name: Check if Dataportal Backend is correctly running with the user with id 10001
         run: .github/scripts/check-if-running-as-user-10001.sh
 
       - name: Check info endpoint
-        run: .github/scripts/check-info-endpoint.sh http://localhost:8091/api/v5/actuator/info
+        run: .github/scripts/check-info-endpoint.sh http://localhost:8091/api/v6/actuator/info
 
       - name: Wait for Blaze
         run: .github/scripts/wait-for-url.sh  http://localhost:8082/health

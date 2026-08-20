@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.validation.v5;
+package de.medizininformatikinitiative.dataportal.backend.validation.v6;
 
 import tools.jackson.databind.JsonNode;
 import de.medizininformatikinitiative.dataportal.backend.validation.UpgradeService;

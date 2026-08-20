@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.dse.v5;
+package de.medizininformatikinitiative.dataportal.backend.dse.v6;
 
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;

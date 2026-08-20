@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.terminology.v5;
+package de.medizininformatikinitiative.dataportal.backend.terminology.v6;
 
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;

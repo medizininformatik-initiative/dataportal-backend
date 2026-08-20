@@ -19,7 +19,7 @@ RUN mkdir logging && \
     apk --no-cache add curl bash
 USER 10001
 
-HEALTHCHECK --interval=5s --start-period=10s CMD curl -s -f http://localhost:8090/api/v5/actuator/health || exit 1
+HEALTHCHECK --interval=5s --start-period=10s CMD curl -s -f http://localhost:8090/api/v6/actuator/health || exit 1
 
 COPY ./target/*.jar ./dataportal-backend.jar
 COPY ontology ontology
