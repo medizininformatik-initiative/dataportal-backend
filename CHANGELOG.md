@@ -4,10 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Unreleased]
+## [9.0.0] - 2026-08-20
 
+- Based on ontology **[v5.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.0)**
+
+### Added
+- Add ES based feature search under the `/profile` endpoints ([#978](https://github.com/medizininformatik-initiative/dataportal-backend/issues/978))
+- Make elastic search boost factor configurable ([#1012](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1012))
+- Improve test coverage on validation changes and upgrade feature ([#821](https://github.com/medizininformatik-initiative/dataportal-backend/issues/821))
 ### Changed
 - **breaking** moved rest api from v5 to v6 ([#1073](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1073))
+- **breaking** renamed the `targetFilter` query parameter to `target-filter` on the terminology and profile filter search endpoints ([#1047](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1047))
+- Update ontology to [v5.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.0) ([#1047](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1047))
+- Replaced sq2cql dependency with cctb-cql ([#1017](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1017))
+- Migrate to Spring Boot 4.0.0 ([#755](https://github.com/medizininformatik-initiative/dataportal-backend/issues/755))
+- Downgrade log level for elastic search queries ([#1075](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1075))
+### Removed
+- **breaking** removed the `/dse/profile-tree` endpoint ([#1047](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1047))
+### Fixed
+- Bulk search no longer flags duplicate search terms as not found ([#1071](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1071))
+- Fixed importing certificates with windows style linebreaks ([#1021](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1021))
+- Include operation outcome error message when measure evaluation fails in the Direct Broker ([#731](https://github.com/medizininformatik-initiative/dataportal-backend/issues/731))
+### Security
+- Update dependencies and github actions
 
 ## [8.7.0] - 2026-05-08
 
