@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [9.1.0] - 2026-08-24
+
+- Based on ontology **[v5.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.0)**
+
+### Changed
+- Renamed JPA entity classes to avoid name clashes with DTOs ([#1076](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1076))
+### Security
+- Update dependencies and github actions
+
 ## [9.0.0] - 2026-08-20
 
 - Based on ontology **[v5.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.0)**
