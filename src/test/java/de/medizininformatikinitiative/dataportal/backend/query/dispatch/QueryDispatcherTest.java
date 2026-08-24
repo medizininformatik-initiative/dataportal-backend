@@ -88,9 +88,9 @@ public class QueryDispatcherTest {
   @Test
   public void testDispatchEnqueuedQuery_FailsWhenCcdlNotFetchable() throws JacksonException {
     var testQueryId = 99999L;
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setId(testQueryId);
-    var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
+    var testQueryContent = new QueryContentEntity(jsonUtil.writeValueAsString(Ccdl.builder().build()));
     testQuery.setQueryContent(testQueryContent);
 
     doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
@@ -107,10 +107,10 @@ public class QueryDispatcherTest {
   public void testDispatchEnqueuedQuery_FailsWhenQueryCannotGetTranslated() throws JacksonException,
       QueryTranslationException {
     var testQueryId = 99999L;
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setId(testQueryId);
     var ccdl = Ccdl.builder().build();
-    var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(ccdl));
+    var testQueryContent = new QueryContentEntity(jsonUtil.writeValueAsString(ccdl));
     testQuery.setQueryContent(testQueryContent);
 
     doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
@@ -128,10 +128,10 @@ public class QueryDispatcherTest {
   public void testDispatchEnqueuedQuery_FailsOnBrokerQueryCreationError() throws IOException,
       QueryTranslationException {
     var testQueryId = 99999L;
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setId(testQueryId);
     var ccdl = Ccdl.builder().build();
-    var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(ccdl));
+    var testQueryContent = new QueryContentEntity(jsonUtil.writeValueAsString(ccdl));
     testQuery.setQueryContent(testQueryContent);
 
     var failingBrokerClient = mock(BrokerClient.class);
@@ -152,14 +152,14 @@ public class QueryDispatcherTest {
       throws IOException, QueryTranslationException,
       QueryNotFoundException, QueryDefinitionNotFoundException {
     var testQueryId = 99999L;
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setId(testQueryId);
     var ccdl = Ccdl.builder()
         .version(URI.create("https://to.be.decided/schema"))
         .display("Test")
         .build();
 
-    var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(ccdl));
+    var testQueryContent = new QueryContentEntity(jsonUtil.writeValueAsString(ccdl));
     testQuery.setQueryContent(testQueryContent);
     var translationResult = Map.of(QueryMediaType.STRUCTURED_QUERY, testQueryContent.getQueryContent());
 
@@ -185,9 +185,9 @@ public class QueryDispatcherTest {
     var queryDispatcher = createQueryDispatcher(List.of(failingBrokerClient, succeedingBrokerClient));
 
     var testQueryId = 99999L;
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setId(testQueryId);
-    var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
+    var testQueryContent = new QueryContentEntity(jsonUtil.writeValueAsString(Ccdl.builder().build()));
     testQuery.setQueryContent(testQueryContent);
 
     doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
@@ -212,9 +212,9 @@ public class QueryDispatcherTest {
     var queryDispatcher = createQueryDispatcher(List.of(succeedingBrokerClient, failingBrokerClient));
 
     var testQueryId = 99999L;
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setId(testQueryId);
-    var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
+    var testQueryContent = new QueryContentEntity(jsonUtil.writeValueAsString(Ccdl.builder().build()));
     testQuery.setQueryContent(testQueryContent);
 
     doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);
@@ -239,9 +239,9 @@ public class QueryDispatcherTest {
         anotherFailingBrokerClient));
 
     var testQueryId = 99999L;
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setId(testQueryId);
-    var testQueryContent = new QueryContent(jsonUtil.writeValueAsString(Ccdl.builder().build()));
+    var testQueryContent = new QueryContentEntity(jsonUtil.writeValueAsString(Ccdl.builder().build()));
     testQuery.setQueryContent(testQueryContent);
 
     doReturn(Optional.of(testQuery)).when(queryRepository).findById(testQueryId);

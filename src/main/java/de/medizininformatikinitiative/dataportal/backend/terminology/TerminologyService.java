@@ -3,9 +3,10 @@ package de.medizininformatikinitiative.dataportal.backend.terminology;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.*;
-import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.Context;
-import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.TermCode;
+import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.ContextEntity;
+import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.TermCodeEntity;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.TermCodeRepository;
+import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileRepository;
 import lombok.Getter;
 import lombok.NonNull;
@@ -55,7 +56,7 @@ public class TerminologyService {
 
   public String getUiProfile(String contextualizedTermCodeHash)
       throws UiProfileNotFoundException {
-    Optional<de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfile> uiProfile = uiProfileRepository.findByContextualizedTermcodeHash(contextualizedTermCodeHash);
+    Optional<UiProfileEntity> uiProfile = uiProfileRepository.findByContextualizedTermcodeHash(contextualizedTermCodeHash);
     if (uiProfile.isPresent()) {
       return uiProfile.get().getUiProfile();
     } else {
@@ -76,8 +77,8 @@ public class TerminologyService {
     List<CriteriaProfileData> results = new ArrayList<>();
 
     for (String id : criteriaIds) {
-      TermCode tc = termCodeRepository.findTermCodeByContextualizedTermcodeHash(id).orElse(null);
-      Context c = termCodeRepository.findContextByContextualizedTermcodeHash(id).orElse(null);
+      TermCodeEntity tc = termCodeRepository.findTermCodeByContextualizedTermcodeHash(id).orElse(null);
+      ContextEntity c = termCodeRepository.findContextByContextualizedTermcodeHash(id).orElse(null);
       de.medizininformatikinitiative.dataportal.backend.common.api.TermCode context;
       List<de.medizininformatikinitiative.dataportal.backend.common.api.TermCode> termCodes = new ArrayList<>();
 

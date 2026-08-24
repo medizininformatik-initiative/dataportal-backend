@@ -10,7 +10,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.QueryResultRa
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.FeasibilityIssue;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.FeasibilityIssues;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
-import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklist;
+import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistEntity;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.InvalidAuthenticationException;
@@ -117,7 +117,7 @@ public class FeasibilityQueryHandlerRestController {
     }
 
     String userId = authentication.getName();
-    Optional<UserBlacklist> userBlacklistEntry = userBlacklistRepository.findByUserId(
+    Optional<UserBlacklistEntity> userBlacklistEntry = userBlacklistRepository.findByUserId(
         userId);
     boolean isPowerUser = authenticationHelper.hasAuthority(authentication,
         keycloakPowerRole);
@@ -144,7 +144,7 @@ public class FeasibilityQueryHandlerRestController {
           amountOfQueriesByUserAndHardInterval,
           intervalStart,
           intervalEnd);
-      UserBlacklist userBlacklist = new UserBlacklist();
+      UserBlacklistEntity userBlacklist = new UserBlacklistEntity();
       userBlacklist.setUserId(userId);
       userBlacklistRepository.save(userBlacklist);
 

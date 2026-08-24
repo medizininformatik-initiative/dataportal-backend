@@ -15,8 +15,8 @@ import java.util.Objects;
 @Setter
 @ToString
 @RequiredArgsConstructor
-@Entity
-public class Query {
+@Entity(name = "Query")
+public class QueryEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +32,7 @@ public class Query {
   @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   @JoinColumn(referencedColumnName = "id", name = "query_content_id")
   @ToString.Exclude
-  private QueryContent queryContent;
+  private QueryContentEntity queryContent;
 
   @Override
   public final boolean equals(Object o) {
@@ -41,7 +41,7 @@ public class Query {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    Query query = (Query) o;
+    QueryEntity query = (QueryEntity) o;
     return getId() != null && Objects.equals(getId(), query.getId());
   }
 

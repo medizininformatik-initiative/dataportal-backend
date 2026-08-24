@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.query.persistence;
+package de.medizininformatikinitiative.dataportal.backend.dse.persistence;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,25 +7,26 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
 
-import java.sql.Timestamp;
+import java.io.Serializable;
 import java.util.Objects;
 
+@Entity(name = "DseProfile")
+@Table(name = "dse_profile", schema = "public")
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
-@Entity
-public class UserBlacklist {
-
-  @Id
+public class DseProfileEntity implements Serializable {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Id
+  @Column(name = "id", nullable = false)
   private Long id;
-
-  @Column(name = "user_id", nullable = false, unique = true)
-  private String userId;
-
-  @Column(name = "blacklisted_at", insertable = false)
-  private Timestamp blacklistedAt;
+  @Basic
+  @Column(name = "url", nullable = false, length = -1)
+  private String url;
+  @Basic
+  @Column(name = "entry", columnDefinition = "json", nullable = false)
+  private String entry;
 
   @Override
   public final boolean equals(Object o) {
@@ -34,7 +35,7 @@ public class UserBlacklist {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    UserBlacklist that = (UserBlacklist) o;
+    DseProfileEntity that = (DseProfileEntity) o;
     return getId() != null && Objects.equals(getId(), that.getId());
   }
 

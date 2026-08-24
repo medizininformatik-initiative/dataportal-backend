@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-class UiProfileContentTest {
+class UiProfileContentEntityTest {
 
   @Test
   void testEqualsAndHashCode_sameUiProfileContent() {
@@ -52,8 +52,8 @@ class UiProfileContentTest {
     assertNotEquals(uiProfileContent.hashCode(), i.hashCode());
   }
 
-  private UiProfileContent createUiProfileContent(String uiProfile, String system, String code, String version) {
-    UiProfileContent uiProfileContent = new UiProfileContent();
+  private UiProfileContentEntity createUiProfileContent(String uiProfile, String system, String code, String version) {
+    UiProfileContentEntity uiProfileContent = new UiProfileContentEntity();
     uiProfileContent.setUiProfile(uiProfile);
     uiProfileContent.setSystem(system);
     uiProfileContent.setCode(code);

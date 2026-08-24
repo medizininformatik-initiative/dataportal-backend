@@ -7,10 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface DataqueryRepository extends JpaRepository<Dataquery, Long> {
+public interface DataqueryRepository extends JpaRepository<DataqueryEntity, Long> {
 
   @Query(value = "SELECT dq from Dataquery dq WHERE dq.createdBy = ?1 AND (:includeTemporary = true OR dq.expiresAt IS NULL)")
-  List<Dataquery> findAllByCreatedBy(String userId, boolean includeTemporary);
+  List<DataqueryEntity> findAllByCreatedBy(String userId, boolean includeTemporary);
 
   @Query(value = "SELECT COUNT(*) FROM Dataquery WHERE createdBy = ?1 AND resultSize IS NOT NULL")
   Long countByCreatedByWhereResultIsNotNull(String userId);

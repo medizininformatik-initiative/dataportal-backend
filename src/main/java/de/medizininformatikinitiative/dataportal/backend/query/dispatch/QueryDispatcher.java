@@ -9,7 +9,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.broker.QueryDefin
 import de.medizininformatikinitiative.dataportal.backend.query.broker.QueryNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.UnsupportedMediaTypeException;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.*;
-import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryDispatch.QueryDispatchId;
+import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryDispatchEntity.QueryDispatchId;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationComponent;
 import de.medizininformatikinitiative.dataportal.backend.query.translation.QueryTranslationException;
 import jakarta.transaction.Transactional;
@@ -74,7 +74,7 @@ public class QueryDispatcher {
     var queryHash = queryHashCalculator.calculateSerializedQueryBodyHash(querySerialized);
     var queryBody = queryContentRepository.findByHash(queryHash)
         .orElseGet(() -> {
-          var freshQueryBody = new QueryContent(querySerialized);
+          var freshQueryBody = new QueryContentEntity(querySerialized);
           freshQueryBody.setHash(queryHash);
           return queryContentRepository.save(freshQueryBody);
         });
@@ -209,34 +209,34 @@ public class QueryDispatcher {
     }
   }
 
-  private Long persistEnqueuedQuery(QueryContent queryBody, String userId) {
-    var feasibilityQuery = new Query();
+  private Long persistEnqueuedQuery(QueryContentEntity queryBody, String userId) {
+    var feasibilityQuery = new QueryEntity();
     feasibilityQuery.setCreatedAt(Timestamp.from(Instant.now()));
     feasibilityQuery.setCreatedBy(userId);
     feasibilityQuery.setQueryContent(queryBody);
     return queryRepository.save(feasibilityQuery).getId();
   }
 
-  private void persistDispatchedQuery(Query query, String brokerInternalId, BrokerClientType brokerType) {
+  private void persistDispatchedQuery(QueryEntity query, String brokerInternalId, BrokerClientType brokerType) {
     var queryDispatchId = new QueryDispatchId();
     queryDispatchId.setQueryId(query.getId());
     queryDispatchId.setExternalId(brokerInternalId);
     queryDispatchId.setBrokerType(brokerType);
 
-    var dispatchedQuery = new QueryDispatch();
+    var dispatchedQuery = new QueryDispatchEntity();
     dispatchedQuery.setId(queryDispatchId);
     dispatchedQuery.setQuery(query);
     dispatchedQuery.setDispatchedAt(Timestamp.from(Instant.now()));
     queryDispatchRepository.save(dispatchedQuery);
   }
 
-  private Query getEnqueuedQuery(Long queryId) throws QueryDispatchException {
+  private QueryEntity getEnqueuedQuery(Long queryId) throws QueryDispatchException {
     return queryRepository.findById(queryId)
         .orElseThrow(() ->
             new QueryDispatchException("cannot find enqueued query with id '%s'".formatted(queryId)));
   }
 
-  private Ccdl getCcdlFromEnqueuedQuery(Query enqueuedQuery) throws QueryDispatchException {
+  private Ccdl getCcdlFromEnqueuedQuery(QueryEntity enqueuedQuery) throws QueryDispatchException {
     try {
       return jsonUtil.readValue(enqueuedQuery.getQueryContent().getQueryContent(), Ccdl.class);
     } catch (JacksonException e) {
@@ -258,7 +258,7 @@ public class QueryDispatcher {
   private static class Dispatchable {
 
     @NonNull
-    private Query query;
+    private QueryEntity query;
 
     @NonNull
     private Map<QueryMediaType, String> serializedQueryByFormat;

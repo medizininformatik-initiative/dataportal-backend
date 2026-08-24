@@ -68,6 +68,25 @@ class TerminologyServiceTest {
   }
 
   @Test
+  void getUiProfile_succeeds() throws IOException, UiProfileNotFoundException {
+    var terminologyService = createTerminologyService();
+    var uiProfile = createUiProfile();
+    doReturn(Optional.of(uiProfile)).when(uiProfileRepository).findByContextualizedTermcodeHash(any(String.class));
+
+    var result = terminologyService.getUiProfile("some-hash");
+
+    assertEquals(uiProfile.getUiProfile(), result);
+  }
+
+  @Test
+  void getUiProfile_throwsWhenNotFound() throws IOException {
+    var terminologyService = createTerminologyService();
+    doReturn(Optional.empty()).when(uiProfileRepository).findByContextualizedTermcodeHash(any(String.class));
+
+    assertThrows(UiProfileNotFoundException.class, () -> terminologyService.getUiProfile("some-hash"));
+  }
+
+  @Test
   void testMin() {
     int expected = 3;
     int[] numbers = {33, 18, 3, 30, 4};
@@ -219,8 +238,8 @@ class TerminologyServiceTest {
     }
   }
 
-  private UiProfile createUiProfile() throws JacksonException {
-    var uiProfile = new UiProfile();
+  private UiProfileEntity createUiProfile() throws JacksonException {
+    var uiProfile = new UiProfileEntity();
     uiProfile.setId(1L);
     uiProfile.setName("example");
     uiProfile.setUiProfile(jsonUtil.writeValueAsString(
@@ -232,16 +251,16 @@ class TerminologyServiceTest {
     return uiProfile;
   }
 
-  private UiProfile createBogousUiProfile() throws JacksonException {
-    var uiProfile = new UiProfile();
+  private UiProfileEntity createBogousUiProfile() throws JacksonException {
+    var uiProfile = new UiProfileEntity();
     uiProfile.setId(1L);
     uiProfile.setName("example");
     uiProfile.setUiProfile("this is not a valid profile entry");
     return uiProfile;
   }
 
-  private TermCode createTermCode() {
-    TermCode termCode = new TermCode();
+  private TermCodeEntity createTermCode() {
+    TermCodeEntity termCode = new TermCodeEntity();
     termCode.setId(1L);
     termCode.setCode("LL2191-6");
     termCode.setSystem("http://loinc.org");
@@ -250,8 +269,8 @@ class TerminologyServiceTest {
     return termCode;
   }
 
-  private Context createContext() {
-    Context context = new Context();
+  private ContextEntity createContext() {
+    ContextEntity context = new ContextEntity();
     context.setId(1L);
     context.setCode("LL2191-6");
     context.setSystem("http://loinc.org");
