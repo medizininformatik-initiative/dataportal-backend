@@ -5,14 +5,14 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.common.api.*;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
-import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfile;
+import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.CodeableConceptEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
-import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfile;
+import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileRepository;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -389,8 +389,8 @@ class DataqueryCsvExportServiceTest {
         .build();
   }
 
-  private DseProfile createDseProfile() throws IOException {
-    var dseProfile = new DseProfile();
+  private DseProfileEntity createDseProfile() throws IOException {
+    var dseProfile = new DseProfileEntity();
     FileInputStream fis = new FileInputStream("src/test/resources/de/medizininformatikinitiative/dataportal/backend/query/dataquery/dseProfileDiagnose.json");
     String dseProfileString = IOUtils.toString(fis, StandardCharsets.UTF_8);
 
@@ -400,8 +400,8 @@ class DataqueryCsvExportServiceTest {
     return dseProfile;
   }
 
-  private UiProfile createUiProfile() {
-    var uiProfile = new UiProfile();
+  private UiProfileEntity createUiProfile() {
+    var uiProfile = new UiProfileEntity();
     uiProfile.setId(1L);
     uiProfile.setName("ui profile");
     uiProfile.setUiProfile("""

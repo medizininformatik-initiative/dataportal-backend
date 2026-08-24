@@ -1,31 +1,34 @@
-package de.medizininformatikinitiative.dataportal.backend.terminology.persistence;
+package de.medizininformatikinitiative.dataportal.backend.query.persistence;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
 
-@Entity
-@Table(name = "ui_profile", schema = "public")
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
-public class UiProfile {
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+@NoArgsConstructor
+@Entity(name = "QueryContent")
+public class QueryContentEntity {
+
   @Id
-  @Column(name = "id", nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-  @Basic
-  @Column(name = "name", nullable = false, length = -1)
-  private String name;
-  @Basic
-  @Column(name = "ui_profile", columnDefinition = "json", nullable = false)
-  private String uiProfile;
+
+  @Column(name = "query_content", nullable = false)
+  private String queryContent;
+
+  @Column(columnDefinition = "TEXT")
+  private String hash;
+
+  public QueryContentEntity(String queryContent) {
+    this.queryContent = queryContent;
+  }
 
   @Override
   public final boolean equals(Object o) {
@@ -34,8 +37,8 @@ public class UiProfile {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    UiProfile uiProfile = (UiProfile) o;
-    return getId() != null && Objects.equals(getId(), uiProfile.getId());
+    QueryContentEntity that = (QueryContentEntity) o;
+    return getId() != null && Objects.equals(getId(), that.getId());
   }
 
   @Override

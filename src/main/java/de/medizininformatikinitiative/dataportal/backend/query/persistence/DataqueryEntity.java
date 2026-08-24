@@ -16,8 +16,8 @@ import java.util.Objects;
 @Setter
 @ToString
 @RequiredArgsConstructor
-@Entity
-public class Dataquery {
+@Entity(name = "Dataquery")
+public class DataqueryEntity {
 
   private static ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
@@ -46,8 +46,8 @@ public class Dataquery {
   @Column(name = "expires_at")
   private Timestamp expiresAt;
 
-  public static Dataquery of(de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery in) throws JacksonException {
-    var out = new Dataquery();
+  public static DataqueryEntity of(de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery in) throws JacksonException {
+    var out = new DataqueryEntity();
     out.setId(in.id() > 0 ? in.id() : null);
     out.setLabel(in.label());
     out.setComment(in.comment());
@@ -64,7 +64,7 @@ public class Dataquery {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    Dataquery dataquery = (Dataquery) o;
+    DataqueryEntity dataquery = (DataqueryEntity) o;
     return Objects.equals(id, dataquery.id) && Objects.equals(createdBy, dataquery.createdBy) && Objects.equals(label, dataquery.label) && Objects.equals(comment, dataquery.comment) && Objects.equals(crtdl, dataquery.crtdl) && Objects.equals(lastModified, dataquery.lastModified) && Objects.equals(resultSize, dataquery.resultSize) && Objects.equals(expiresAt, dataquery.expiresAt);
   }
 

@@ -55,11 +55,11 @@ class QueryStatusListenerImplIT {
 
   @BeforeEach
   public void setUpDatabaseState() {
-    var fakeContent = new QueryContent("{}");
+    var fakeContent = new QueryContentEntity("{}");
     fakeContent.setHash("a2189dffb");
     queryContentRepository.save(fakeContent);
 
-    var testQuery = new Query();
+    var testQuery = new QueryEntity();
     testQuery.setQueryContent(fakeContent);
     testQuery.setCreatedBy("testuser");
     testBackendQueryId = queryRepository.save(testQuery).getId();

@@ -15,7 +15,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.status.*;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.JsonSchemaValidator;
 import de.medizininformatikinitiative.dataportal.backend.query.api.validation.CcdlValidatorSpringConfig;
 import de.medizininformatikinitiative.dataportal.backend.query.dispatch.QueryDispatchException;
-import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklist;
+import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistEntity;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.UserBlacklistRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.AuthenticationHelper;
 import de.medizininformatikinitiative.dataportal.backend.query.ratelimiting.RateLimitingInterceptor;
@@ -188,8 +188,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private static de.medizininformatikinitiative.dataportal.backend.query.persistence.Query createValidQuery(long id) {
-    var query = new de.medizininformatikinitiative.dataportal.backend.query.persistence.Query();
+  private static de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryEntity createValidQuery(long id) {
+    var query = new de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryEntity();
     query.setId(id);
     query.setCreatedAt(new Timestamp(new java.util.Date().getTime()));
     query.setCreatedBy("someone");
@@ -198,8 +198,8 @@ public class FeasibilityQueryHandlerRestControllerIT {
   }
 
   @NotNull
-  private static de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContent createValidQueryContent(long id) {
-    var queryContent = new de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContent();
+  private static de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContentEntity createValidQueryContent(long id) {
+    var queryContent = new de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryContentEntity();
     queryContent.setId(id);
     queryContent.setQueryContent(createValidCcdl().toString());
     queryContent.setHash("abc");
@@ -458,11 +458,11 @@ public class FeasibilityQueryHandlerRestControllerIT {
   @WithMockUser(roles = "DATAPORTAL_TEST_USER", username = "test")
   public void testRunQueryEndpoint_FailsOnBeingBlacklistedWith403() throws Exception {
     Ccdl testQuery = createValidCcdl();
-    UserBlacklist userBlacklistEntry = new UserBlacklist();
+    UserBlacklistEntity userBlacklistEntry = new UserBlacklistEntity();
     userBlacklistEntry.setId(1L);
     userBlacklistEntry.setUserId("test");
     userBlacklistEntry.setBlacklistedAt(new Timestamp(System.currentTimeMillis()));
-    Optional<UserBlacklist> userBlacklistOptional = Optional.of(userBlacklistEntry);
+    Optional<UserBlacklistEntity> userBlacklistOptional = Optional.of(userBlacklistEntry);
 
     doReturn(List.of()).when(validationService).validateCcdlSchema(any(JsonNode.class));
     doReturn(testQuery).when(validationService).ccdlFromJsonNode(any(JsonNode.class));

@@ -1,17 +1,17 @@
-package de.medizininformatikinitiative.dataportal.backend.dse.persistence;
+package de.medizininformatikinitiative.dataportal.backend.terminology.persistence;
 
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-class DseProfileTest {
+class UiProfileEntityTest {
   @Test
   void testEquals_sameId_shouldBeEqual() {
-    DseProfile profile1 = new DseProfile();
+    UiProfileEntity profile1 = new UiProfileEntity();
     profile1.setId(1L);
 
-    DseProfile profile2 = new DseProfile();
+    UiProfileEntity profile2 = new UiProfileEntity();
     profile2.setId(1L);
 
     assertEquals(profile1, profile2);
@@ -20,10 +20,10 @@ class DseProfileTest {
 
   @Test
   void testEquals_differentId_shouldNotBeEqual() {
-    DseProfile profile1 = new DseProfile();
+    UiProfileEntity profile1 = new UiProfileEntity();
     profile1.setId(1L);
 
-    DseProfile profile2 = new DseProfile();
+    UiProfileEntity profile2 = new UiProfileEntity();
     profile2.setId(2L);
 
     assertNotEquals(profile1, profile2);
@@ -31,15 +31,15 @@ class DseProfileTest {
 
   @Test
   void testEquals_nullId_shouldNotBeEqual() {
-    DseProfile profile1 = new DseProfile(); // id is null
-    DseProfile profile2 = new DseProfile(); // id is null
+    UiProfileEntity profile1 = new UiProfileEntity(); // id is null
+    UiProfileEntity profile2 = new UiProfileEntity(); // id is null
 
     assertNotEquals(profile1, profile2);
   }
 
   @Test
   void testEquals_self_shouldBeEqual() {
-    DseProfile profile = new DseProfile();
+    UiProfileEntity profile = new UiProfileEntity();
     profile.setId(1L);
 
     assertEquals(profile, profile);
@@ -47,7 +47,7 @@ class DseProfileTest {
 
   @Test
   void testEquals_null_shouldNotBeEqual() {
-    DseProfile profile = new DseProfile();
+    UiProfileEntity profile = new UiProfileEntity();
     profile.setId(1L);
 
     assertNotEquals(null, profile);
@@ -55,7 +55,7 @@ class DseProfileTest {
 
   @Test
   void testEquals_differentClass_shouldNotBeEqual() {
-    DseProfile profile = new DseProfile();
+    UiProfileEntity profile = new UiProfileEntity();
     profile.setId(1L);
 
     Object other = new Object();

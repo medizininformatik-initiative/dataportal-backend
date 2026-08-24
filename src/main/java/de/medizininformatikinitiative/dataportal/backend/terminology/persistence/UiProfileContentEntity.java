@@ -1,4 +1,4 @@
-package de.medizininformatikinitiative.dataportal.backend.dse.persistence;
+package de.medizininformatikinitiative.dataportal.backend.terminology.persistence;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -10,23 +10,28 @@ import org.hibernate.proxy.HibernateProxy;
 import java.io.Serializable;
 import java.util.Objects;
 
-@Entity
-@Table(name = "dse_profile", schema = "public")
+@Entity(name = "UI_PROFILE")
+@Table(name = "UI_PROFILE_TABLE")
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class DseProfile implements Serializable {
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+@IdClass(Coding.class)
+public class UiProfileContentEntity implements Serializable {
   @Id
-  @Column(name = "id", nullable = false)
-  private Long id;
-  @Basic
-  @Column(name = "url", nullable = false, length = -1)
-  private String url;
-  @Basic
-  @Column(name = "entry", columnDefinition = "json", nullable = false)
-  private String entry;
+  @Column(name = "system")
+  private String system;
+
+  @Id
+  @Column(name = "code")
+  private String code;
+
+  @Id
+  @Column(name = "version")
+  private String version;
+
+  @Column(name = "UI_Profile", nullable = false)
+  private String uiProfile;
 
   @Override
   public final boolean equals(Object o) {
@@ -35,12 +40,14 @@ public class DseProfile implements Serializable {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    DseProfile that = (DseProfile) o;
-    return getId() != null && Objects.equals(getId(), that.getId());
+    UiProfileContentEntity that = (UiProfileContentEntity) o;
+    return getSystem() != null && Objects.equals(getSystem(), that.getSystem())
+        && getCode() != null && Objects.equals(getCode(), that.getCode())
+        && getVersion() != null && Objects.equals(getVersion(), that.getVersion());
   }
 
   @Override
   public final int hashCode() {
-    return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
+    return Objects.hash(system, code, version);
   }
 }

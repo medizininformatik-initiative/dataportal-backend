@@ -14,8 +14,8 @@ import static jakarta.persistence.FetchType.LAZY;
 @Setter
 @ToString
 @RequiredArgsConstructor
-@Entity
-public class QueryDispatch {
+@Entity(name = "QueryDispatch")
+public class QueryDispatchEntity {
 
   @EmbeddedId
   private QueryDispatchId id;
@@ -24,7 +24,7 @@ public class QueryDispatch {
   @JoinColumn(referencedColumnName = "id", name = "query_id", nullable = false)
   @ManyToOne(fetch = LAZY)
   @ToString.Exclude
-  private Query query;
+  private QueryEntity query;
 
   @Column(name = "dispatched_at", insertable = false, updatable = false)
   private Timestamp dispatchedAt;
@@ -36,7 +36,7 @@ public class QueryDispatch {
     Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
     Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
-    QueryDispatch that = (QueryDispatch) o;
+    QueryDispatchEntity that = (QueryDispatchEntity) o;
     return getId() != null && Objects.equals(getId(), that.getId());
   }
 

@@ -3,17 +3,18 @@ package de.medizininformatikinitiative.dataportal.backend.query.persistence;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.NativeQuery;
+import org.springframework.data.jpa.repository.Query;
 
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
-public interface QueryRepository extends JpaRepository<Query, Long> {
+public interface QueryRepository extends JpaRepository<QueryEntity, Long> {
 
-  @org.springframework.data.jpa.repository.Query("SELECT t FROM Query t WHERE t.createdBy = ?1")
-  Optional<List<Query>> findByAuthor(String authorId);
+  @Query("SELECT t FROM Query t WHERE t.createdBy = ?1")
+  Optional<List<QueryEntity>> findByAuthor(String authorId);
 
-  @org.springframework.data.jpa.repository.Query("SELECT t.createdBy FROM Query t WHERE t.id = ?1")
+  @Query("SELECT t.createdBy FROM Query t WHERE t.id = ?1")
   Optional<String> getAuthor(Long queryId);
 
   @NativeQuery(value = "SELECT count (*) FROM query WHERE created_by = ?1 AND created_at > (current_timestamp - (?2 * interval '1 minute'))")

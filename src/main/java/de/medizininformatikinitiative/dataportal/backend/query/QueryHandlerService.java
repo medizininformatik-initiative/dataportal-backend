@@ -120,7 +120,7 @@ public class QueryHandlerService {
   }
 
 
-  private Query convertQueryToApi(de.medizininformatikinitiative.dataportal.backend.query.persistence.Query in)
+  private Query convertQueryToApi(QueryEntity in)
       throws JacksonException {
 
     return Query.builder()

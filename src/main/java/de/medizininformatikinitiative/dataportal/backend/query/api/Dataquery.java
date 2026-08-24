@@ -27,7 +27,7 @@ public record Dataquery(
 ) {
   private static ObjectMapper jsonUtil = JsonMapper.builderWithJackson2Defaults().build();
 
-  public static Dataquery of(de.medizininformatikinitiative.dataportal.backend.query.persistence.Dataquery in) throws JacksonException {
+  public static Dataquery of(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity in) throws JacksonException {
     return Dataquery.builder()
         .id(in.getId())
         .label(in.getLabel())

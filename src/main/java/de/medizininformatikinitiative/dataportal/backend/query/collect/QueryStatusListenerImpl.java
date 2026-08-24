@@ -4,7 +4,7 @@ import de.medizininformatikinitiative.dataportal.backend.query.broker.BrokerClie
 import de.medizininformatikinitiative.dataportal.backend.query.broker.QueryNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.query.broker.SiteNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.BrokerClientType;
-import de.medizininformatikinitiative.dataportal.backend.query.persistence.Query;
+import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryEntity;
 import de.medizininformatikinitiative.dataportal.backend.query.persistence.QueryRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultLine;
 import de.medizininformatikinitiative.dataportal.backend.query.result.ResultService;
@@ -75,7 +75,7 @@ public class QueryStatusListenerImpl implements QueryStatusListener {
     }
   }
 
-  private Query lookupAssociatedBackendQuery(Long backendQueryId) throws QueryResultCollectException {
+  private QueryEntity lookupAssociatedBackendQuery(Long backendQueryId) throws QueryResultCollectException {
     return queryRepository.findById(backendQueryId)
         .orElseThrow(() -> new QueryResultCollectException("cannot find backend query with id '%s'"
             .formatted(backendQueryId)));
@@ -89,7 +89,7 @@ public class QueryStatusListenerImpl implements QueryStatusListener {
     }
   }
 
-  private void persistResult(Query internalQuery, String siteName, Integer matchesInPopulation)
+  private void persistResult(QueryEntity internalQuery, String siteName, Integer matchesInPopulation)
       throws QueryResultCollectException {
     var resultLine = ResultLine.builder()
         .siteName(siteName)

@@ -2,5 +2,5 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.persistenc
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ContextualizedTermCodeRepository extends JpaRepository<ContextualizedTermCode, Long> {
+public interface ContextualizedTermCodeRepository extends JpaRepository<ContextualizedTermCodeEntity, Long> {
 }
