@@ -110,7 +110,7 @@ services:
       xpack.security.enabled: false
 
   blaze:
-    image: "samply/blaze:1.10.1"
+    image: "samply/blaze:1.11.0"
     environment:
       BASE_URL: "http://blaze:8080"
       JAVA_TOOL_OPTIONS: "-Xmx1g"
