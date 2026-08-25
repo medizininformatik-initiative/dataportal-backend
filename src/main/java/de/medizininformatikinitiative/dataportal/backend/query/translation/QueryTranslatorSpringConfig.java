@@ -145,9 +145,7 @@ public class QueryTranslatorSpringConfig {
   @Qualifier("flare")
   @Bean
   RestTemplate createFlareWebClient() {
-    return new RestTemplateBuilder()
-        .rootUri(flareBaseUrl)
-        .build();
+    return new RestTemplateBuilder().baseUri(flareBaseUrl).build();
   }
 
   @Qualifier("translation")

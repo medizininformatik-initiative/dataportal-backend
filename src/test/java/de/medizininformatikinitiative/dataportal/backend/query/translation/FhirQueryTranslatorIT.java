@@ -76,9 +76,7 @@ public class FhirQueryTranslatorIT {
         .build()
         .toString();
 
-    var client = new RestTemplateBuilder()
-        .rootUri(flareRootUri)
-        .build();
+    var client = new RestTemplateBuilder().baseUri(flareRootUri).build();
 
     fhirQueryTranslator = new FhirQueryTranslator(client, jsonUtil);
   }
