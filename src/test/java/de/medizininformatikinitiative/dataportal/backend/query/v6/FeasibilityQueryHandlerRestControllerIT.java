@@ -370,7 +370,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
         .build()))
         .when(validationService).validateCcdlSchema(any(JsonNode.class));
 
-    var mvcResult = mockMvc.perform(post(URI.create(PATH)).with(csrf())
+    mockMvc.perform(post(URI.create(PATH)).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(testQuery)))
         .andExpect(status().isBadRequest());
