@@ -23,6 +23,7 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregatio
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
@@ -30,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,20 +56,29 @@ public class ProfileService {
   public static final String FILTER_NAME_CATEGORY = "category";
   public static final String FILTER_NAME_RESOURCE_TYPE = "resourceType";
 
+  // Elasticsearch's default index.max_result_window - the largest "from + size" it will serve
+  // in a single, unscrolled search. The profile catalog is a small, curated set (in the low
+  // hundreds), so fetching up to this many hits to pin/sort entirely in memory is safe.
+  private static final int MAX_PINNABLE_RESULTS = 10000;
+
   private ElasticsearchOperations operations;
 
   private String[] translatedQueryFields;
 
   private String[] originalQueryFields;
 
+  private String[] pinnedProfileUrls;
+
   private ProfileEsRepository repo;
 
   @Autowired
   public ProfileService(@Value("${app.elastic.query.profile.translated_fields}") String[] translatedQueryFields,
                         @Value("${app.elastic.query.profile.original_fields}") String[] originalQueryFields,
+                        @Value("${app.elastic.profile.pinned_urls}") String[] pinnedProfileUrls,
                         ElasticsearchOperations operations, ProfileEsRepository repo) {
     this.translatedQueryFields = translatedQueryFields;
     this.originalQueryFields = originalQueryFields;
+    this.pinnedProfileUrls = pinnedProfileUrls;
     this.operations = operations;
     this.repo = repo;
   }
@@ -77,6 +89,9 @@ public class ProfileService {
                                                                     @Nullable List<String> resourceTypes,
                                                                     @Nullable int pageSize,
                                                                     @Nullable int page) {
+
+    int safePage = Math.max(0, page);
+    int safePageSize = Math.max(1, pageSize);
 
     List<Pair<String, List<String>>> filterList = new ArrayList<>();
     if (!CollectionUtils.isEmpty(modules)) {
@@ -89,12 +104,70 @@ public class ProfileService {
       filterList.add(Pair.of(FILTER_KEY_RESOURCE_TYPE, resourceTypes));
     }
 
-    var searchHitPage = findByNameOrDisplay(keyword, filterList, PageRequest.of(page, pageSize));
+    if (keyword.isEmpty()) {
+      var pinnedRank = pinnedProfileUrlRanks();
+      if (!pinnedRank.isEmpty()) {
+        return performPinnedProfileSearch(filterList, pinnedRank, safePageSize, safePage);
+      }
+    }
+
+    var searchHitPage = findByNameOrDisplay(keyword, filterList, PageRequest.of(safePage, safePageSize));
     List<ProfileSearchEntry> profileEntries = new ArrayList<>();
 
     searchHitPage.getSearchHits().forEach(hit -> profileEntries.add(ProfileSearchEntry.of(hit.getContent())));
     return ProfileSearchResult.builder()
         .totalHits(searchHitPage.getTotalHits())
+        .results(profileEntries)
+        .build();
+  }
+
+  private Map<String, Integer> pinnedProfileUrlRanks() {
+    Map<String, Integer> ranks = new LinkedHashMap<>();
+    for (String url : pinnedProfileUrls) {
+      if (url != null && !url.isBlank()) {
+        ranks.putIfAbsent(url, ranks.size());
+      }
+    }
+    return ranks;
+  }
+
+  // The "url" field is not indexed in Elasticsearch (stored, but not searchable/sortable), so
+  // pinning can't be expressed as an ES query/sort - matching hits are fetched in full and
+  // reordered here instead, then paged manually.
+  private ProfileSearchResult performPinnedProfileSearch(List<Pair<String, List<String>>> filterList,
+                                                          Map<String, Integer> pinnedRank,
+                                                          int pageSize,
+                                                          int page) {
+    List<ProfileDocument> allMatches = findByNameOrDisplay("", filterList, PageRequest.of(0, MAX_PINNABLE_RESULTS))
+        .getSearchHits().stream()
+        .map(SearchHit::getContent)
+        .toList();
+
+    List<ProfileDocument> pinned = new ArrayList<>();
+    List<ProfileDocument> rest = new ArrayList<>();
+    for (ProfileDocument document : allMatches) {
+      if (pinnedRank.containsKey(document.url())) {
+        pinned.add(document);
+      } else {
+        rest.add(document);
+      }
+    }
+    pinned.sort(Comparator.comparingInt(document -> pinnedRank.get(document.url())));
+
+    List<ProfileDocument> ordered = new ArrayList<>(pinned.size() + rest.size());
+    ordered.addAll(pinned);
+    ordered.addAll(rest);
+
+    long rawFromIndex = (long) page * (long) pageSize;
+    int fromIndex = (int) Math.min(Math.max(0L, rawFromIndex), (long) ordered.size());
+    int toIndex = Math.min(fromIndex + pageSize, ordered.size());
+
+    List<ProfileSearchEntry> profileEntries = ordered.subList(fromIndex, toIndex).stream()
+        .map(ProfileSearchEntry::of)
+        .toList();
+
+    return ProfileSearchResult.builder()
+        .totalHits(ordered.size())
         .results(profileEntries)
         .build();
   }

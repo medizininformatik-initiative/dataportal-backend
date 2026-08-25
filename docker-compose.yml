@@ -94,6 +94,10 @@ services:
       ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_CODEABLE_CONCEPT_FIELDS:-display.de,display.en,termcode.code^2,display.original^0.5}
       ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_PROFILE_TRANSLATED_FIELDS:-display.localization.de-DE^2,display.localization.en-US^2,name^3,fields.display.localization.de-DE,fields.display.localization.en-US,fields.display.localization.de-DE.ngram,fields.display.localization.en-US.ngram,display.localization.de-DE.ngram,display.localization.en-US.ngram,name.ngram}
       ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_PROFILE_ORIGINAL_FIELDS:-display.original^2,name^3,fields.display.original,fields.display.original.ngram,name.ngram}
+      # Ordered list of profile "url" values pinned to the top of api/v6/profile/entry/search
+      # results when no searchterm is given. See docs/configuration.md (search for
+      # ELASTIC_SEARCH_PROFILE_PINNED_URLS) for details.
+      ELASTIC_SEARCH_PROFILE_PINNED_URLS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_PROFILE_PINNED_URLS:-https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose,https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure,https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/DiagnosticReportLab}
       # ---- logging
       LOG_LEVEL_SQL: ${DATAPORTAL_BACKEND_LOG_LEVEL_SQL:-warn}
       LOG_LEVEL: ${DATAPORTAL_BACKEND_LOG_LEVEL:-warn}

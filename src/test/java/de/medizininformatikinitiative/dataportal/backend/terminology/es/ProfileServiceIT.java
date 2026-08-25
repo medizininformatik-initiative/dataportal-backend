@@ -1,5 +1,7 @@
 package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDisplay;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDocument;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileEsRepository;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.ProfileNotFoundException;
 import org.junit.jupiter.api.*;
@@ -18,6 +20,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -86,6 +89,51 @@ public class ProfileServiceIT {
     assertNotNull(page);
     assertThat(page.getTotalHits()).isEqualTo(1L);
     assertThat(page.getResults().get(0).id()).isEqualTo("diagnose-condition-id");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinsConfiguredProfilesToTop() {
+    // Relies on the pinned urls configured via app.elastic.profile.pinned_urls in the main
+    // application.yml (not overridden by this IT's @DataElasticsearchTest properties): the
+    // Diagnose/Procedure/Labor core profile urls, in that order. "diagnose-condition-id" from
+    // profile_testdata.json already matches the pinned Diagnose url.
+    var procedureDoc = ProfileDocument.builder()
+        .id("pinned-procedure-id")
+        .name("MII_PR_Prozedur_Procedure")
+        .display(new ProfileDisplay("Procedure", Map.of("de-DE", "Prozedur", "en-US", "Procedure")))
+        .selectable(true)
+        .url("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure")
+        .build();
+    var labDoc = ProfileDocument.builder()
+        .id("pinned-lab-id")
+        .name("MII_PR_Labor_DiagnosticReportLab")
+        .display(new ProfileDisplay("DiagnosticReportLab", Map.of("de-DE", "Laborbericht", "en-US", "Lab report")))
+        .selectable(true)
+        .url("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/DiagnosticReportLab")
+        .build();
+    var otherDoc = ProfileDocument.builder()
+        .id("unpinned-other-id")
+        .name("MII_PR_Other")
+        .display(new ProfileDisplay("Other", Map.of("de-DE", "Andere", "en-US", "Other")))
+        .selectable(true)
+        .url("https://www.medizininformatik-initiative.de/fhir/core/modul-other/StructureDefinition/Other")
+        .build();
+
+    try {
+      repo.saveAll(List.of(procedureDoc, labDoc, otherDoc));
+      operations.indexOps(ProfileDocument.class).refresh();
+
+      var page = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, null, 20, 0));
+
+      assertNotNull(page);
+      assertThat(page.getTotalHits()).isEqualTo(4L);
+      assertThat(page.getResults()).extracting("id")
+          .startsWith("diagnose-condition-id", "pinned-procedure-id", "pinned-lab-id");
+      assertThat(page.getResults()).extracting("id").contains("unpinned-other-id");
+    } finally {
+      repo.deleteAllById(List.of("pinned-procedure-id", "pinned-lab-id", "unpinned-other-id"));
+      operations.indexOps(ProfileDocument.class).refresh();
+    }
   }
 
   @Test

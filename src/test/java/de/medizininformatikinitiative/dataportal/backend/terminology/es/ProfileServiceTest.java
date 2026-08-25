@@ -58,10 +58,12 @@ class ProfileServiceTest {
 
   private ProfileService profileService;
 
+  private String[] pinnedProfileUrls = new String[]{};
+
   @BeforeEach
   void setUp() {
     Mockito.reset(operations, repo);
-    profileService = new ProfileService(translatedQueryFields, originalQueryFields, operations, repo);
+    profileService = new ProfileService(translatedQueryFields, originalQueryFields, pinnedProfileUrls, operations, repo);
   }
 
   @Test
@@ -143,6 +145,72 @@ class ProfileServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.getTotalHits()).isZero();
     assertThat(result.getResults()).isEmpty();
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinsConfiguredUrlsToTopWhenKeywordEmpty() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1", "https://example.org/pin-2"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    var hits = createDummySearchHitsPageWithUrls(List.of(
+        "https://example.org/pin-2", "https://example.org/other-1",
+        "https://example.org/pin-1", "https://example.org/other-2"));
+    doReturn(hits).when(operations).search(any(NativeQuery.class), any(Class.class));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 20, 0));
+
+    assertThat(result.getTotalHits()).isEqualTo(4L);
+    assertThat(result.getResults()).extracting("url").containsExactly(
+        "https://example.org/pin-1", "https://example.org/pin-2",
+        "https://example.org/other-1", "https://example.org/other-2");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_doesNotPinWhenKeywordPresent() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    var hits = createDummySearchHitsPageWithUrls(List.of(
+        "https://example.org/other-1", "https://example.org/pin-1"));
+    doReturn(hits).when(operations).search(any(NativeQuery.class), any(Class.class));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("foo", null, null, null, 20, 0));
+
+    assertThat(result.getResults()).extracting("url").containsExactly(
+        "https://example.org/other-1", "https://example.org/pin-1");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedSearchIsPagedManually() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1", "https://example.org/pin-2"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    var hits = createDummySearchHitsPageWithUrls(List.of(
+        "https://example.org/other-1", "https://example.org/pin-2",
+        "https://example.org/pin-1", "https://example.org/other-2"));
+    doReturn(hits).when(operations).search(any(NativeQuery.class), any(Class.class));
+
+    var firstPage = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 0));
+    var secondPage = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 1));
+
+    assertThat(firstPage.getTotalHits()).isEqualTo(4L);
+    assertThat(firstPage.getResults()).extracting("url").containsExactly(
+        "https://example.org/pin-1", "https://example.org/pin-2");
+    assertThat(secondPage.getTotalHits()).isEqualTo(4L);
+    assertThat(secondPage.getResults()).extracting("url").containsExactly(
+        "https://example.org/other-1", "https://example.org/other-2");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedUrlNotInResultsIsIgnored() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1", "https://example.org/not-present"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    var hits = createDummySearchHitsPageWithUrls(List.of(
+        "https://example.org/other-1", "https://example.org/pin-1"));
+    doReturn(hits).when(operations).search(any(NativeQuery.class), any(Class.class));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 20, 0));
+
+    assertThat(result.getTotalHits()).isEqualTo(2L);
+    assertThat(result.getResults()).extracting("url").containsExactly(
+        "https://example.org/pin-1", "https://example.org/other-1");
   }
 
   @Test
@@ -335,6 +403,22 @@ class ProfileServiceTest {
       );
     }
     return new SearchHitsImpl<>(totalHits, TotalHitsRelation.OFF, 10.0F, null, null, null, searchHitsList, null, null, null);
+  }
+
+  private SearchHits<ProfileDocument> createDummySearchHitsPageWithUrls(List<String> urls) {
+    var searchHitsList = new ArrayList<SearchHit<ProfileDocument>>();
+
+    for (String url : urls) {
+      var document = ProfileDocument.builder()
+          .id(UUID.randomUUID().toString())
+          .name("some-profile")
+          .display(createDummyDisplay())
+          .selectable(true)
+          .url(url)
+          .build();
+      searchHitsList.add(new SearchHit<>(null, null, null, 10.0F, null, null, null, null, null, null, document));
+    }
+    return new SearchHitsImpl<>(urls.size(), TotalHitsRelation.OFF, 10.0F, null, null, null, searchHitsList, null, null, null);
   }
 
   private ProfileDocument createDummyProfileDocument(String id, List<ProfileRelative> parents, List<ProfileRelative> children) {
