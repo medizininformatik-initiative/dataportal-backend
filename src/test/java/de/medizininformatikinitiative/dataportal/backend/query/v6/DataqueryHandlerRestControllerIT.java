@@ -327,7 +327,7 @@ public class DataqueryHandlerRestControllerIT {
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/convert/crtdl")).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(dataqueryId))))
-        .andExpect(status().isUnprocessableEntity());
+        .andExpect(status().isUnprocessableContent());
   }
 
   @Test
@@ -478,7 +478,7 @@ public class DataqueryHandlerRestControllerIT {
     mockMvc.perform(put(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/1")).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(createValidDataqueryToStore(1L))))
-        .andExpect(status().isUnprocessableEntity());
+        .andExpect(status().isUnprocessableContent());
   }
 
   @Test

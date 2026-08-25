@@ -647,7 +647,7 @@ public class FeasibilityQueryHandlerRestControllerIT {
     mockMvc.perform(post(URI.create(PATH_API + PATH_QUERY + PATH_FEASIBILITY + "/cql")).with(csrf())
             .contentType(APPLICATION_JSON)
             .content(jsonUtil.writeValueAsString(createValidCcdl())))
-        .andExpect(status().isUnprocessableEntity());
+        .andExpect(status().isUnprocessableContent());
   }
 
   @NotNull
