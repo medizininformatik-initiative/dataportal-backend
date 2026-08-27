@@ -51,7 +51,7 @@ public class UpgradeService {
           : List.of(
           (UpgradeHandler) (de, ag, idx) -> handleFilterNameChange(de, ag, dseProfile, idx),
           (UpgradeHandler) (de, ag, idx) -> handleFieldOrReferenceRemoved(de, ag, dseProfile, idx),
-          (UpgradeHandler) (de, ag, idx) -> handleLinkedGroupsRemoved(de, ag, dseProfile, idx)
+          (UpgradeHandler) this::handleLinkedGroupsRemoved
       );
 
       for (var handler : handlers) {
@@ -163,7 +163,7 @@ public class UpgradeService {
         .build();
   }
 
-  private DataExtractionUpgradeResult handleLinkedGroupsRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile, int groupIndex) {
+  private DataExtractionUpgradeResult handleLinkedGroupsRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, int groupIndex) {
     var fixedDataExtraction = dataExtraction;
     var fixedAttributeGroup = attributeGroup;
     var issues = new ArrayList<UpgradeIssue>();
