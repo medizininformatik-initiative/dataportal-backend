@@ -9,6 +9,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -122,6 +123,10 @@ public class WebSecurityConfig {
         )
         .cors(Customizer.withDefaults())
         .anonymous(Customizer.withDefaults())
+        // CSRF protection is not needed: this is a stateless API authenticated via bearer
+        // tokens (SessionCreationPolicy.STATELESS), so there is no session or auth cookie a
+        // cross-site request could ride on.
+        .csrf(AbstractHttpConfigurer::disable)
         .sessionManagement((session) -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
