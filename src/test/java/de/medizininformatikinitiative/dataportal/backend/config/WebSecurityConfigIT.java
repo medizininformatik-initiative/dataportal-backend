@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -36,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -167,6 +169,25 @@ class WebSecurityConfigIT {
     doReturn(createDataquery(false)).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
     mockMvc.perform(get(URI.create("/api/v6/query/data/1")).with(csrf()))
         .andExpect(status().isOk());
+  }
+
+  // CSRF protection is disabled (stateless bearer-token API), so a state-changing request
+  // must be accepted without a CSRF token.
+  @Test
+  @WithMockUser(username = "user", roles = "DATAPORTAL_TEST_USER")
+  void postDataquery_authenticatedAllowedWithoutCsrfToken() throws Exception {
+    mockMvc.perform(post(URI.create("/api/v6/query/data"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"label\":\"test\",\"comment\":\"test\"}"))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  void postDataquery_unauthenticatedDeniedWithoutCsrfToken() throws Exception {
+    mockMvc.perform(post(URI.create("/api/v6/query/data"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"label\":\"test\",\"comment\":\"test\"}"))
+        .andExpect(status().isUnauthorized());
   }
 
   private Dataquery createDataquery(boolean withResult) {
