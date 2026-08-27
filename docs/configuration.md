@@ -667,6 +667,17 @@ Comma-separated list of the fields (with optional `^boost` factor) searched when
 
 ---
 
+#### `ELASTIC_SEARCH_PROFILE_PINNED_URLS`
+
+Ordered, comma-separated list of profile `url` values to pin to the top of `api/v6/profile/entry/search` results. Only
+applied when no `searchterm` is given, and only shows a pinned profile if it already matches the active filters. Maps to
+`app.elastic.profile.pinned_urls`.
+
+**Default:** `https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose,https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure,https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/DiagnosticReportLab`
+
+
+---
+
 #### `PT_CCDL_VERSION`
 
 The used version of the Clinical Cohort Definition Language
