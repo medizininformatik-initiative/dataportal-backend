@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [9.2.0] - 2026-09-02
+
+- Based on ontology **[v5.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.0)**
+
+### Changed
+- Pin configurable profiles to the top of the profile search in case no search term is supplied ([#1092](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1092))
+### Security
+- Update dependencies and github actions
+
 ## [9.1.0] - 2026-08-24
 
 - Based on ontology **[v5.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.0)**
