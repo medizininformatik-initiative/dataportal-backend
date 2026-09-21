@@ -26,7 +26,7 @@ permissions: read-all
 
 jobs:
   build-pages:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out Git repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -53,7 +53,7 @@ jobs:
           path: docs/.vitepress/dist
 
   deploy-pages:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [ build-pages ]
     permissions:
       pages: write
