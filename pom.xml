@@ -30,6 +30,9 @@
     <!-- Override spring-boot-starter-parent's pinned Tomcat version to fix CVE-2026-68525
          (FORM auth incorrect authorization, fixed in 11.0.25); remove once the parent BOM catches up. -->
     <tomcat.version>11.0.25</tomcat.version>
+    <!-- Override spring-boot-starter-parent's pinned Jackson 3 version (3.1.5) to fix CVE-2026-68497
+         (fixed in 3.1.7); remove once the parent BOM catches up. -->
+    <jackson-bom.version>3.1.7</jackson-bom.version>
   </properties>
 
   <dependencies>
