@@ -128,6 +128,30 @@ class DataqueryCsvExportServiceTest {
   }
 
   @Test
+  void testJsonToCsv_dataExtraction_includesNestedFields() throws IOException {
+    var dataExtraction = DataExtraction.builder()
+        .attributeGroups(List.of(
+            AttributeGroup.builder()
+                .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose"))
+                .name("nested testgroup")
+                .id("my-nested-grp")
+                .attributes(List.of(
+                    Attribute.builder().attributeRef("Condition.code").build(),
+                    Attribute.builder().attributeRef("Condition.code.coding:icd10-gm").build(),
+                    Attribute.builder().attributeRef("Condition.code.coding:icd10-gm.extension:Seitenlokalisation").mustHave(true).build()
+                ))
+                .build()
+        ))
+        .build();
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(dataExtraction, DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN);
+
+    assertTrue(csvResult.contains("Code, ICD-10-GM code, Seitenlokalisation (Required)"));
+  }
+
+  @Test
   void testJsonToCsv_dataExtraction_throwsWhenModuleCannotBeDeserialized() throws IOException {
     var dataExtraction = createValidDataExtraction();
     doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());

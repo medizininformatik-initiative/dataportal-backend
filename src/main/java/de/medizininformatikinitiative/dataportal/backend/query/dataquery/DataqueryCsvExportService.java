@@ -7,6 +7,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.Comparator;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
+import de.medizininformatikinitiative.dataportal.backend.dse.api.Field;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileRepository;
@@ -149,7 +150,7 @@ public class DataqueryCsvExportService {
       } else if (dseProfileOptional.isPresent()) {
         try {
           var dseProfile = jsonUtil.readValue(dseProfileOptional.get().getEntry(), de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class);
-          var fieldEntryOptional = dseProfile.fields().stream().filter(profile -> profile.id().equalsIgnoreCase(attribute.attributeRef())).findFirst();
+          var fieldEntryOptional = findFieldById(dseProfile.fields(), attribute.attributeRef());
           if (fieldEntryOptional.isPresent()) {
             var fieldEntry = fieldEntryOptional.get();
             fieldsList.add(
@@ -170,6 +171,19 @@ public class DataqueryCsvExportService {
         .fields(String.join(", ", fieldsList))
         .links(String.join(", ", linksList))
         .build();
+  }
+
+  private Optional<Field> findFieldById(List<Field> fields, String id) {
+    for (Field field : fields) {
+      if (field.id().equalsIgnoreCase(id)) {
+        return Optional.of(field);
+      }
+      var childMatch = findFieldById(field.children(), id);
+      if (childMatch.isPresent()) {
+        return childMatch;
+      }
+    }
+    return Optional.empty();
   }
 
   private String getReferencedBy(AttributeGroup attributeGroup, Map<String, String> idMap, DataExtraction dataExtraction, SUPPORTED_LANGUAGES lang) {
