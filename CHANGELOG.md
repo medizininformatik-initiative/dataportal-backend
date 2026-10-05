@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [9.3.1] - 2026-10-05
+
+- Based on ontology **[v5.0.1](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.1)**
+
+### Security
+- Update jackson-databind 2.x to 2.21.7 to fix CVEs ([#1154](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1154))
+
 ## [9.3.0] - 2026-10-05
 
 - Based on ontology **[v5.0.1](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.1)**
