@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [9.3.0] - 2026-10-05
+
+- Based on ontology **[v5.0.1](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.1)**
+
+### Changed
+- Update ontology to [v5.0.1](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.1) ([#1130](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1130))
+### Removed
+- Removed redundant description attribute from profile list-detail ([#1128](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1128))
+### Fixed
+- CSV exports correctly traverse through descendant entries of fields ([#1142](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1142))
+### Security
+- Update jackson-databind 2.x to 2.21.6 to fix CVEs ([#1147](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1147))
+- Update dependencies and GitHub actions
+
 ## [9.2.0] - 2026-09-02
 
 - Based on ontology **[v5.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.0.0)**
@@ -11,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changed
 - Pin configurable profiles to the top of the profile search in case no search term is supplied ([#1092](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1092))
 ### Security
-- Update dependencies and github actions
+- Update dependencies and GitHub actions
 
 ## [9.1.0] - 2026-08-24
 
@@ -20,7 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changed
 - Renamed JPA entity classes to avoid name clashes with DTOs ([#1076](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1076))
 ### Security
-- Update dependencies and github actions
+- Update dependencies and GitHub actions
 
 ## [9.0.0] - 2026-08-20
 
@@ -44,7 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed importing certificates with windows style linebreaks ([#1021](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1021))
 - Include operation outcome error message when measure evaluation fails in the Direct Broker ([#731](https://github.com/medizininformatik-initiative/dataportal-backend/issues/731))
 ### Security
-- Update dependencies and github actions
+- Update dependencies and GitHub actions
 
 ## [8.7.0] - 2026-05-08
 
@@ -60,7 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Fixed
 - Fixed some bugs in openapi description (included in [#931](https://github.com/medizininformatik-initiative/dataportal-backend/issues/931))
 ### Security
-- Update dependencies and github actions
+- Update dependencies and GitHub actions
 
 ## [8.6.1] - 2026-03-19
 
