@@ -121,7 +121,7 @@ services:
       - "blaze-data:/app/data"
 
   flare:
-    image: ghcr.io/medizininformatik-initiative/flare:2.8.0
+    image: ghcr.io/medizininformatik-initiative/flare:2.9.0
     ports:
       - "8092:8080"
     environment:
