@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Unreleased]
+
+### Added
+- Add validation issue `VALIDATION-2000008` (`FILTER_NAME_NOT_FOUND`) for data extraction filters whose name does not exist in the ontology profile of the attribute group (e.g. outdated `onset-date` instead of `recorded-date`), so that clients trigger the CRTDL upgrade ([#1174](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1174))
+- Add tests ensuring that the CRTDL upgrade replaces the `onset-date` filter with `recorded-date` for the Condition profiles (Diagnose, Onkologie Diagnose Primärtumor, Patho Problem List Item, ISiKDiagnose, Todesursache) ([#1174](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1174))
+
 ## [9.4.0] - 2026-10-19
 
 - Based on ontology **[v5.1.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.1.0)**

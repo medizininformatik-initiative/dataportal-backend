@@ -1,5 +1,6 @@
 package de.medizininformatikinitiative.dataportal.backend.validation;
 
+import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
 import de.medizininformatikinitiative.dataportal.backend.dse.DseService;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.Field;
@@ -13,10 +14,13 @@ import de.medizininformatikinitiative.dataportal.backend.query.api.status.Upgrad
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,6 +117,54 @@ class UpgradeServiceTest {
     var issue = result.annotations().get(0);
     assertThat(issue.value().code()).isEqualTo("UPGRADE-" + UpgradeIssueType.FILTER_CHANGE.code());
     assertThat(issue.path()).isEqualTo("dataExtraction/attributeGroups/0/filter/0");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "https://www.medizininformatik-initiative.de/fhir/ext/modul-onko/StructureDefinition/mii-pr-onko-diagnose-primaertumor",
+      "https://www.medizininformatik-initiative.de/fhir/ext/modul-patho/StructureDefinition/mii-pr-patho-problem-list-item",
+      "https://gematik.de/fhir/isik/StructureDefinition/ISiKDiagnose",
+      "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Todesursache"
+  })
+  void upgrade_conditionOnsetDateFilter_isReplacedWithRecordedDate(String profileUrl) {
+    var groupReference = URI.create(profileUrl);
+    var onsetDateFilter = Filter.builder().type("date").name("onset-date")
+        .start(LocalDate.of(2020, 1, 1)).end(LocalDate.of(2021, 12, 31)).build();
+    var codeFilter = Filter.builder().type("token").name("code")
+        .codes(List.of(TermCode.builder().code("I10").system("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
+            .display("Essential hypertension").build()))
+        .build();
+    var group = attributeGroup("group-1", groupReference, List.of(attribute("Condition.code")),
+        List.of(codeFilter, onsetDateFilter));
+    var crtdl = crtdl(DataExtraction.builder().attributeGroups(List.of(group)).build());
+
+    // DSE filters as delivered since ontology v4.1.1 for the affected Condition profiles
+    var recordedDateDseFilter = de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder()
+        .type("date").name("recorded-date").uiType("timeRestriction").build();
+    var codeDseFilter = de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder()
+        .type("token").name("code").uiType("code").build();
+    var dseProfile = DseProfile.builder().url(profileUrl)
+        .fields(List.of(Field.builder().id("Condition.code").build()))
+        .filters(List.of(recordedDateDseFilter, codeDseFilter))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = upgradeService.upgrade(crtdl);
+
+    var expectedDateFilter = Filter.builder().type("date").name("recorded-date")
+        .start(LocalDate.of(2020, 1, 1)).end(LocalDate.of(2021, 12, 31)).build();
+    var resultGroup = result.crtdl().dataExtraction().attributeGroups().get(0);
+    assertThat(resultGroup.groupReference()).isEqualTo(groupReference);
+    assertThat(resultGroup.attributes()).isEqualTo(group.attributes());
+    assertThat(resultGroup.filter()).containsExactly(codeFilter, expectedDateFilter);
+    assertThat(result.annotations()).hasSize(1);
+    var issue = result.annotations().get(0);
+    assertThat(issue.value().code()).isEqualTo("UPGRADE-" + UpgradeIssueType.FILTER_CHANGE.code());
+    assertThat(issue.path()).isEqualTo("dataExtraction/attributeGroups/0/filter/1");
+    assertThat(issue.details())
+        .containsEntry("replaced", onsetDateFilter)
+        .containsEntry("replacedWith", expectedDateFilter);
   }
 
   @Test

@@ -25,6 +25,7 @@ public enum ValidationIssueType {
   LINKED_GROUP_MISSING(2000005, "Linked group missing for attribute of type reference"),
   LINKED_GROUP_NOT_FOUND(2000006, "Linked group not found in CRTDL"),
   FILTER_DATE_COMBINATION_INVALID(2000007, "End date must not be before start date."),
+  FILTER_NAME_NOT_FOUND(2000008, "filter name not found in ontology profile of attribute group"),
   UIPROFILE_NOT_FOUND(50001, "UiProfile not found");
 
   private static final ValidationIssueType[] VALUES;

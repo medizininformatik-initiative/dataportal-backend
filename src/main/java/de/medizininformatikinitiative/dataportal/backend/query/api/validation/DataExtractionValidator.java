@@ -22,6 +22,7 @@ import java.net.URI;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Validator for {@link DataExtraction} that does an actual check based on a JSON schema.
@@ -179,13 +180,18 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
     var hasErrors = false;
     for (int i = 0; i < attributeGroup.filter().size(); i++) {
       var attributeFilter = attributeGroup.filter().get(i);
-        hasErrors = hasUnsupportedFilterTypes(ctx, dseProfile, attributeFilter,
+      if (hasUnsupportedFilterTypes(ctx, dseProfile, attributeFilter,
+          MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i))) {
+        hasErrors = true;
+      } else {
+        hasErrors = hasUnknownFilterName(ctx, dseProfile, attributeFilter,
             MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
-        hasErrors = codesMissingInValueSets(ctx, dseProfile, attributeFilter,
-            MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
+      }
+      hasErrors = codesMissingInValueSets(ctx, dseProfile, attributeFilter,
+          MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
       hasErrors = hasInvalidDateSettings(ctx, attributeFilter,
           MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
-      }
+    }
     return hasErrors;
   }
 
@@ -198,6 +204,28 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
           ctx,
           MessageFormat.format("{0}/type", jsonPointerBase),
           ValidationIssueType.FILTER_TYPE_NOT_SUPPORTED
+      );
+      return true;
+    }
+    return false;
+  }
+
+  // Filters may be renamed between ontology versions (e.g. onset-date -> recorded-date). Reporting this lets the
+  // client trigger the CRTDL upgrade, which replaces the outdated name.
+  private boolean hasUnknownFilterName(ConstraintValidatorContext ctx,
+                                       DseProfile dseProfile,
+                                       Filter attributeFilter,
+                                       String jsonPointerBase) {
+    if (dseProfile.filters().stream().noneMatch(filter -> filter.type().equals(attributeFilter.type())
+        && Objects.equals(filter.name(), attributeFilter.name()))) {
+      ValidationErrorBuilder.addError(
+          ctx,
+          MessageFormat.format("{0}/name", jsonPointerBase),
+          ValidationIssueType.FILTER_NAME_NOT_FOUND,
+          Map.of(
+              "name", Objects.toString(attributeFilter.name(), ""),
+              "type", attributeFilter.type()
+          )
       );
       return true;
     }
