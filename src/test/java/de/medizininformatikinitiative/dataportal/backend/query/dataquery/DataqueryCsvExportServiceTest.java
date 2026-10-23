@@ -117,7 +117,7 @@ class DataqueryCsvExportServiceTest {
 
     CodeableConceptEntry ccEntry = mock(CodeableConceptEntry.class);
     doReturn(displayEntry).when(ccEntry).display();
-    doReturn(ccEntry).when(codeableConceptService).getSearchResultEntryByTermCode(any(TermCode.class));
+    doReturn(Optional.of(ccEntry)).when(codeableConceptService).getSearchResultEntryByTermCode(any(TermCode.class));
     doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
     doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
 

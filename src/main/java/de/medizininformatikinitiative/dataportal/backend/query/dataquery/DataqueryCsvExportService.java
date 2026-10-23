@@ -13,7 +13,6 @@ import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProf
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileRepository;
 import de.medizininformatikinitiative.dataportal.backend.query.api.*;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.AttributeDefinition;
-import de.medizininformatikinitiative.dataportal.backend.terminology.api.CodeableConceptEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
@@ -40,7 +39,7 @@ public class DataqueryCsvExportService {
 
   private static final String[] INCLUSION_HEADERS = {"module", "criterionDisplay", "criterionSystem", "criterionCode", "criterionFilter", "timeRestriction", "conjunctionGroup"};
   private static final String[] FEATURE_HEADERS = {"id", "module", "profile", "featureName", "fields", "filter", "timeRestriction", "links", "onlyExtractIfLinked", "required"};
-  private static final String FILTERTYPE_CODE = "code";
+  private static final String FILTERTYPE_TOKEN = "token";
   private static final String FILTERTYPE_DATE = "date";
   private static final String FILTER_DELIMITER = "or";
   private static final String REFERENCING_GROUPS_DELIMITER = ", ";
@@ -210,13 +209,15 @@ public class DataqueryCsvExportService {
 
   private String getFilter(AttributeGroup attributeGroup, SUPPORTED_LANGUAGES lang) {
     var codeFilters = attributeGroup.filter().stream()
-        .filter(filter -> filter.name().equalsIgnoreCase(FILTERTYPE_CODE))
+        .filter(filter -> filter.type().equalsIgnoreCase(FILTERTYPE_TOKEN))
         .toList();
     return codeFilters.stream()
         .flatMap(filter -> filter.codes().stream())
         .map(code -> {
-          var ccEntry = codeableConceptService.getSearchResultEntryByTermCode(code);
-          return MessageFormat.format("[{0} ({1}, {2})]", getLocalizedDisplayEntry(ccEntry.display(), lang), code.code(), code.system());
+          var display = codeableConceptService.getSearchResultEntryByTermCode(code)
+              .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
+              .orElse("");
+          return MessageFormat.format("[{0} ({1}, {2})]", display, code.code(), code.system());
         })
         .collect(Collectors.joining(" " + MultiMessageBundle.getEntry(FILTER_DELIMITER, lang) + " "));
   }
@@ -331,10 +332,9 @@ public class DataqueryCsvExportService {
         return MessageFormat.format("{0}: {1}",
             MultiMessageBundle.getEntry("value", lang),
             filter.selectedConcepts().stream()
-                .map(tc -> {
-                  CodeableConceptEntry ccEntry = codeableConceptService.getSearchResultEntryByTermCode(tc);
-                  return ccEntry == null ? "" : getLocalizedDisplayEntry(ccEntry.display(), lang);
-                })
+                .map(tc -> codeableConceptService.getSearchResultEntryByTermCode(tc)
+                    .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
+                    .orElse(""))
                 .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
       case REFERENCE:
       default:
@@ -349,20 +349,18 @@ public class DataqueryCsvExportService {
         return MessageFormat.format("{0}: {1}",
             filterAcEntryString,
             filter.selectedConcepts().stream()
-                .map(tc -> {
-                  CodeableConceptEntry ccEntry = codeableConceptService.getSearchResultEntryByTermCode(tc);
-                  return ccEntry == null ? "" : getLocalizedDisplayEntry(ccEntry.display(), lang);
-                })
+                .map(tc -> codeableConceptService.getSearchResultEntryByTermCode(tc)
+                    .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
+                    .orElse(""))
                 .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
       case REFERENCE:
         return MessageFormat.format("{0}: {1}",
             filterAcEntryString,
             filter.criteria().stream()
                 .flatMap(criterion -> criterion.termCodes().stream())
-                .map(tc -> {
-                  CodeableConceptEntry ccEntry = codeableConceptService.getSearchResultEntryByTermCode(tc);
-                  return ccEntry == null ? "" : getLocalizedDisplayEntry(ccEntry.display(), lang);
-                })
+                .map(tc -> codeableConceptService.getSearchResultEntryByTermCode(tc)
+                    .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
+                    .orElse(""))
                 .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
       case QUANTITY_COMPARATOR:
       case QUANTITY_RANGE:
