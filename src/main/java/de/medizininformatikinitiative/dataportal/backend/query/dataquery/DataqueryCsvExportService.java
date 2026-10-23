@@ -7,6 +7,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.Comparator;
 import de.medizininformatikinitiative.dataportal.backend.common.api.Criterion;
 import de.medizininformatikinitiative.dataportal.backend.common.api.DisplayEntry;
 import de.medizininformatikinitiative.dataportal.backend.common.api.TermCode;
+import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.Field;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.LocalizedValue;
 import de.medizininformatikinitiative.dataportal.backend.dse.persistence.DseProfileEntity;
@@ -16,6 +17,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.api.Attribu
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.OntologyItemNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileRepository;
 import lombok.Builder;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,6 +46,7 @@ public class DataqueryCsvExportService {
   private static final String FILTERTYPE_DATE = "date";
   private static final String FILTER_DELIMITER = "or";
   private static final String REFERENCING_GROUPS_DELIMITER = ", ";
+  private static final String NOT_FOUND = "notFound";
   @NonNull
   private final DseProfileRepository dseProfileRepository;
   @NonNull
@@ -142,7 +146,7 @@ public class DataqueryCsvExportService {
         linksList.add(
             attribute.linkedGroups().stream()
                 .map(lg -> MessageFormat.format("{0}{1}",
-                    idMap.get(lg),
+                    idMap.getOrDefault(lg, notFound(lang)),
                     attribute.mustHave() ? " (" + MultiMessageBundle.getEntry("required", lang) + ")" : ""))
                 .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("and", lang) + " "))
         );
@@ -174,7 +178,7 @@ public class DataqueryCsvExportService {
 
   private Optional<Field> findFieldById(List<Field> fields, String id) {
     for (Field field : fields) {
-      if (field.id().equalsIgnoreCase(id)) {
+      if (field.id() != null && field.id().equalsIgnoreCase(id)) {
         return Optional.of(field);
       }
       var childMatch = findFieldById(field.children(), id);
@@ -209,22 +213,22 @@ public class DataqueryCsvExportService {
 
   private String getFilter(AttributeGroup attributeGroup, SUPPORTED_LANGUAGES lang) {
     var codeFilters = attributeGroup.filter().stream()
-        .filter(filter -> filter.type().equalsIgnoreCase(FILTERTYPE_TOKEN))
+        .filter(filter -> FILTERTYPE_TOKEN.equalsIgnoreCase(filter.type()))
         .toList();
     return codeFilters.stream()
         .flatMap(filter -> filter.codes().stream())
         .map(code -> {
           var display = codeableConceptService.getSearchResultEntryByTermCode(code)
               .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
-              .orElse("");
-          return MessageFormat.format("[{0} ({1}, {2})]", display, code.code(), code.system());
+              .orElse(notFound(lang));
+          return MessageFormat.format("[{0} ({1}, {2})]", display, valueOrNotFound(code.code(), lang), valueOrNotFound(code.system(), lang));
         })
         .collect(Collectors.joining(" " + MultiMessageBundle.getEntry(FILTER_DELIMITER, lang) + " "));
   }
 
   private String getTimeRestriction(AttributeGroup attributeGroup) {
     var dateFilterOptional = attributeGroup.filter().stream()
-        .filter(filter -> filter.type().equalsIgnoreCase(FILTERTYPE_DATE))
+        .filter(filter -> FILTERTYPE_DATE.equalsIgnoreCase(filter.type()))
         .findFirst();
     if (dateFilterOptional.isPresent()) {
       var dateFilter = dateFilterOptional.get();
@@ -266,11 +270,15 @@ public class DataqueryCsvExportService {
 
   private String[] getRow(Criterion criterion, int conjunctionGroup, SUPPORTED_LANGUAGES lang) {
 
-    EsSearchResultEntry criterionEsEntry = terminologyEsService.getSearchResultEntryByCriterion(criterion);
-
     TermCode tc0 = criterion.termCodes().get(0);
-    String contextDisplay = criterion.context().display();
-    String termCodeDisplay = getLocalizedDisplayEntry(criterionEsEntry.display(), lang);
+    String contextDisplay = valueOrNotFound(criterion.context().display(), lang);
+    String termCodeDisplay;
+    try {
+      EsSearchResultEntry criterionEsEntry = terminologyEsService.getSearchResultEntryByCriterion(criterion);
+      termCodeDisplay = getLocalizedDisplayEntry(criterionEsEntry.display(), lang);
+    } catch (OntologyItemNotFoundException e) {
+      termCodeDisplay = notFound(lang);
+    }
     String termCodeSystem = tc0.system();
     String termCodeCode = tc0.code();
     String filter = filterToString(criterion, lang);
@@ -309,13 +317,13 @@ public class DataqueryCsvExportService {
   }
 
   private String valueFilterToString(ValueFilter filter, SUPPORTED_LANGUAGES lang) {
-    String unit = filter.quantityUnit() != null ? filter.quantityUnit().display() : "";
+    String unit = filter.quantityUnit() != null ? getUnitDisplay(filter.quantityUnit(), lang) : "";
     switch (filter.type()) {
       case QUANTITY_COMPARATOR:
         return MessageFormat.format("{0} {1} {2}{3}",
             MultiMessageBundle.getEntry("value", lang),
             translateComparator(filter.comparator()),
-            filter.value(),
+            filter.value() != null ? filter.value() : notFound(lang),
             unit
         );
       case QUANTITY_RANGE:
@@ -334,7 +342,7 @@ public class DataqueryCsvExportService {
             filter.selectedConcepts().stream()
                 .map(tc -> codeableConceptService.getSearchResultEntryByTermCode(tc)
                     .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
-                    .orElse(""))
+                    .orElse(notFound(lang)))
                 .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
       case REFERENCE:
       default:
@@ -351,7 +359,7 @@ public class DataqueryCsvExportService {
             filter.selectedConcepts().stream()
                 .map(tc -> codeableConceptService.getSearchResultEntryByTermCode(tc)
                     .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
-                    .orElse(""))
+                    .orElse(notFound(lang)))
                 .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
       case REFERENCE:
         return MessageFormat.format("{0}: {1}",
@@ -360,7 +368,7 @@ public class DataqueryCsvExportService {
                 .flatMap(criterion -> criterion.termCodes().stream())
                 .map(tc -> codeableConceptService.getSearchResultEntryByTermCode(tc)
                     .map(ccEntry -> getLocalizedDisplayEntry(ccEntry.display(), lang))
-                    .orElse(""))
+                    .orElse(notFound(lang)))
                 .collect(Collectors.joining(" " + MultiMessageBundle.getEntry("or", lang) + " ")));
       case QUANTITY_COMPARATOR:
       case QUANTITY_RANGE:
@@ -386,13 +394,17 @@ public class DataqueryCsvExportService {
   public void addFileToZip(ZipOutputStream zos, String fileName, String content) throws IOException {
     ZipEntry entry = new ZipEntry(fileName);
     zos.putNextEntry(entry);
-    zos.write(content.getBytes());
+    zos.write(content.getBytes(StandardCharsets.UTF_8));
     zos.closeEntry();
   }
 
   private String getLocalizedDisplayEntry(DisplayEntry displayEntry, SUPPORTED_LANGUAGES lang, boolean fallbackToOriginal) {
-    Optional<LocalizedValue> localizedValueOptional = displayEntry.translations().stream()
-        .filter(lv -> lv.language().equalsIgnoreCase(lang.getJsonKey()))
+    if (displayEntry == null) {
+      return notFound(lang);
+    }
+    Optional<LocalizedValue> localizedValueOptional = Optional.ofNullable(displayEntry.translations()).orElse(List.of()).stream()
+        .filter(Objects::nonNull)
+        .filter(lv -> lang.getJsonKey().equalsIgnoreCase(lv.language()))
         .findFirst();
 
     if (localizedValueOptional.isPresent()) {
@@ -402,11 +414,29 @@ public class DataqueryCsvExportService {
         return localizedEntry;
       }
     }
-    return fallbackToOriginal ? displayEntry.original() : "";
+    if (!fallbackToOriginal) {
+      return "";
+    }
+    return valueOrNotFound(displayEntry.original(), lang);
   }
 
   private String getLocalizedDisplayEntry(DisplayEntry displayEntry, SUPPORTED_LANGUAGES lang) {
     return getLocalizedDisplayEntry(displayEntry, lang, true);
+  }
+
+  private String getUnitDisplay(Unit unit, SUPPORTED_LANGUAGES lang) {
+    if (unit.display() != null && !unit.display().isBlank()) {
+      return unit.display();
+    }
+    return valueOrNotFound(unit.code(), lang);
+  }
+
+  private String valueOrNotFound(String value, SUPPORTED_LANGUAGES lang) {
+    return (value == null || value.isBlank()) ? notFound(lang) : value;
+  }
+
+  private String notFound(SUPPORTED_LANGUAGES lang) {
+    return MultiMessageBundle.getEntry(NOT_FOUND, lang);
   }
 
   private String getAttributeCodeTranslation(AttributeFilter filter, Optional<UiProfileEntity> uiProfileOptional, SUPPORTED_LANGUAGES lang) {
@@ -425,7 +455,7 @@ public class DataqueryCsvExportService {
         throw new DataqueryCsvExportException();
       }
     } else {
-      filterAcEntryString = filter.attributeCode().display();
+      filterAcEntryString = valueOrNotFound(filter.attributeCode().display(), lang);
     }
     return filterAcEntryString;
   }

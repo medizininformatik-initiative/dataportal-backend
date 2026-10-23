@@ -12,6 +12,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.api.Codeabl
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.OntologyItemNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileRepository;
 import org.apache.commons.io.IOUtils;
@@ -24,6 +25,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -203,6 +205,111 @@ class DataqueryCsvExportServiceTest {
         () -> dataqueryCsvExportService.jsonToCsv(ccdl.inclusionCriteria(), DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN));
   }
 
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_criteria_notFoundWhenCriterionNotInOntology(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var ccdl = createValidCcdl(ValueFilterType.CONCEPT, false, false, false);
+    doThrow(new OntologyItemNotFoundException()).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(ccdl.inclusionCriteria(), language);
+
+    assertTrue(csvResult.contains("\"Geschlecht\";\"" + notFound(language) + "\""));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_criteria_notFoundWhenDisplayIsMissing(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var ccdl = createValidCcdl(ValueFilterType.CONCEPT, false, false, false);
+    EsSearchResultEntry esSearchResultEntry = mock(EsSearchResultEntry.class);
+    doReturn(null).when(esSearchResultEntry).display();
+    doReturn(esSearchResultEntry).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(ccdl.inclusionCriteria(), language);
+
+    assertTrue(csvResult.contains("\"Geschlecht\";\"" + notFound(language) + "\""));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_dataExtraction_notFoundWhenCodeNotInIndex(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    var dataExtraction = createValidDataExtraction();
+    var termCode = createTermCode();
+    doReturn(Optional.empty()).when(codeableConceptService).getSearchResultEntryByTermCode(any(TermCode.class));
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(dataExtraction, language);
+
+    assertTrue(csvResult.contains("[" + notFound(language) + " (" + termCode.code() + ", " + termCode.system() + ")]"));
+  }
+
+  @Test
+  void testJsonToCsv_dataExtraction_doesNotThrowOnFilterWithoutType() throws IOException {
+    var dataExtraction = DataExtraction.builder()
+        .attributeGroups(List.of(
+            AttributeGroup.builder()
+                .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
+                .name("untyped filter testgroup")
+                .id("my-untyped-filter-grp")
+                .attributes(List.of(Attribute.builder().attributeRef("Observation.status").build()))
+                .filter(List.of(Filter.builder().name("code").codes(List.of(createTermCode())).build()))
+                .build()
+        ))
+        .build();
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = assertDoesNotThrow(() -> dataqueryCsvExportService.jsonToCsv(dataExtraction, DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN));
+
+    assertTrue(csvResult.contains("untyped filter testgroup"));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_dataExtraction_notFoundWhenLinkedGroupIsUnknown(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var dataExtraction = DataExtraction.builder()
+        .attributeGroups(List.of(
+            AttributeGroup.builder()
+                .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
+                .name("dangling link testgroup")
+                .id("my-dangling-link-grp")
+                .attributes(List.of(
+                    Attribute.builder()
+                        .attributeRef("Observation.category")
+                        .linkedGroups(List.of("unknown-group"))
+                        .build()
+                ))
+                .build()
+        ))
+        .build();
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(dataExtraction, language);
+
+    assertTrue(csvResult.contains("\"" + notFound(language) + "\""));
+    assertFalse(csvResult.contains("null"));
+  }
+
+  @Test
+  void testAddFileToZip_writesUtf8() throws IOException {
+    String fileName = "umlauts.csv";
+    String fileContent = "Verknüpfungsgruppe;Größe;Maß";
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+      dataqueryCsvExportService.addFileToZip(zos, fileName, fileContent);
+    }
+
+    try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+      assertNotNull(zis.getNextEntry(), "zipfile is empty");
+      assertArrayEquals(fileContent.getBytes(StandardCharsets.UTF_8), zis.readAllBytes());
+    }
+  }
+
   @Test
   void testAddFileToZip() throws IOException {
     String fileName = "dataquery.json";
@@ -233,6 +340,15 @@ class DataqueryCsvExportServiceTest {
 
       assertNull(zis.getNextEntry(), "too many entries in zipfile");
     }
+  }
+
+  private void useReadableCsvFormat() {
+    ReflectionTestUtils.setField(dataqueryCsvExportService, "csvDelimiter", ';');
+    ReflectionTestUtils.setField(dataqueryCsvExportService, "csvTextWrapper", '"');
+  }
+
+  private String notFound(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) {
+    return MultiMessageBundle.getEntry("notFound", language);
   }
 
   private DataExtraction createValidDataExtraction() {
