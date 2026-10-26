@@ -295,6 +295,104 @@ class DataqueryCsvExportServiceTest {
   }
 
   @Test
+  void testJsonToCsv_dataExtraction_findsNestedFieldBelowFieldWithoutId() throws IOException {
+    var dataExtraction = DataExtraction.builder()
+        .attributeGroups(List.of(
+            AttributeGroup.builder()
+                .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
+                .name("missing id testgroup")
+                .id("my-missing-id-grp")
+                .attributes(List.of(Attribute.builder().attributeRef("Observation.status").build()))
+                .build()
+        ))
+        .build();
+    var dseProfileApi = de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.builder()
+        .fields(List.of(
+            de.medizininformatikinitiative.dataportal.backend.dse.api.Field.builder()
+                .display(createDisplayEntry())
+                .children(List.of(
+                    de.medizininformatikinitiative.dataportal.backend.dse.api.Field.builder()
+                        .id("Observation.status")
+                        .display(DisplayEntry.builder().original("status field").translations(List.of()).build())
+                        .build()
+                ))
+                .build()
+        ))
+        .build();
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(dseProfileApi).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = assertDoesNotThrow(() -> dataqueryCsvExportService.jsonToCsv(dataExtraction, DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN));
+
+    assertTrue(csvResult.contains("status field"));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_criteria_referenceAttributeFilterResolvesReferencedCriteria(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var knownTermCode = TermCode.builder().code("known").system("system").display("known").build();
+    var unknownTermCode = TermCode.builder().code("unknown").system("system").display("unknown").build();
+    var referencedCriterion = Criterion.builder()
+        .context(createTermCode())
+        .termCodes(List.of(knownTermCode, unknownTermCode))
+        .build();
+    var criterion = Criterion.builder()
+        .context(createTermCode())
+        .termCodes(List.of(createTermCode()))
+        .attributeFilters(List.of(
+            AttributeFilter.builder()
+                .type(ValueFilterType.REFERENCE)
+                .attributeCode(createTermCode())
+                .criteria(List.of(referencedCriterion))
+                .build()
+        ))
+        .build();
+    CodeableConceptEntry ccEntry = mock(CodeableConceptEntry.class);
+    doReturn(createDisplayEntry()).when(ccEntry).display();
+    doReturn(Optional.of(ccEntry)).when(codeableConceptService).getSearchResultEntryByTermCode(knownTermCode);
+    doReturn(Optional.empty()).when(codeableConceptService).getSearchResultEntryByTermCode(unknownTermCode);
+    doThrow(new OntologyItemNotFoundException()).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(List.of(List.of(criterion)), language);
+
+    var expectedDisplay = language == DataqueryCsvExportService.SUPPORTED_LANGUAGES.DE ? "deutscher Eintrag" : "English entry";
+    assertTrue(csvResult.contains("[display: " + expectedDisplay + " " + MultiMessageBundle.getEntry("or", language) + " " + notFound(language) + "]"));
+  }
+
+  private static Stream<Arguments> provideUnitsWithMissingData() {
+    var notFound = MultiMessageBundle.getEntry("notFound", DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN);
+    return Stream.of(
+        Arguments.of(Unit.builder().code("mg").build(), "mg"),
+        Arguments.of(Unit.builder().code("mg").display(" ").build(), "mg"),
+        Arguments.of(Unit.builder().display("").build(), notFound),
+        Arguments.of(Unit.builder().code(" ").build(), notFound)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideUnitsWithMissingData")
+  void testJsonToCsv_criteria_quantityValueFilterWithMissingData(Unit unit, String expectedUnit) throws IOException {
+    useReadableCsvFormat();
+    var language = DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN;
+    var criterion = Criterion.builder()
+        .context(createTermCode())
+        .termCodes(List.of(createTermCode()))
+        .valueFilter(ValueFilter.builder()
+            .type(ValueFilterType.QUANTITY_COMPARATOR)
+            .comparator(Comparator.EQUAL)
+            .quantityUnit(unit)
+            .build())
+        .build();
+    doThrow(new OntologyItemNotFoundException()).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(List.of(List.of(criterion)), language);
+
+    assertTrue(csvResult.contains(notFound(language) + expectedUnit + "]"));
+    assertFalse(csvResult.contains("null"));
+  }
+
+  @Test
   void testAddFileToZip_writesUtf8() throws IOException {
     String fileName = "umlauts.csv";
     String fileContent = "Verknüpfungsgruppe;Größe;Maß";

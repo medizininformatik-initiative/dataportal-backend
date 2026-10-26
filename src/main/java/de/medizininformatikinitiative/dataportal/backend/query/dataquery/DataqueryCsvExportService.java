@@ -398,7 +398,7 @@ public class DataqueryCsvExportService {
     zos.closeEntry();
   }
 
-  private String getLocalizedDisplayEntry(DisplayEntry displayEntry, SUPPORTED_LANGUAGES lang, boolean fallbackToOriginal) {
+  private String getLocalizedDisplayEntry(DisplayEntry displayEntry, SUPPORTED_LANGUAGES lang) {
     if (displayEntry == null) {
       return notFound(lang);
     }
@@ -414,14 +414,7 @@ public class DataqueryCsvExportService {
         return localizedEntry;
       }
     }
-    if (!fallbackToOriginal) {
-      return "";
-    }
     return valueOrNotFound(displayEntry.original(), lang);
-  }
-
-  private String getLocalizedDisplayEntry(DisplayEntry displayEntry, SUPPORTED_LANGUAGES lang) {
-    return getLocalizedDisplayEntry(displayEntry, lang, true);
   }
 
   private String getUnitDisplay(Unit unit, SUPPORTED_LANGUAGES lang) {
