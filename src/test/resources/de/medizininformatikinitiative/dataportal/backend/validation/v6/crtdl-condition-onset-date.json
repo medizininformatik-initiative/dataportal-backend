@@ -1,0 +1,82 @@
+{
+  "version": "http://json-schema.org/to-be-done/schema#",
+  "display": "",
+  "cohortDefinition": {
+    "version": "http://to_be_decided.com/draft-1/schema#",
+    "display": "Ausgewählte Merkmale",
+    "inclusionCriteria": [
+      [
+        {
+          "termCodes": [
+            {
+              "code": "263495000",
+              "display": "Geschlecht",
+              "system": "http://snomed.info/sct",
+              "version": ""
+            }
+          ],
+          "context": {
+            "code": "Patient",
+            "display": "Patient",
+            "system": "fdpg.mii.cds",
+            "version": "1.0.0"
+          },
+          "valueFilter": {
+            "selectedConcepts": [
+              {
+                "code": "female",
+                "display": "Female",
+                "system": "http://hl7.org/fhir/administrative-gender",
+                "version": "2099"
+              }
+            ],
+            "type": "concept"
+          }
+        }
+      ]
+    ]
+  },
+  "dataExtraction": {
+    "attributeGroups": [
+      {
+        "attributes": [
+          {
+            "attributeRef": "Condition.code",
+            "mustHave": false
+          },
+          {
+            "attributeRef": "Condition.onset[x]",
+            "mustHave": false
+          },
+          {
+            "attributeRef": "Condition.recordedDate",
+            "mustHave": false
+          }
+        ],
+        "id": "04b51538-0055-432c-9d9e-de53f42134d2",
+        "filter": [
+          {
+            "type": "date",
+            "name": "onset-date",
+            "start": "2020-01-01",
+            "end": "2021-12-31"
+          },
+          {
+            "type": "token",
+            "name": "code",
+            "codes": [
+              {
+                "code": "E10-E14",
+                "display": "Diabetes mellitus",
+                "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+                "version": "2099"
+              }
+            ]
+          }
+        ],
+        "groupReference": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+        "name": "MII PR Diagnose Condition"
+      }
+    ]
+  }
+}

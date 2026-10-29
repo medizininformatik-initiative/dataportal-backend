@@ -7,10 +7,12 @@ import de.medizininformatikinitiative.dataportal.backend.dse.api.Field;
 import de.medizininformatikinitiative.dataportal.backend.dse.api.Reference;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Attribute;
 import de.medizininformatikinitiative.dataportal.backend.query.api.AttributeGroup;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.DataExtraction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Filter;
 import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
+import de.medizininformatikinitiative.dataportal.backend.validation.UpgradeService;
 import jakarta.validation.ConstraintValidatorContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -202,6 +204,90 @@ class DataExtractionValidatorTest {
     var captor = ArgumentCaptor.forClass(String.class);
     verify(ctx).buildConstraintViolationWithTemplate(captor.capture());
     assertTemplateHasCode(captor.getValue(), ValidationIssueType.FILTER_TYPE_NOT_SUPPORTED);
+  }
+
+  @Test
+  void isValid_dateFilterNameNotInProfile_false() {
+    var filter = Filter.builder().type("date").name("onset-date").start(LocalDate.of(2020, 1, 1)).end(LocalDate.of(2021, 12, 31)).build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Patient.active")), List.of(filter));
+    var dataExtraction = DataExtraction.builder().attributeGroups(List.of(group)).build();
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Patient.active").build()))
+        .filters(List.of(de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder().type("date").name("recorded-date").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = validator.isValid(dataExtraction, ctx);
+
+    assertFalse(result);
+    var captor = ArgumentCaptor.forClass(String.class);
+    verify(ctx).buildConstraintViolationWithTemplate(captor.capture());
+    assertTemplateHasCode(captor.getValue(), ValidationIssueType.FILTER_NAME_NOT_FOUND);
+    assertTrue(captor.getValue().contains("/attributeGroups/0/filter/0/name"),
+        "expected template to contain filter name pointer but was: " + captor.getValue());
+  }
+
+  @Test
+  void isValid_outdatedDateFilterNameAfterUpgrade_true() {
+    var filter = Filter.builder().type("date").name("onset-date").start(LocalDate.of(2020, 1, 1)).end(LocalDate.of(2021, 12, 31)).build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Patient.active")), List.of(filter));
+    var crtdl = Crtdl.builder()
+        .version("http://json-schema.org/to-be-done/schema#")
+        .dataExtraction(DataExtraction.builder().attributeGroups(List.of(group)).build())
+        .build();
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Patient.active").build()))
+        .filters(List.of(de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder().type("date").name("recorded-date").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    assertFalse(validator.isValid(crtdl.dataExtraction(), ctx));
+
+    var upgraded = new UpgradeService(dseService).upgrade(crtdl).crtdl();
+    clearInvocations(ctx);
+
+    assertTrue(validator.isValid(upgraded.dataExtraction(), ctx));
+    verify(ctx, never()).buildConstraintViolationWithTemplate(anyString());
+  }
+
+  @Test
+  void isValid_filterNameNull_falseWithoutException() {
+    var filter = Filter.builder().type("date").build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Patient.active")), List.of(filter));
+    var dataExtraction = DataExtraction.builder().attributeGroups(List.of(group)).build();
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Patient.active").build()))
+        .filters(List.of(de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder().type("date").name("date").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = validator.isValid(dataExtraction, ctx);
+
+    assertFalse(result);
+    var captor = ArgumentCaptor.forClass(String.class);
+    verify(ctx).buildConstraintViolationWithTemplate(captor.capture());
+    assertTemplateHasCode(captor.getValue(), ValidationIssueType.FILTER_NAME_NOT_FOUND);
+  }
+
+  @Test
+  void isValid_filterNameOnlyInProfileForOtherType_false() {
+    var filter = Filter.builder().type("token").name("date").codes(List.of()).build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Patient.active")), List.of(filter));
+    var dataExtraction = DataExtraction.builder().attributeGroups(List.of(group)).build();
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Patient.active").build()))
+        .filters(List.of(
+            de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder().type("date").name("date").build(),
+            de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder().type("token").name("code").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = validator.isValid(dataExtraction, ctx);
+
+    assertFalse(result);
+    var captor = ArgumentCaptor.forClass(String.class);
+    verify(ctx).buildConstraintViolationWithTemplate(captor.capture());
+    assertTemplateHasCode(captor.getValue(), ValidationIssueType.FILTER_NAME_NOT_FOUND);
   }
 
   @Test
