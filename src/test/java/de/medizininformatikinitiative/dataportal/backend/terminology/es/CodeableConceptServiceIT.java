@@ -223,9 +223,10 @@ public class CodeableConceptServiceIT {
   @Test
   void testGetSearchResultsEntryByTermcode_succeeds() {
     var tc = createTermCode();
-    var result = assertDoesNotThrow(() -> codeableConceptService.getSearchResultEntryByTermCode(tc));
+    var resultOptional = assertDoesNotThrow(() -> codeableConceptService.getSearchResultEntryByTermCode(tc));
 
-    assertNotNull(result);
+    Assertions.assertTrue(resultOptional.isPresent());
+    var result = resultOptional.get();
     Assertions.assertNotNull(result.display());
     Assertions.assertEquals(tc.code(), result.termCode().code());
     Assertions.assertEquals(tc.system(), result.termCode().system());
@@ -233,9 +234,9 @@ public class CodeableConceptServiceIT {
   }
 
   @Test
-  void testGetSearchResultsEntryByTermcode_nullOnNotFound() {
+  void testGetSearchResultsEntryByTermcode_emptyOnNotFound() {
     var result = assertDoesNotThrow(() -> codeableConceptService.getSearchResultEntryByTermCode(TermCode.builder().build()));
-    Assertions.assertNull(result);
+    Assertions.assertTrue(result.isEmpty());
   }
 
   private TermCode createTermCode() {

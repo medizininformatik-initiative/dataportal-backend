@@ -93,16 +93,14 @@ public class CodeableConceptService {
     return codeableConceptEntries;
   }
 
-  public CodeableConceptEntry getSearchResultEntryByTermCode(TermCode termCode) {
+  public Optional<CodeableConceptEntry> getSearchResultEntryByTermCode(TermCode termCode) {
     String termCodeConcat = MessageFormat.format("{0}{1}",
         termCode.code(),
         termCode.system()
     );
-    try {
-      return getSearchResultsEntryByIds(List.of(TerminologyEsService.createUuidV3(NAMESPACE_UUID, termCodeConcat).toString())).get(0);
-    } catch (IndexOutOfBoundsException e) {
-      return null;
-    }
+    return getSearchResultsEntryByIds(List.of(TerminologyEsService.createUuidV3(NAMESPACE_UUID, termCodeConcat).toString()))
+        .stream()
+        .findFirst();
   }
 
   public List<String> availableCodesInValueSets(List<String> codes, List<String> valueSetUrls) {

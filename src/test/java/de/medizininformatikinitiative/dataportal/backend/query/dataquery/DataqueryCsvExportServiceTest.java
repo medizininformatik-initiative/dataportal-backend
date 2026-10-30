@@ -12,6 +12,7 @@ import de.medizininformatikinitiative.dataportal.backend.terminology.api.Codeabl
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.EsSearchResultEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
+import de.medizininformatikinitiative.dataportal.backend.terminology.es.repository.OntologyItemNotFoundException;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileEntity;
 import de.medizininformatikinitiative.dataportal.backend.terminology.persistence.UiProfileRepository;
 import org.apache.commons.io.IOUtils;
@@ -24,6 +25,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -117,7 +119,7 @@ class DataqueryCsvExportServiceTest {
 
     CodeableConceptEntry ccEntry = mock(CodeableConceptEntry.class);
     doReturn(displayEntry).when(ccEntry).display();
-    doReturn(ccEntry).when(codeableConceptService).getSearchResultEntryByTermCode(any(TermCode.class));
+    doReturn(Optional.of(ccEntry)).when(codeableConceptService).getSearchResultEntryByTermCode(any(TermCode.class));
     doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
     doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
 
@@ -203,6 +205,209 @@ class DataqueryCsvExportServiceTest {
         () -> dataqueryCsvExportService.jsonToCsv(ccdl.inclusionCriteria(), DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN));
   }
 
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_criteria_notFoundWhenCriterionNotInOntology(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var ccdl = createValidCcdl(ValueFilterType.CONCEPT, false, false, false);
+    doThrow(new OntologyItemNotFoundException()).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(ccdl.inclusionCriteria(), language);
+
+    assertTrue(csvResult.contains("\"Geschlecht\";\"" + notFound(language) + "\""));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_criteria_notFoundWhenDisplayIsMissing(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var ccdl = createValidCcdl(ValueFilterType.CONCEPT, false, false, false);
+    EsSearchResultEntry esSearchResultEntry = mock(EsSearchResultEntry.class);
+    doReturn(null).when(esSearchResultEntry).display();
+    doReturn(esSearchResultEntry).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(ccdl.inclusionCriteria(), language);
+
+    assertTrue(csvResult.contains("\"Geschlecht\";\"" + notFound(language) + "\""));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_dataExtraction_notFoundWhenCodeNotInIndex(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    var dataExtraction = createValidDataExtraction();
+    var termCode = createTermCode();
+    doReturn(Optional.empty()).when(codeableConceptService).getSearchResultEntryByTermCode(any(TermCode.class));
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(dataExtraction, language);
+
+    assertTrue(csvResult.contains("[" + notFound(language) + " (" + termCode.code() + ", " + termCode.system() + ")]"));
+  }
+
+  @Test
+  void testJsonToCsv_dataExtraction_doesNotThrowOnFilterWithoutType() throws IOException {
+    var dataExtraction = DataExtraction.builder()
+        .attributeGroups(List.of(
+            AttributeGroup.builder()
+                .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
+                .name("untyped filter testgroup")
+                .id("my-untyped-filter-grp")
+                .attributes(List.of(Attribute.builder().attributeRef("Observation.status").build()))
+                .filter(List.of(Filter.builder().name("code").codes(List.of(createTermCode())).build()))
+                .build()
+        ))
+        .build();
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = assertDoesNotThrow(() -> dataqueryCsvExportService.jsonToCsv(dataExtraction, DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN));
+
+    assertTrue(csvResult.contains("untyped filter testgroup"));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_dataExtraction_notFoundWhenLinkedGroupIsUnknown(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var dataExtraction = DataExtraction.builder()
+        .attributeGroups(List.of(
+            AttributeGroup.builder()
+                .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
+                .name("dangling link testgroup")
+                .id("my-dangling-link-grp")
+                .attributes(List.of(
+                    Attribute.builder()
+                        .attributeRef("Observation.category")
+                        .linkedGroups(List.of("unknown-group"))
+                        .build()
+                ))
+                .build()
+        ))
+        .build();
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(createDseProfileApi()).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(dataExtraction, language);
+
+    assertTrue(csvResult.contains("\"" + notFound(language) + "\""));
+    assertFalse(csvResult.contains("null"));
+  }
+
+  @Test
+  void testJsonToCsv_dataExtraction_findsNestedFieldBelowFieldWithoutId() throws IOException {
+    var dataExtraction = DataExtraction.builder()
+        .attributeGroups(List.of(
+            AttributeGroup.builder()
+                .groupReference(URI.create("https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab"))
+                .name("missing id testgroup")
+                .id("my-missing-id-grp")
+                .attributes(List.of(Attribute.builder().attributeRef("Observation.status").build()))
+                .build()
+        ))
+        .build();
+    var dseProfileApi = de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.builder()
+        .fields(List.of(
+            de.medizininformatikinitiative.dataportal.backend.dse.api.Field.builder()
+                .display(createDisplayEntry())
+                .children(List.of(
+                    de.medizininformatikinitiative.dataportal.backend.dse.api.Field.builder()
+                        .id("Observation.status")
+                        .display(DisplayEntry.builder().original("status field").translations(List.of()).build())
+                        .build()
+                ))
+                .build()
+        ))
+        .build();
+    doReturn(Optional.of(createDseProfile())).when(dseProfileRepository).findByUrl(anyString());
+    doReturn(dseProfileApi).when(objectMapper).readValue(anyString(), eq(de.medizininformatikinitiative.dataportal.backend.dse.api.DseProfile.class));
+
+    String csvResult = assertDoesNotThrow(() -> dataqueryCsvExportService.jsonToCsv(dataExtraction, DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN));
+
+    assertTrue(csvResult.contains("status field"));
+  }
+
+  @ParameterizedTest
+  @EnumSource
+  void testJsonToCsv_criteria_referenceAttributeFilterResolvesReferencedCriteria(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) throws IOException {
+    useReadableCsvFormat();
+    var knownTermCode = TermCode.builder().code("known").system("system").display("known").build();
+    var unknownTermCode = TermCode.builder().code("unknown").system("system").display("unknown").build();
+    var referencedCriterion = Criterion.builder()
+        .context(createTermCode())
+        .termCodes(List.of(knownTermCode, unknownTermCode))
+        .build();
+    var criterion = Criterion.builder()
+        .context(createTermCode())
+        .termCodes(List.of(createTermCode()))
+        .attributeFilters(List.of(
+            AttributeFilter.builder()
+                .type(ValueFilterType.REFERENCE)
+                .attributeCode(createTermCode())
+                .criteria(List.of(referencedCriterion))
+                .build()
+        ))
+        .build();
+    CodeableConceptEntry ccEntry = mock(CodeableConceptEntry.class);
+    doReturn(createDisplayEntry()).when(ccEntry).display();
+    doReturn(Optional.of(ccEntry)).when(codeableConceptService).getSearchResultEntryByTermCode(knownTermCode);
+    doReturn(Optional.empty()).when(codeableConceptService).getSearchResultEntryByTermCode(unknownTermCode);
+    doThrow(new OntologyItemNotFoundException()).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(List.of(List.of(criterion)), language);
+
+    var expectedDisplay = language == DataqueryCsvExportService.SUPPORTED_LANGUAGES.DE ? "deutscher Eintrag" : "English entry";
+    assertTrue(csvResult.contains("[display: " + expectedDisplay + " " + MultiMessageBundle.getEntry("or", language) + " " + notFound(language) + "]"));
+  }
+
+  private static Stream<Arguments> provideUnitsWithMissingData() {
+    var notFound = MultiMessageBundle.getEntry("notFound", DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN);
+    return Stream.of(
+        Arguments.of(Unit.builder().code("mg").build(), "mg"),
+        Arguments.of(Unit.builder().code("mg").display(" ").build(), "mg"),
+        Arguments.of(Unit.builder().display("").build(), notFound),
+        Arguments.of(Unit.builder().code(" ").build(), notFound)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideUnitsWithMissingData")
+  void testJsonToCsv_criteria_quantityValueFilterWithMissingData(Unit unit, String expectedUnit) throws IOException {
+    useReadableCsvFormat();
+    var language = DataqueryCsvExportService.SUPPORTED_LANGUAGES.EN;
+    var criterion = Criterion.builder()
+        .context(createTermCode())
+        .termCodes(List.of(createTermCode()))
+        .valueFilter(ValueFilter.builder()
+            .type(ValueFilterType.QUANTITY_COMPARATOR)
+            .comparator(Comparator.EQUAL)
+            .quantityUnit(unit)
+            .build())
+        .build();
+    doThrow(new OntologyItemNotFoundException()).when(terminologyEsService).getSearchResultEntryByCriterion(any(Criterion.class));
+
+    String csvResult = dataqueryCsvExportService.jsonToCsv(List.of(List.of(criterion)), language);
+
+    assertTrue(csvResult.contains(notFound(language) + expectedUnit + "]"));
+    assertFalse(csvResult.contains("null"));
+  }
+
+  @Test
+  void testAddFileToZip_writesUtf8() throws IOException {
+    String fileName = "umlauts.csv";
+    String fileContent = "Verknüpfungsgruppe;Größe;Maß";
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+      dataqueryCsvExportService.addFileToZip(zos, fileName, fileContent);
+    }
+
+    try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
+      assertNotNull(zis.getNextEntry(), "zipfile is empty");
+      assertArrayEquals(fileContent.getBytes(StandardCharsets.UTF_8), zis.readAllBytes());
+    }
+  }
+
   @Test
   void testAddFileToZip() throws IOException {
     String fileName = "dataquery.json";
@@ -233,6 +438,15 @@ class DataqueryCsvExportServiceTest {
 
       assertNull(zis.getNextEntry(), "too many entries in zipfile");
     }
+  }
+
+  private void useReadableCsvFormat() {
+    ReflectionTestUtils.setField(dataqueryCsvExportService, "csvDelimiter", ';');
+    ReflectionTestUtils.setField(dataqueryCsvExportService, "csvTextWrapper", '"');
+  }
+
+  private String notFound(DataqueryCsvExportService.SUPPORTED_LANGUAGES language) {
+    return MultiMessageBundle.getEntry("notFound", language);
   }
 
   private DataExtraction createValidDataExtraction() {

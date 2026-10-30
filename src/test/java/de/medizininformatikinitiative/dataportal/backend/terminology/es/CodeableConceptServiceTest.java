@@ -243,9 +243,10 @@ class CodeableConceptServiceTest {
     CodeableConceptDocument dummyCodeableConceptDocument = createDummyCodeableConceptDocument("1");
     doReturn(List.of(dummyCodeableConceptDocument)).when(repository).findAllById(any());
 
-    var result = assertDoesNotThrow(() -> codeableConceptService.getSearchResultEntryByTermCode(createDummyTermcode()));
+    var resultOptional = assertDoesNotThrow(() -> codeableConceptService.getSearchResultEntryByTermCode(createDummyTermcode()));
 
-    assertNotNull(result);
+    assertTrue(resultOptional.isPresent());
+    var result = resultOptional.get();
     assertEquals(dummyCodeableConceptDocument.termCode(), result.termCode());
     assertEquals(dummyCodeableConceptDocument.display().original(), result.display().original());
     assertTrue(result.display().translations().containsAll(
@@ -263,11 +264,11 @@ class CodeableConceptServiceTest {
   }
 
   @Test
-  void testGetSearchResultsEntryByTermcode_nullOnException() {
+  void testGetSearchResultsEntryByTermcode_emptyOnNotFound() {
     doReturn(List.of()).when(repository).findAllById(anyList());
 
     var result = assertDoesNotThrow(() -> codeableConceptService.getSearchResultEntryByTermCode(createDummyTermcode()));
-    assertNull(result);
+    assertTrue(result.isEmpty());
   }
 
   private SearchHits<CodeableConceptDocument> createDummySearchHitsPage(int totalHits) {
