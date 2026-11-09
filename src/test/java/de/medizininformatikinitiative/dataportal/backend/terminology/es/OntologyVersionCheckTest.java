@@ -92,7 +92,7 @@ class OntologyVersionCheckTest {
         .hasMessageNotContaining("index 'ontology'")
         .hasMessageContaining("may cause errors")
         .hasMessageContaining("Aborting startup")
-        .hasMessageContaining("ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK");
+        .hasMessageContaining("ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_MODE");
   }
 
   @Test
@@ -227,7 +227,7 @@ class OntologyVersionCheckTest {
   @Test
   void isNotActiveWhenElasticsearchIsDisabled() {
     new ApplicationContextRunner()
-        .withPropertyValues("app.elastic.enabled=false", "app.elastic.ontologyVersionCheck=strict")
+        .withPropertyValues("app.elastic.enabled=false", "app.elastic.ontologyVersionCheck.mode=strict")
         .withBean(ElasticsearchClient.class, () -> client)
         .withBean(PropertiesReader.class, () -> propertiesReader)
         .withUserConfiguration(OntologyVersionCheck.class)
@@ -237,5 +237,46 @@ class OntologyVersionCheckTest {
         });
 
     verifyNoInteractions(indicesClient);
+  }
+
+  private ApplicationContextRunner contextRunnerWithCheck() {
+    return new ApplicationContextRunner()
+        .withPropertyValues("app.elastic.enabled=true", "app.elastic.ontologyVersionCheck.mode=WARN")
+        .withBean(ElasticsearchClient.class, () -> client)
+        .withBean(PropertiesReader.class, () -> propertiesReader)
+        .withUserConfiguration(OntologyVersionCheck.class);
+  }
+
+  @Test
+  void usesTheConfiguredAttemptsAndInterval() throws IOException {
+    doThrow(new IOException("Connection refused")).when(indicesClient).getMapping(any(GetMappingRequest.class));
+
+    contextRunnerWithCheck()
+        .withPropertyValues("app.elastic.ontologyVersionCheck.attempts=2", "app.elastic.ontologyVersionCheck.interval=PT0S")
+        .run(context -> assertThat(context).hasNotFailed());
+
+    verify(indicesClient, times(2)).getMapping(any(GetMappingRequest.class));
+  }
+
+  @Test
+  void intervalMustBeAnIsoDuration() {
+    contextRunnerWithCheck()
+        .withPropertyValues("app.elastic.ontologyVersionCheck.interval=10s")
+        .run(context -> assertThat(context).hasFailed());
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, -1})
+  void attemptsMustBeAtLeastOne(int attempts) {
+    assertThatThrownBy(() -> new OntologyVersionCheck(client, propertiesReader, Mode.WARN, attempts, Duration.ZERO))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("app.elastic.ontologyVersionCheck.attempts");
+  }
+
+  @Test
+  void intervalMustNotBeNegative() {
+    assertThatThrownBy(() -> new OntologyVersionCheck(client, propertiesReader, Mode.WARN, 1, Duration.ofSeconds(-1)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("app.elastic.ontologyVersionCheck.interval");
   }
 }

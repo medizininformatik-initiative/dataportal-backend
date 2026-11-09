@@ -7,7 +7,6 @@ import de.medizininformatikinitiative.dataportal.backend.config.PropertiesReader
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
@@ -37,30 +36,30 @@ public class OntologyVersionCheck implements SmartInitializingSingleton {
 
   private static final List<String> INDICES = List.of("ontology", "codeable_concept", "profile");
   private static final String META_VERSION_KEY = "version";
-  private static final String CONFIG_HINT = "This check is controlled by ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK (strict|warn|off).";
-  private static final int DEFAULT_MAX_ATTEMPTS = 6;
-  private static final Duration DEFAULT_RETRY_DELAY = Duration.ofSeconds(5);
+  private static final String CONFIG_HINT = "This check is controlled by ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_MODE (strict|warn|off).";
 
   private final ElasticsearchClient client;
   private final PropertiesReader propertiesReader;
   private final Mode mode;
-  private final int maxAttempts;
-  private final Duration retryDelay;
+  private final int attempts;
+  private final Duration interval;
 
-  @Autowired
   public OntologyVersionCheck(ElasticsearchClient client,
                               PropertiesReader propertiesReader,
-                              @Value("${app.elastic.ontologyVersionCheck:warn}") Mode mode) {
-    this(client, propertiesReader, mode, DEFAULT_MAX_ATTEMPTS, DEFAULT_RETRY_DELAY);
-  }
-
-  OntologyVersionCheck(ElasticsearchClient client, PropertiesReader propertiesReader, Mode mode, int maxAttempts,
-                       Duration retryDelay) {
+                              @Value("${app.elastic.ontologyVersionCheck.mode:warn}") Mode mode,
+                              @Value("${app.elastic.ontologyVersionCheck.attempts:6}") int attempts,
+                              @Value("#{T(java.time.Duration).parse('${app.elastic.ontologyVersionCheck.interval:PT10S}')}") Duration interval) {
+    if (attempts < 1) {
+      throw new IllegalArgumentException("app.elastic.ontologyVersionCheck.attempts must be at least 1, but was " + attempts);
+    }
+    if (interval.isNegative()) {
+      throw new IllegalArgumentException("app.elastic.ontologyVersionCheck.interval must not be negative, but was " + interval);
+    }
     this.client = client;
     this.propertiesReader = propertiesReader;
     this.mode = mode;
-    this.maxAttempts = maxAttempts;
-    this.retryDelay = retryDelay;
+    this.attempts = attempts;
+    this.interval = interval;
   }
 
   @Override
@@ -96,21 +95,21 @@ public class OntologyVersionCheck implements SmartInitializingSingleton {
           Could not verify the ontology version of Elasticsearch after %d attempts: %s. Elasticsearch may be \
           unavailable. If its ontology does not match %s, errors may occur, for example empty or wrong search \
           results, or failing requests."""
-          .formatted(maxAttempts, e.getMessage(), expected));
+          .formatted(attempts, e.getMessage(), expected));
     }
   }
 
   private List<String> findProblemsWithRetry(String expected) throws EsUnavailableException {
     Exception lastFailure = null;
-    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+    for (int attempt = 1; attempt <= attempts; attempt++) {
       try {
         return findProblems(expected);
       } catch (IOException | RuntimeException e) {
         // Also covers responses that can't be parsed: in warn mode, those must not prevent the startup either.
         lastFailure = e;
-        log.debug("Attempt {}/{} to read the ontology version from Elasticsearch failed.", attempt, maxAttempts, e);
+        log.debug("Attempt {}/{} to read the ontology version from Elasticsearch failed.", attempt, attempts, e);
       }
-      if (attempt < maxAttempts && !sleepBeforeRetry()) {
+      if (attempt < attempts && !sleepBeforeRetry()) {
         break;
       }
     }
@@ -119,7 +118,7 @@ public class OntologyVersionCheck implements SmartInitializingSingleton {
 
   private boolean sleepBeforeRetry() {
     try {
-      Thread.sleep(retryDelay.toMillis());
+      Thread.sleep(interval.toMillis());
       return true;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

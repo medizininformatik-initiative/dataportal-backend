@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
 @Import({OntologyVersionCheck.class, PropertiesReader.class})
 @Testcontainers
 @DataElasticsearchTest(properties = {
-    "app.elastic.ontologyVersionCheck=strict",
+    "app.elastic.ontologyVersionCheck.mode=strict",
     "ontology-tag=" + OntologyVersionCheckIT.FIXTURE_VERSION
 })
 class OntologyVersionCheckIT {

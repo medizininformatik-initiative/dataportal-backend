@@ -623,14 +623,15 @@ Which parameters can be used to filter results
 
 ---
 
-#### `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK`
+#### `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_MODE`
 
 Controls what happens on startup if the ontology in elastic search does not match the ontology version this backend was
 built for. A mismatch **may cause errors**, for example empty or wrong search results, or failing requests.
 
 The backend compares its own ontology version (shown as `terminology.ontologyTag` in `/actuator/info`) with
 `_meta.version` of the `ontology`, `codeable_concept` and `profile` indices. The check counts as failed if a version
-differs, if a version or an index is missing, or if elastic search stays unreachable for about 30 seconds. The check only
+differs, if a version or an index is missing, or if elastic search stays unreachable (see
+`ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_ATTEMPTS` and `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_INTERVAL`). The check only
 runs once on startup and is skipped if `ELASTIC_SEARCH_ENABLED` is `false`.
 
 Valid values:
@@ -648,6 +649,27 @@ curl -s "localhost:9200/ontology,codeable_concept,profile/_mapping?filter_path=*
 ```
 
 **Default:** `warn`
+
+
+---
+
+#### `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_ATTEMPTS`
+
+How many times the ontology version check tries to read the versions from elastic search before giving up. Must be at
+least `1`.
+
+**Default:** `6`
+
+
+---
+
+#### `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_INTERVAL`
+
+How long the ontology version check waits between two attempts, as an ISO 8601 duration. Must not be negative. With the
+default values, the check gives up after about 50 seconds if elastic search stays unreachable, which delays the startup
+by that time.
+
+**Default:** `PT10S`
 
 
 ---
