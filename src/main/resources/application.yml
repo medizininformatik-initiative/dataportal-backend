@@ -134,6 +134,12 @@ app:
     enabled: ${ELASTIC_SEARCH_ENABLED:true}
     host: ${ELASTIC_SEARCH_HOST:localhost:9200}
     filter: ${ELASTIC_SEARCH_FILTER:context,terminology,kds_module}
+    ontologyVersionCheck:
+      # strict: abort startup if the ontology version in elastic search does not match, warn: only log a warning, off: skip the check
+      mode: ${ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_MODE:warn}
+      # How often to try reading the version from elastic search, and how long to wait between two tries (ISO 8601 duration)
+      attempts: ${ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_ATTEMPTS:6}
+      interval: ${ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_INTERVAL:PT10S}
     query:
       # Be careful changing these fields. There is no check whether the fields are "valid" (as in indexed in elastic search)
       # Only modify if you really know what you are doing! Modifying the boost factor or removing fields is no problem.

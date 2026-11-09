@@ -96,6 +96,9 @@
     }
   },
   "mappings": {
+    "_meta": {
+      "version": "v0.0.0-test"
+    },
     "properties": {
       "availability": {
         "type": "long",
