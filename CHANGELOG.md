@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Add tests ensuring that the CRTDL upgrade replaces the `onset-date` filter with `recorded-date` for the Condition profiles (Diagnose, Onkologie Diagnose Primärtumor, Patho Problem List Item, ISiKDiagnose, Todesursache) ([#1174](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1174))
 - Add a startup check comparing the ontology version of the backend with the ontology version in elastic search. Configurable via `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_MODE` (`strict`, `warn` or `off`, default `warn`), `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_ATTEMPTS` (default `6`) and `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_INTERVAL` (default `PT10S`) ([#1212](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1212))
 
+### Changed
+- Only deploy the documentation to GitHub Pages for stable release tags. Pull requests, pushes to `main` and scheduled runs only build the documentation ([#1214](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1214))
+
 ## [9.4.0] - 2026-10-19
 
 - Based on ontology **[v5.1.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.1.0)**
