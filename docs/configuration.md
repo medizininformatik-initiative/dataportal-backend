@@ -623,6 +623,35 @@ Which parameters can be used to filter results
 
 ---
 
+#### `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK`
+
+Controls what happens on startup if the ontology in elastic search does not match the ontology version this backend was
+built for. A mismatch **may cause errors**, for example empty or wrong search results, or failing requests.
+
+The backend compares its own ontology version (shown as `terminology.ontologyTag` in `/actuator/info`) with
+`_meta.version` of the `ontology`, `codeable_concept` and `profile` indices. The check counts as failed if a version
+differs, if a version or an index is missing, or if elastic search stays unreachable for about 30 seconds. The check only
+runs once on startup and is skipped if `ELASTIC_SEARCH_ENABLED` is `false`.
+
+Valid values:
+
+- `strict`: abort the startup if the check fails
+- `warn`: log a warning if the check fails and continue the startup
+- `off`: skip the check
+
+To fix a mismatch, load the matching ontology version into elastic search using
+[dataportal-es-init](https://github.com/medizininformatik-initiative/dataportal-es-init/pkgs/container/dataportal-es-init),
+or use a backend version that matches the ontology in elastic search. You can look up the versions in elastic search with:
+
+```bash
+curl -s "localhost:9200/ontology,codeable_concept,profile/_mapping?filter_path=*.mappings._meta.version"
+```
+
+**Default:** `warn`
+
+
+---
+
 The `ELASTIC_SEARCH_QUERY_*_FIELDS` variables below configure which fields (with an optional `^boost` factor) are searched
 for each elastic search index. There is no check whether a configured field is "valid" (i.e. actually indexed in elastic
 search) - use [`.github/scripts/list_text_fields.sh`](../.github/scripts/list_text_fields.sh) against a running elastic

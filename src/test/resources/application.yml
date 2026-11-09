@@ -47,6 +47,7 @@ app:
       enabled: false
   elastic:
     enabled: true
+    ontologyVersionCheck: off
   privacy:
     threshold:
       sites: 3

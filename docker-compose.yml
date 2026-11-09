@@ -88,6 +88,7 @@ services:
       ELASTIC_SEARCH_ENABLED: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_ENABLED:-true}
       ELASTIC_SEARCH_HOST: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_HOST:-dataportal-elastic}
       ELASTIC_SEARCH_FILTER: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_FILTER:-context,terminology,kds_module}
+      ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK:-warn}
       # Which fields (with optional ^boost factor) are searched per index. See docs/configuration.md
       # (search for ELASTIC_SEARCH_QUERY) for details and a script to list the fields usable here.
       ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS: ${DATAPORTAL_BACKEND_ELASTIC_SEARCH_QUERY_TERMINOLOGY_FIELDS:-display.de,display.en,termcode^2,display.original^0.5}
