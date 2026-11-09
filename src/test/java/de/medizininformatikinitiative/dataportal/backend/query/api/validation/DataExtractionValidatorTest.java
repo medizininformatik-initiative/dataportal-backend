@@ -313,6 +313,27 @@ class DataExtractionValidatorTest {
   }
 
   @Test
+  void isValid_codeFilterButProfileHasNoTokenFilter_onlyReportsUnsupportedType() {
+    var termCode = TermCode.builder().code("123").system("http://example.org").display("Foo").version("1.0").build();
+    var filter = Filter.builder().type("token").name("code").codes(List.of(termCode)).build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Patient.active")), List.of(filter));
+    var dataExtraction = DataExtraction.builder().attributeGroups(List.of(group)).build();
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Patient.active").build()))
+        .filters(List.of(de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder().type("date").name("date").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = validator.isValid(dataExtraction, ctx);
+
+    assertFalse(result);
+    var captor = ArgumentCaptor.forClass(String.class);
+    verify(ctx).buildConstraintViolationWithTemplate(captor.capture());
+    assertTemplateHasCode(captor.getValue(), ValidationIssueType.FILTER_TYPE_NOT_SUPPORTED);
+    verifyNoInteractions(codeableConceptService);
+  }
+
+  @Test
   void isValid_filterCodeAvailableInValueSet_true() {
     var termCode = TermCode.builder().code("123").system("http://example.org").display("Foo").build();
     var filter = Filter.builder().type("token").name("code").codes(List.of(termCode)).build();

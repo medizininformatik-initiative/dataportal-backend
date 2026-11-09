@@ -26,7 +26,7 @@
   <properties>
     <java.version>17</java.version>
     <mockwebserver.version>5.5.1</mockwebserver.version>
-    <ontology-tag>v5.1.0</ontology-tag>
+    <ontology-tag>v5.2.1</ontology-tag>
   </properties>
 
   <dependencies>

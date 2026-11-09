@@ -66,6 +66,21 @@ public record DataExtraction(
         .build();
   }
 
+  public static DataExtraction withRemovedFilter(DataExtraction extraction, AttributeGroup targetGroup, Filter toRemove) {
+
+    AttributeGroup updatedGroup = targetGroup.toBuilder()
+        .filter(targetGroup.filter().stream()
+            .filter(f -> !f.equals(toRemove))
+            .toList())
+        .build();
+
+    return extraction.toBuilder()
+        .attributeGroups(extraction.attributeGroups().stream()
+            .map(g -> Objects.equals(g.id(), targetGroup.id()) ? updatedGroup : g)
+            .toList())
+        .build();
+  }
+
   public static DataExtraction withRemovedAttributeGroup(DataExtraction extraction, AttributeGroup toRemove) {
     return new DataExtraction(
         extraction.attributeGroups().stream()
