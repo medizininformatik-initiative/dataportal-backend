@@ -92,6 +92,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     var issue = result.annotations().get(0);
     assertThat(issue.value().code()).isEqualTo("UPGRADE-" + UpgradeIssueType.PROFILE_REMOVED.code());
+    assertThat(issue.value().message()).isEqualTo(
+        "Removed attribute group \"group-1\" as its profile \"" + GROUP_1_REF + "\" does not exist anymore");
     assertThat(issue.path()).isEqualTo("dataExtraction/attributeGroups/0");
   }
 
@@ -116,6 +118,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     var issue = result.annotations().get(0);
     assertThat(issue.value().code()).isEqualTo("UPGRADE-" + UpgradeIssueType.FILTER_CHANGE.code());
+    assertThat(issue.value().message())
+        .isEqualTo("Changed filter \"recorded-date\" to \"date-recorded\" in attribute group \"group-1\"");
     assertThat(issue.path()).isEqualTo("dataExtraction/attributeGroups/0/filter/0");
   }
 
@@ -161,6 +165,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     var issue = result.annotations().get(0);
     assertThat(issue.value().code()).isEqualTo("UPGRADE-" + UpgradeIssueType.FILTER_CHANGE.code());
+    assertThat(issue.value().message())
+        .isEqualTo("Changed filter \"onset-date\" to \"recorded-date\" in attribute group \"group-1\"");
     assertThat(issue.path()).isEqualTo("dataExtraction/attributeGroups/0/filter/1");
     assertThat(issue.details())
         .containsEntry("replaced", onsetDateFilter)
@@ -202,6 +208,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     var issue = result.annotations().get(0);
     assertThat(issue.value().code()).isEqualTo("UPGRADE-" + UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.code());
+    assertThat(issue.value().message()).isEqualTo(
+        "Removed field \"Patient.removedField\" from attribute group \"group-1\" as it is no longer available");
     assertThat(issue.path()).isEqualTo("dataExtraction/attributeGroups/0/attributes/0");
   }
 
@@ -223,6 +231,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     assertThat(result.annotations().get(0).value().code())
         .isEqualTo("UPGRADE-" + UpgradeIssueType.FIELD_CHANGED_TO_PARENT.code());
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Changed field \"Patient.address.country\" to parent field \"Patient.address\" in attribute group \"group-1\"");
   }
 
   @Test
@@ -244,6 +254,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     assertThat(result.annotations().get(0).value().code())
         .isEqualTo("UPGRADE-" + UpgradeIssueType.FIELD_CHANGED_TO_PARENT.code());
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Changed field \"Patient.address.country\" to parent field \"Patient.address\" in attribute group \"group-1\"");
   }
 
   @Test
@@ -280,6 +292,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     assertThat(result.annotations().get(0).value().code())
         .isEqualTo("UPGRADE-" + UpgradeIssueType.REFERENCE_NO_LONGER_AVAILABLE.code());
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Removed reference \"Observation.removedRef\" from attribute group \"group-1\" as it is no longer available");
   }
 
   @Test
@@ -301,6 +315,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     assertThat(result.annotations().get(0).value().code())
         .isEqualTo("UPGRADE-" + UpgradeIssueType.REFERENCE_CHANGED_TO_PARENT.code());
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Changed reference \"Observation.subject.reference\" to parent reference \"Observation.subject\" in attribute group \"group-1\"");
   }
 
   @Test
@@ -322,6 +338,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     assertThat(result.annotations().get(0).value().code())
         .isEqualTo("UPGRADE-" + UpgradeIssueType.LINKED_GROUPS_NO_LONGER_AVAILABLE.code());
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Removed linked group(s) \"group-missing\" from reference \"Observation.subject.reference\" in attribute group \"group-1\" as they are no longer available");
   }
 
   @Test
@@ -341,6 +359,8 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     assertThat(result.annotations().get(0).value().code())
         .isEqualTo("UPGRADE-" + UpgradeIssueType.ALL_LINKED_GROUPS_NO_LONGER_AVAILABLE.code());
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Removed reference \"Observation.subject.reference\" from attribute group \"group-1\" as none of its linked groups \"group-missing\" are available anymore");
   }
 
   @Test
@@ -383,6 +403,25 @@ class UpgradeServiceTest {
     assertThat(result.annotations()).hasSize(1);
     assertThat(result.annotations().get(0).value().code())
         .isEqualTo("UPGRADE-" + UpgradeIssueType.PROFILE_REMOVED.code());
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Removed attribute group \"group-2\" as its profile \"" + GROUP_2_REF + "\" does not exist anymore");
+  }
+
+  @Test
+  void upgrade_groupWithName_usesNameInMessage() {
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Patient.removedField")), List.of())
+        .toBuilder().name("My Patient Group").build();
+    var crtdl = crtdl(DataExtraction.builder().attributeGroups(List.of(group)).build());
+
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of()).filters(List.of()).references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = upgradeService.upgrade(crtdl);
+
+    assertThat(result.annotations()).hasSize(1);
+    assertThat(result.annotations().get(0).value().message()).isEqualTo(
+        "Removed field \"Patient.removedField\" from attribute group \"My Patient Group\" as it is no longer available");
   }
 
   @Test

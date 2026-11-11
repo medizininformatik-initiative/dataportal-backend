@@ -147,6 +147,8 @@ class UpgradeRestControllerIT {
         .andExpect(jsonPath("$.annotations.length()").value(1))
         .andExpect(jsonPath("$.annotations[0].path").value("dataExtraction/attributeGroups/0/filter/0"))
         .andExpect(jsonPath("$.annotations[0].value.code").value("UPGRADE-" + UpgradeIssueType.FILTER_CHANGE.code()))
+        .andExpect(jsonPath("$.annotations[0].value.message").value(
+            "Changed filter \"onset-date\" to \"recorded-date\" in attribute group \"MII PR Diagnose Condition\""))
         .andExpect(jsonPath("$.annotations[0].details.replaced.name").value("onset-date"))
         .andExpect(jsonPath("$.annotations[0].details.replacedWith.name").value("recorded-date"));
   }

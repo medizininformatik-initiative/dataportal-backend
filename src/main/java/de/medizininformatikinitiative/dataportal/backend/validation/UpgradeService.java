@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UpgradeService {
@@ -88,7 +89,8 @@ public class UpgradeService {
   private DataExtractionUpgradeResult handleProfileRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, int groupIndex) {
     return DataExtractionUpgradeResult.builder()
         .dataExtraction(DataExtraction.withRemovedAttributeGroup(dataExtraction, attributeGroup))
-        .upgradeIssues(List.of(buildGroupIssue(groupIndex, UpgradeIssueType.PROFILE_REMOVED, Map.of("replaced", attributeGroup))))
+        .upgradeIssues(List.of(buildGroupIssue(groupIndex, UpgradeIssueType.PROFILE_REMOVED,
+            Map.of("replaced", attributeGroup), groupLabel(attributeGroup), attributeGroup.groupReference())))
         .build();
   }
 
@@ -111,8 +113,9 @@ public class UpgradeService {
 
     return DataExtractionUpgradeResult.builder()
         .dataExtraction(DataExtraction.withReplacedDateFilter(dataExtraction, attributeGroup, fixedFilter))
-        .upgradeIssues(List.of(buildAttributeIssue(groupIndex, filterIndex, UpgradeIssueType.FILTER_CHANGE,
-            Map.of("replaced", filterCrtdl, "replacedWith", fixedFilter), "filter")))
+        .upgradeIssues(List.of(buildItemIssue(groupIndex, "filter", filterIndex, UpgradeIssueType.FILTER_CHANGE,
+            Map.of("replaced", filterCrtdl, "replacedWith", fixedFilter),
+            filterCrtdl.name(), fixedFilter.name(), groupLabel(attributeGroup))))
         .build();
   }
 
@@ -147,13 +150,15 @@ public class UpgradeService {
 
         var issueType = hasLinkedGroups ? UpgradeIssueType.REFERENCE_CHANGED_TO_PARENT : UpgradeIssueType.FIELD_CHANGED_TO_PARENT;
         issues.add(buildAttributeIssue(groupIndex, attributeIndex, issueType,
-            Map.of("replaced", attribute, "replacedWith", fixedAttribute)));
+            Map.of("replaced", attribute, "replacedWith", fixedAttribute),
+            attribute.attributeRef(), fixedAttribute.attributeRef(), groupLabel(attributeGroup)));
       } else {
         fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute);
         fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, fixedAttributeGroup.id());
 
         var issueType = hasLinkedGroups ? UpgradeIssueType.REFERENCE_NO_LONGER_AVAILABLE : UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE;
-        issues.add(buildAttributeIssue(groupIndex, attributeIndex, issueType, Map.of("replaced", attribute)));
+        issues.add(buildAttributeIssue(groupIndex, attributeIndex, issueType, Map.of("replaced", attribute),
+            attribute.attributeRef(), groupLabel(attributeGroup)));
       }
     }
 
@@ -178,17 +183,23 @@ public class UpgradeService {
 
       if (fixedLinkedGroups.size() == attribute.linkedGroups().size()) continue;
 
+      var removedLinkedGroups = attribute.linkedGroups().stream()
+          .filter(ref -> !fixedLinkedGroups.contains(ref))
+          .toList();
+
       if (fixedLinkedGroups.isEmpty()) {
         fixedDataExtraction = DataExtraction.withRemovedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute);
         fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
         issues.add(buildAttributeIssue(groupIndex, attributeIndex, UpgradeIssueType.ALL_LINKED_GROUPS_NO_LONGER_AVAILABLE,
-            Map.of("replaced", attribute)));
+            Map.of("replaced", attribute),
+            attribute.attributeRef(), groupLabel(attributeGroup), quoteJoined(removedLinkedGroups)));
       } else {
         var fixedAttribute = Attribute.withReplacedLinkedGroups(attribute, fixedLinkedGroups);
         fixedDataExtraction = DataExtraction.withReplacedAttribute(fixedDataExtraction, fixedAttributeGroup, attribute, fixedAttribute);
         fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
         issues.add(buildAttributeIssue(groupIndex, attributeIndex, UpgradeIssueType.LINKED_GROUPS_NO_LONGER_AVAILABLE,
-            Map.of("replaced", attribute, "replacedWith", fixedAttribute)));
+            Map.of("replaced", attribute, "replacedWith", fixedAttribute),
+            quoteJoined(removedLinkedGroups), attribute.attributeRef(), groupLabel(attributeGroup)));
       }
     }
 
@@ -200,27 +211,46 @@ public class UpgradeService {
 
   // --- Issue builders ---
 
-  private UpgradeIssue buildGroupIssue(int groupIndex, UpgradeIssueType type, Map<String, Object> details) {
-    return buildIssue(MessageFormat.format("dataExtraction/attributeGroups/{0}", groupIndex), type, details);
+  private UpgradeIssue buildGroupIssue(int groupIndex, UpgradeIssueType type, Map<String, Object> details,
+                                       Object... messageArgs) {
+    return buildIssue(MessageFormat.format("dataExtraction/attributeGroups/{0}", groupIndex), type, details,
+        messageArgs);
   }
 
-  private UpgradeIssue buildAttributeIssue(int groupIndex, int attributeIndex, UpgradeIssueType type, Map<String, Object> details) {
-    return buildAttributeIssue(groupIndex, attributeIndex, type, details, "attributes");
+  private UpgradeIssue buildAttributeIssue(int groupIndex, int attributeIndex, UpgradeIssueType type,
+                                           Map<String, Object> details, Object... messageArgs) {
+    return buildItemIssue(groupIndex, "attributes", attributeIndex, type, details, messageArgs);
   }
 
-  private UpgradeIssue buildAttributeIssue(int groupIndex, int itemIndex, UpgradeIssueType type, Map<String, Object> details, String segment) {
-    return buildIssue(MessageFormat.format("dataExtraction/attributeGroups/{0}/{1}/{2}", groupIndex, segment, itemIndex), type, details);
+  private UpgradeIssue buildItemIssue(int groupIndex, String segment, int itemIndex, UpgradeIssueType type,
+                                      Map<String, Object> details, Object... messageArgs) {
+    return buildIssue(MessageFormat.format("dataExtraction/attributeGroups/{0}/{1}/{2}", groupIndex, segment, itemIndex),
+        type, details, messageArgs);
   }
 
-  private UpgradeIssue buildIssue(String path, UpgradeIssueType type, Map<String, Object> details) {
+  private UpgradeIssue buildIssue(String path, UpgradeIssueType type, Map<String, Object> details,
+                                  Object... messageArgs) {
     return UpgradeIssue.builder()
         .path(path)
         .value(UpgradeIssueValue.builder()
-            .message(type.detail())
+            .message(type.formatMessage(messageArgs))
             .code("UPGRADE-" + type.code())
             .build())
         .details(details)
         .build();
+  }
+
+  /**
+   * Returns a label identifying the attribute group for users: its name if present, its id otherwise.
+   */
+  private static String groupLabel(AttributeGroup attributeGroup) {
+    return attributeGroup.name() != null && !attributeGroup.name().isBlank()
+        ? attributeGroup.name()
+        : attributeGroup.id();
+  }
+
+  private static String quoteJoined(List<String> values) {
+    return values.stream().map(v -> "\"" + v + "\"").collect(Collectors.joining(", "));
   }
 
   // --- DSE matching helpers ---

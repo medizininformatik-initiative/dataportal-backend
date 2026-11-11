@@ -37,6 +37,20 @@ class UpgradeIssueTypeTest {
   }
 
   @Test
+  void testFormatMessage_insertsArguments() {
+    var message = UpgradeIssueType.FILTER_CHANGE.formatMessage("onset-date", "recorded-date", "Diagnose");
+
+    assertEquals("Changed filter \"onset-date\" to \"recorded-date\" in attribute group \"Diagnose\"", message);
+  }
+
+  @Test
+  void testFormatMessage_doesNotInterpretArgumentsAsPatterns() {
+    var message = UpgradeIssueType.FIELD_NO_LONGER_AVAILABLE.formatMessage("Patient.'{0}'", 1000);
+
+    assertEquals("Removed field \"Patient.'{0}'\" from attribute group \"1000\" as it is no longer available", message);
+  }
+
+  @Test
   void testResolve_nullOnUnknown() {
     var issue = UpgradeIssueType.resolve(-1);
 
