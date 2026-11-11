@@ -194,6 +194,91 @@ class UpgradeServiceTest {
   }
 
   @Test
+  void upgrade_filterTypeNoLongerSupported_removesFilterAndAddsIssue() {
+    // e.g. ObservationLab only offers a date filter since ontology 5.2, its token filter is gone
+    var codeFilter = Filter.builder().type("token").name("code")
+        .codes(List.of(
+            TermCode.builder().code("15067-2").system("http://loinc.org").version("2099")
+                .display("Follitropin [Units/volume] in Serum or Plasma").build(),
+            TermCode.builder().code("10501-5").system("http://loinc.org").version("2099")
+                .display("Lutropin [Units/volume] in Serum or Plasma").build()))
+        .build();
+    var dateFilter = Filter.builder().type("date").name("date")
+        .start(LocalDate.of(2020, 1, 1)).end(LocalDate.of(2021, 12, 31)).build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Observation.value")),
+        List.of(codeFilter, dateFilter));
+    var crtdl = crtdl(DataExtraction.builder().attributeGroups(List.of(group)).build());
+
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Observation.value").build()))
+        .filters(List.of(de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder()
+            .type("date").name("date").uiType("timeRestriction").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = upgradeService.upgrade(crtdl);
+
+    var resultGroup = result.crtdl().dataExtraction().attributeGroups().get(0);
+    assertThat(resultGroup.filter()).containsExactly(dateFilter);
+    assertThat(resultGroup.attributes()).isEqualTo(group.attributes());
+    assertThat(result.annotations()).hasSize(1);
+    var issue = result.annotations().get(0);
+    assertThat(issue.value().code()).isEqualTo("UPGRADE-" + UpgradeIssueType.FILTER_NO_LONGER_AVAILABLE.code());
+    assertThat(issue.value().message()).isEqualTo(
+        "Removed filter \"code\" of type \"token\" from attribute group \"group-1\" as the profile no longer "
+            + "supports this filter type. The attribute group is no longer restricted by this filter");
+    assertThat(issue.path()).isEqualTo("dataExtraction/attributeGroups/0/filter/0");
+    assertThat(issue.details()).containsEntry("replaced", codeFilter);
+  }
+
+  @Test
+  void upgrade_filterTypeRemovedAndDateFilterRenamed_bothFixedWithOriginalIndices() {
+    var codeFilter = Filter.builder().type("token").name("code").build();
+    var dateFilter = Filter.builder().type("date").name("onset-date").build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Condition.code")),
+        List.of(codeFilter, dateFilter));
+    var crtdl = crtdl(DataExtraction.builder().attributeGroups(List.of(group)).build());
+
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Condition.code").build()))
+        .filters(List.of(de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder()
+            .type("date").name("recorded-date").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = upgradeService.upgrade(crtdl);
+
+    var resultGroup = result.crtdl().dataExtraction().attributeGroups().get(0);
+    assertThat(resultGroup.filter())
+        .containsExactly(Filter.builder().type("date").name("recorded-date").build());
+    assertThat(result.annotations()).extracting(i -> i.value().code(), i -> i.path())
+        .containsExactly(
+            org.assertj.core.groups.Tuple.tuple("UPGRADE-" + UpgradeIssueType.FILTER_CHANGE.code(),
+                "dataExtraction/attributeGroups/0/filter/1"),
+            org.assertj.core.groups.Tuple.tuple("UPGRADE-" + UpgradeIssueType.FILTER_NO_LONGER_AVAILABLE.code(),
+                "dataExtraction/attributeGroups/0/filter/0"));
+  }
+
+  @Test
+  void upgrade_supportedFilterType_keptWithoutIssue() {
+    var codeFilter = Filter.builder().type("token").name("code").build();
+    var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Condition.code")), List.of(codeFilter));
+    var crtdl = crtdl(DataExtraction.builder().attributeGroups(List.of(group)).build());
+
+    var dseProfile = DseProfile.builder().url(GROUP_1_REF.toString())
+        .fields(List.of(Field.builder().id("Condition.code").build()))
+        .filters(List.of(de.medizininformatikinitiative.dataportal.backend.dse.api.Filter.builder()
+            .type("token").name("code").build()))
+        .references(List.of()).build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(anyList());
+
+    var result = upgradeService.upgrade(crtdl);
+
+    assertThat(result.annotations()).isEmpty();
+    assertThat(result.crtdl().dataExtraction().attributeGroups().get(0).filter()).containsExactly(codeFilter);
+  }
+
+  @Test
   void upgrade_fieldNoLongerAvailable_removesAttributeAndAddsIssue() {
     var group = attributeGroup("group-1", GROUP_1_REF, List.of(attribute("Patient.removedField")), List.of());
     var crtdl = crtdl(DataExtraction.builder().attributeGroups(List.of(group)).build());

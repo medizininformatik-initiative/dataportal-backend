@@ -104,8 +104,11 @@ public class CodeableConceptService {
   }
 
   public List<String> availableCodesInValueSets(List<String> codes, List<String> valueSetUrls) {
+    // Without codes there is nothing to look up, and without value sets no code can be contained in one. Both cases
+    // occur with user-supplied input (e.g. a CRTDL referencing a profile that has no token filter in the current
+    // ontology), so they must not fail the request.
     if (codes == null || codes.isEmpty() || valueSetUrls == null || valueSetUrls.isEmpty()) {
-      throw new IllegalArgumentException();
+      return List.of();
     }
     var codesFound = new ArrayList<String>();
 
