@@ -2481,7 +2481,7 @@ components:
         message:
           type: string
           examples:
-            - Filter Change
+            - Changed filter "date" to "authoredon" in attribute group "Medication Request"
         code:
           type: string
           examples:
