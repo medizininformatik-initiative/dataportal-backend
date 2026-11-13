@@ -182,13 +182,15 @@ public class DataExtractionValidator implements ConstraintValidator<DataExtracti
       var attributeFilter = attributeGroup.filter().get(i);
       if (hasUnsupportedFilterTypes(ctx, dseProfile, attributeFilter,
           MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i))) {
+        // Without a matching filter in the profile there are no value sets to check codes against, so every code
+        // would be reported as well. The type error alone already covers this filter.
         hasErrors = true;
       } else {
         hasErrors = hasUnknownFilterName(ctx, dseProfile, attributeFilter,
             MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
+        hasErrors = codesMissingInValueSets(ctx, dseProfile, attributeFilter,
+            MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
       }
-      hasErrors = codesMissingInValueSets(ctx, dseProfile, attributeFilter,
-          MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
       hasErrors = hasInvalidDateSettings(ctx, attributeFilter,
           MessageFormat.format("{0}/filter/{1}", jsonPointerBase, i)) || hasErrors;
     }
