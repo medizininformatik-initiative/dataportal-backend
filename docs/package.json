@@ -15,6 +15,6 @@
     "vitepress-plugin-mermaid": {
       "mermaid": "$mermaid"
     },
-    "vite": "^6.4.4"
+    "vite": "^8.0.0"
   }
 }
