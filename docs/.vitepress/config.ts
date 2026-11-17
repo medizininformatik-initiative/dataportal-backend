@@ -6,6 +6,11 @@ export default withMermaid({
     ignoreDeadLinks: true,
     base: process.env.DOCS_BASE || '/',
     appearance: true,
+    vite: {
+        ssr: {
+            noExternal: ['vitepress-openapi']
+        }
+    },
     lastUpdated: true,
     themeConfig: {
         siteTitle: false,
