@@ -4,15 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Unreleased]
+## [9.5.0] - 2026-11-17
+
+- Based on ontology **[v5.2.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.2.2)**
 
 ### Added
+- Add upgrade issue `UPGRADE-1000009` (`FILTER_NO_LONGER_AVAILABLE`). The CRTDL upgrade now removes data extraction filters whose type is no longer supported by the ontology profile of the attribute group (e.g. the token filter of ObservationLab in ontology 5.2) ([#1210](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1210))
 - Add validation issue `VALIDATION-2000008` (`FILTER_NAME_NOT_FOUND`) for data extraction filters whose name does not exist in the ontology profile of the attribute group (e.g. outdated `onset-date` instead of `recorded-date`), so that clients trigger the CRTDL upgrade ([#1174](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1174))
 - Add tests ensuring that the CRTDL upgrade replaces the `onset-date` filter with `recorded-date` for the Condition profiles (Diagnose, Onkologie Diagnose Primärtumor, Patho Problem List Item, ISiKDiagnose, Todesursache) ([#1174](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1174))
 - Add a startup check comparing the ontology version of the backend with the ontology version in elastic search. Configurable via `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_MODE` (`strict`, `warn` or `off`, default `warn`), `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_ATTEMPTS` (default `6`) and `ELASTIC_SEARCH_ONTOLOGY_VERSION_CHECK_INTERVAL` (default `PT10S`) ([#1212](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1212))
 
 ### Changed
+- Update ontology to [v5.2.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.2.2) ([#1210](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1210))
+- Upgrade issue messages now name the concrete change, e.g. `Changed filter "onset-date" to "recorded-date" in attribute group "..."` instead of the generic "Filter Change" ([#1218](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1218))
 - Only deploy the documentation to GitHub Pages for stable release tags. Pull requests, pushes to `main` and scheduled runs only build the documentation ([#1214](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1214))
+- Update Spring Boot to 4.1.2 and remove custom version overrides for Tomcat and Jackson
+### Fixed
+- CSV export no longer fails or writes `null` when a criterion, codeable concept, display, value or linked group cannot be found in the ontology; a localized "(not found)" marker is written instead. Code filters are detected by type, units without display fall back to their code and zip entries are written as UTF-8 ([#1177](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1177))
+- Validation no longer reports every code of an unsupported filter in addition to the filter type error, and the message of `VALIDATION-2000004` is corrected ([#1210](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1210))
+### Security
+- Update temurin base image to contain fix in brotli-libs (CVE-2026-111497)
+- Fix npm vulnerabilities in the documentation reported by OpenSSF Scorecard
+- Update dependencies and GitHub actions
 
 ## [9.4.1] - 2026-11-13
 
