@@ -2,7 +2,7 @@ FROM eclipse-temurin:25.0.5_8-jre-alpine@sha256:e1898fd6a11fc965a994d8ace186fd35
 
 WORKDIR /opt/dataportal-backend
 
-ARG VERSION=9.4.0
+ARG VERSION=9.5.0
 ENV APP_VERSION=${VERSION}
 ENV DATABASE_HOST="dataportal-network"
 ENV DATABASE_PORT=5432
