@@ -21,7 +21,7 @@ public enum ValidationIssueType {
   ATTRIBUTE_GROUP_PROFILE_NOT_FOUND(2000001, "Attribute group groupReference not found"),
   ATTRIBUTE_REF_NOT_FOUND(2000002, "attributeRef not found in ontology profile of attribute group"),
   FILTER_CODE_NOT_FOUND(2000003, "code filter not found in value set"),
-  FILTER_TYPE_NOT_SUPPORTED(2000004, "code filter not found in value set"),
+  FILTER_TYPE_NOT_SUPPORTED(2000004, "filter type not supported by ontology profile of attribute group"),
   LINKED_GROUP_MISSING(2000005, "Linked group missing for attribute of type reference"),
   LINKED_GROUP_NOT_FOUND(2000006, "Linked group not found in CRTDL"),
   FILTER_DATE_COMBINATION_INVALID(2000007, "End date must not be before start date."),

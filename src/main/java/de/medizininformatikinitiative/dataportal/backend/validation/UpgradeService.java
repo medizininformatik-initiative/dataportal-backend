@@ -51,6 +51,7 @@ public class UpgradeService {
           ? List.of((UpgradeHandler) this::handleProfileRemoved)
           : List.of(
           (UpgradeHandler) (de, ag, idx) -> handleFilterNameChange(de, ag, dseProfile, idx),
+          (UpgradeHandler) (de, ag, idx) -> handleFilterTypeRemoved(de, ag, dseProfile, idx),
           (UpgradeHandler) (de, ag, idx) -> handleFieldOrReferenceRemoved(de, ag, dseProfile, idx),
           (UpgradeHandler) this::handleLinkedGroupsRemoved
       );
@@ -116,6 +117,29 @@ public class UpgradeService {
         .upgradeIssues(List.of(buildItemIssue(groupIndex, "filter", filterIndex, UpgradeIssueType.FILTER_CHANGE,
             Map.of("replaced", filterCrtdl, "replacedWith", fixedFilter),
             filterCrtdl.name(), fixedFilter.name(), groupLabel(attributeGroup))))
+        .build();
+  }
+
+  // A profile may drop a filter type between ontology versions (e.g. ObservationLab lost its "token" filter in
+  // ontology 5.2). Such a filter can't be applied anymore, so it is removed. Note that this widens the extraction.
+  private DataExtractionUpgradeResult handleFilterTypeRemoved(DataExtraction dataExtraction, AttributeGroup attributeGroup, DseProfile dseProfile, int groupIndex) {
+    var fixedDataExtraction = dataExtraction;
+    var fixedAttributeGroup = attributeGroup;
+    var issues = new ArrayList<UpgradeIssue>();
+
+    for (int filterIndex = 0; filterIndex < attributeGroup.filter().size(); filterIndex++) {
+      var filter = attributeGroup.filter().get(filterIndex);
+      if (dseProfile.filters().stream().anyMatch(f -> Objects.equals(f.type(), filter.type()))) continue;
+
+      fixedDataExtraction = DataExtraction.withRemovedFilter(fixedDataExtraction, fixedAttributeGroup, filter);
+      fixedAttributeGroup = findAttributeGroup(fixedDataExtraction, attributeGroup.id());
+      issues.add(buildItemIssue(groupIndex, "filter", filterIndex, UpgradeIssueType.FILTER_NO_LONGER_AVAILABLE,
+          Map.of("replaced", filter), filter.name(), filter.type(), groupLabel(attributeGroup)));
+    }
+
+    return DataExtractionUpgradeResult.builder()
+        .dataExtraction(fixedDataExtraction)
+        .upgradeIssues(issues)
         .build();
   }
 

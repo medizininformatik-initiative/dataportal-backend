@@ -315,6 +315,25 @@ class CodeableConceptServiceTest {
         .build();
   }
 
+  private static Stream<Arguments> generateArgumentsForTestAvailableCodesInValueSets_emptyInput() {
+    return Stream.of(
+        Arguments.of(List.of("code-1"), List.of()),
+        Arguments.of(List.of("code-1"), null),
+        Arguments.of(List.of(), List.of("http://example.org/ValueSet/foo")),
+        Arguments.of(null, List.of("http://example.org/ValueSet/foo"))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("generateArgumentsForTestAvailableCodesInValueSets_emptyInput")
+  void testAvailableCodesInValueSets_returnsEmptyListWithoutQueryingOnEmptyInput(List<String> codes,
+                                                                                List<String> valueSetUrls) {
+    var result = codeableConceptService.availableCodesInValueSets(codes, valueSetUrls);
+
+    assertThat(result).isEmpty();
+    Mockito.verifyNoInteractions(operations);
+  }
+
   private TermCode createDummyTermcode(String code) {
     return TermCode.builder()
         .code(code)

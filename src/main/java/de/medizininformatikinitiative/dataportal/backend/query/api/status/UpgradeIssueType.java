@@ -26,7 +26,9 @@ public enum UpgradeIssueType {
   LINKED_GROUPS_NO_LONGER_AVAILABLE(1000007, "One or more linked group references removed as no longer available",
       "Removed linked group(s) {0} from reference \"{1}\" in attribute group \"{2}\" as they are no longer available"),
   ALL_LINKED_GROUPS_NO_LONGER_AVAILABLE(1000008, "Attribute removed since all referenced groups are no longer available",
-      "Removed reference \"{0}\" from attribute group \"{1}\" as none of its linked groups {2} are available anymore");
+      "Removed reference \"{0}\" from attribute group \"{1}\" as none of its linked groups {2} are available anymore"),
+  FILTER_NO_LONGER_AVAILABLE(1000009, "Filter removed as its type is no longer supported",
+      "Removed filter \"{0}\" of type \"{1}\" from attribute group \"{2}\" as the profile no longer supports this filter type. The attribute group is no longer restricted by this filter");
 
   private static final UpgradeIssueType[] VALUES;
 
