@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [8.6.3] - 2026-11-18
+
+- Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
+
+### Fixed
+- Multiple space-separated flags in `JAVA_OPTS` no longer break JVM startup in the docker entrypoint ([#1232](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1232))
+
 ## [8.6.2] - 2026-07-14
 
 - Based on ontology **[v4.0.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v4.0.0)**
