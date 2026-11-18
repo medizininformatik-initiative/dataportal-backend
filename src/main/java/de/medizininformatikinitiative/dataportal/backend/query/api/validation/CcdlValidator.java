@@ -181,11 +181,22 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
                                                   UiProfile uiProfile,
                                                   String jsonPointerBase) {
     var valueDefinition = uiProfile.valueDefinition();
-    if (valueDefinition != null) {
-      return unitsContainErrors(ctx, criterion, valueDefinition, jsonPointerBase)
-          || quantitiesContainErrors(ctx, criterion, valueDefinition, jsonPointerBase);
+    if (valueDefinition == null) {
+      return false;
     }
-    return false;
+    if (criterion.valueFilter() == null) {
+      if (Boolean.FALSE.equals(valueDefinition.optional())) {
+        ValidationErrorBuilder.addError(
+            ctx,
+            jsonPointerBase,
+            ValidationIssueType.VALUEFILTER_MISSING
+        );
+        return true;
+      }
+      return false;
+    }
+    return unitsContainErrors(ctx, criterion, valueDefinition, jsonPointerBase)
+        || quantitiesContainErrors(ctx, criterion, valueDefinition, jsonPointerBase);
   }
 
   private boolean unitsContainErrors(ConstraintValidatorContext ctx,
@@ -193,13 +204,14 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
                                      AttributeDefinition valueDefinition,
                                      String jsonPointerBase) {
     // check if units are allowed
-    if (valueDefinition.allowedUnits() != null && !valueDefinition.allowedUnits().isEmpty()) {
-      if (valueDefinition.allowedUnits().stream().noneMatch(unit -> unit.code().equals(criterion.valueFilter().quantityUnit().code()))) {
+    var quantityUnit = criterion.valueFilter().quantityUnit();
+    if (quantityUnit != null && !valueDefinition.allowedUnits().isEmpty()) {
+      if (valueDefinition.allowedUnits().stream().noneMatch(unit -> Objects.equals(unit.code(), quantityUnit.code()))) {
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/unit", jsonPointerBase),
             ValidationIssueType.VALUEFILTER_INVALID_UNIT,
-            Map.of("selected", criterion.valueFilter().quantityUnit().code(),
+            Map.of("selected", String.valueOf(quantityUnit.code()),
                 "allowed", valueDefinition.allowedUnits().stream()
                     .map(TermCode::code)
                     .filter(Objects::nonNull)
@@ -219,7 +231,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
     var hasErrors = false;
     var valueFilter = criterion.valueFilter();
     if (valueDefinition.type() == ValueDefinitonType.QUANTITY) {
-      if (valueDefinition.max() != null && valueFilter.value() > valueDefinition.max()) {
+      if (valueDefinition.max() != null && valueFilter.value() != null && valueFilter.value() > valueDefinition.max()) {
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
@@ -231,7 +243,7 @@ public class CcdlValidator implements ConstraintValidator<CcdlValidation, Ccdl> 
         );
         hasErrors = true;
       }
-      if (valueDefinition.min() != null && valueFilter.value() < valueDefinition.min()) {
+      if (valueDefinition.min() != null && valueFilter.value() != null && valueFilter.value() < valueDefinition.min()) {
         ValidationErrorBuilder.addError(
             ctx,
             MessageFormat.format("{0}/value", jsonPointerBase),
