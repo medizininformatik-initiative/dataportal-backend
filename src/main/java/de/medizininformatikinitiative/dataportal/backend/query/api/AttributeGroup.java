@@ -14,7 +14,7 @@ public record AttributeGroup(
     @JsonProperty String name,
     @JsonProperty URI groupReference,
     @JsonProperty Boolean includeReferenceOnly,
-    @JsonProperty List<Attribute> attributes,
+    @JsonInclude(JsonInclude.Include.ALWAYS) @JsonProperty List<Attribute> attributes,
     @JsonProperty List<Filter> filter
 ) {
   public AttributeGroup {
