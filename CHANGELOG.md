@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+- Add validation issue `VALIDATION-20009` (`VALUEFILTER_MISSING`) for criteria without a value filter whose UI profile requires one ([#1227](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1227))
+
 ### Fixed
-- CRTDL upgrade and serialisation keep empty `attributes` (and empty `attributeGroups`) arrays, so an upgraded CRTDL with an attribute group without attributes passes schema validation ([#1228](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1228))
+- CCDL validation no longer answers 500 (NullPointerException) when a mandatory value filter, its unit or its value is missing; a validation issue is returned instead ([#1227](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1227))
 
 ## [9.5.1] - 2026-11-18
 

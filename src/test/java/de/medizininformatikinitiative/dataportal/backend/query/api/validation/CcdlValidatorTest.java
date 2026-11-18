@@ -8,6 +8,7 @@ import de.medizininformatikinitiative.dataportal.backend.common.api.Unit;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Ccdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.TimeRestriction;
 import de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilter;
+import de.medizininformatikinitiative.dataportal.backend.query.api.status.ValidationIssueType;
 import de.medizininformatikinitiative.dataportal.backend.terminology.TerminologyService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.CodeableConceptService;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.TerminologyEsService;
@@ -27,11 +28,13 @@ import java.util.List;
 
 import static de.medizininformatikinitiative.dataportal.backend.common.api.Comparator.GREATER_EQUAL;
 import static de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilterType.QUANTITY_COMPARATOR;
+import static de.medizininformatikinitiative.dataportal.backend.query.api.ValueFilterType.QUANTITY_RANGE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @Tag("query")
@@ -114,6 +117,221 @@ public class CcdlValidatorTest {
     doReturn("{ this is not valid json").when(terminologyService).getUiProfile(anyString());
 
     assertThrows(RuntimeException.class, () -> validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_missingMandatoryValueFilterFails() {
+    var ccdl = buildQueryWithoutValueFilter();
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertFalse(validator.isValid(ccdl, constraintValidatorContext));
+    verify(constraintValidatorContext, atLeastOnce()).buildConstraintViolationWithTemplate(
+        argThat(template -> template.contains(String.valueOf(ValidationIssueType.VALUEFILTER_MISSING.code()))));
+  }
+
+  @Test
+  public void testValidate_missingOptionalValueFilterOk() {
+    var ccdl = buildQueryWithoutValueFilter();
+    doReturn(createUiProfileStringWithQuantityValueDefinition(true)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_missingMandatoryConceptValueFilterFails() {
+    var ccdl = buildQueryWithoutValueFilter();
+    doReturn(createValidUiProfileString()).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertFalse(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_quantityRangeWithoutValueOk() {
+    var validQuery = buildValidQuery();
+    var criterion = validQuery.inclusionCriteria().get(0).get(0);
+    var rangeFilter = ValueFilter.builder()
+        .type(QUANTITY_RANGE)
+        .quantityUnit(Unit.builder().code("a").display("a").build())
+        .minValue(18.0)
+        .maxValue(65.0)
+        .build();
+    var rangeCriterion = Criterion.builder()
+        .context(criterion.context())
+        .termCodes(criterion.termCodes())
+        .valueFilter(rangeFilter)
+        .build();
+    var ccdl = Ccdl.builder()
+        .version(validQuery.version())
+        .inclusionCriteria(List.of(List.of(rangeCriterion)))
+        .build();
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_uiProfileWithoutValueDefinitionOk() {
+    var ccdl = buildQueryWithoutValueFilter();
+    doReturn("""
+        {"attributeDefinitions": [], "name": "NoValue", "timeRestrictionAllowed": true}
+        """).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_invalidUnitFails() {
+    var ccdl = buildQueryWithValueFilter(quantityComparatorFilter(Unit.builder().code("kg").display("kg").build(), 50.0));
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertFalse(validator.isValid(ccdl, constraintValidatorContext));
+    verifyIssueReported(ValidationIssueType.VALUEFILTER_INVALID_UNIT);
+  }
+
+  @Test
+  public void testValidate_quantityWithoutUnitOk() {
+    var ccdl = buildQueryWithValueFilter(quantityComparatorFilter(null, 50.0));
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_quantityWithoutAllowedUnitsOk() {
+    var ccdl = buildQueryWithValueFilter(quantityComparatorFilter(Unit.builder().code("kg").display("kg").build(), 50.0));
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false).replace(
+        "[{\"code\": \"a\", \"system\": \"http://unitsofmeasure.org\", \"display\": \"a\"}]", "[]"))
+        .when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_valueAboveMaxFails() {
+    var ccdl = buildQueryWithValueFilter(quantityComparatorFilter(Unit.builder().code("a").display("a").build(), 200.0));
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertFalse(validator.isValid(ccdl, constraintValidatorContext));
+    verifyIssueReported(ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS);
+  }
+
+  @Test
+  public void testValidate_valueBelowMinFails() {
+    var ccdl = buildQueryWithValueFilter(quantityComparatorFilter(Unit.builder().code("a").display("a").build(), -1.0));
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertFalse(validator.isValid(ccdl, constraintValidatorContext));
+    verifyIssueReported(ValidationIssueType.VALUEFILTER_OUT_OF_BOUNDS);
+  }
+
+  @Test
+  public void testValidate_valueInsideBoundsOk() {
+    var ccdl = buildQueryWithValueFilter(quantityComparatorFilter(Unit.builder().code("a").display("a").build(), 42.0));
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_quantityWithoutBoundsOk() {
+    var ccdl = buildQueryWithValueFilter(quantityComparatorFilter(Unit.builder().code("a").display("a").build(), 500.0));
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)
+        .replace("\"max\": 150", "\"max\": null")
+        .replace("\"min\": 0", "\"min\": null"))
+        .when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertTrue(validator.isValid(ccdl, constraintValidatorContext));
+  }
+
+  @Test
+  public void testValidate_quantityRangeMinGreaterThanMaxFails() {
+    var rangeFilter = ValueFilter.builder()
+        .type(QUANTITY_RANGE)
+        .quantityUnit(Unit.builder().code("a").display("a").build())
+        .minValue(65.0)
+        .maxValue(18.0)
+        .build();
+    var ccdl = buildQueryWithValueFilter(rangeFilter);
+    doReturn(createUiProfileStringWithQuantityValueDefinition(false)).when(terminologyService).getUiProfile(anyString());
+    doReturn(true).when(terminologyService).isExistingTermCode(anyString(), anyString());
+
+    assertFalse(validator.isValid(ccdl, constraintValidatorContext));
+    verifyIssueReported(ValidationIssueType.VALUEFILTER_MIN_MAX_ERROR);
+  }
+
+  private void verifyIssueReported(ValidationIssueType issueType) {
+    verify(constraintValidatorContext, atLeastOnce()).buildConstraintViolationWithTemplate(
+        argThat(template -> template.contains("VALIDATION-" + issueType.code())));
+  }
+
+  private ValueFilter quantityComparatorFilter(Unit unit, Double value) {
+    return ValueFilter.builder()
+        .type(QUANTITY_COMPARATOR)
+        .comparator(GREATER_EQUAL)
+        .quantityUnit(unit)
+        .value(value)
+        .build();
+  }
+
+  private Ccdl buildQueryWithValueFilter(ValueFilter valueFilter) {
+    var validQuery = buildValidQuery();
+    var criterion = validQuery.inclusionCriteria().get(0).get(0);
+    var criterionWithValueFilter = Criterion.builder()
+        .context(criterion.context())
+        .termCodes(criterion.termCodes())
+        .valueFilter(valueFilter)
+        .build();
+    return Ccdl.builder()
+        .version(validQuery.version())
+        .inclusionCriteria(List.of(List.of(criterionWithValueFilter)))
+        .build();
+  }
+
+  private Ccdl buildQueryWithoutValueFilter() {
+    var validQuery = buildValidQuery();
+    var criterion = validQuery.inclusionCriteria().get(0).get(0);
+    var criterionWithoutValueFilter = Criterion.builder()
+        .context(criterion.context())
+        .termCodes(criterion.termCodes())
+        .build();
+    return Ccdl.builder()
+        .display("display-value")
+        .version(validQuery.version())
+        .inclusionCriteria(List.of(List.of(criterionWithoutValueFilter)))
+        .build();
+  }
+
+  private String createUiProfileStringWithQuantityValueDefinition(boolean optional) {
+    return """
+          {
+              "attributeDefinitions": [],
+              "name": "MII_PR_Person_Patient",
+              "timeRestrictionAllowed": false,
+              "valueDefinition": {
+                  "allowedUnits": [{"code": "a", "system": "http://unitsofmeasure.org", "display": "a"}],
+                  "display": {"original": "Alter", "translations": []},
+                  "max": 150,
+                  "min": 0,
+                  "optional": %s,
+                  "precision": 1,
+                  "referencedCriteriaSet": [],
+                  "referencedValueSet": [],
+                  "type": "quantity"
+              }
+          }
+          """.formatted(optional);
   }
 
   private Ccdl buildValidQuery() {
