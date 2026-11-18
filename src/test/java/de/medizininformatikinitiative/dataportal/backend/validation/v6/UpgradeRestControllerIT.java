@@ -27,6 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -151,5 +152,40 @@ class UpgradeRestControllerIT {
             "Changed filter \"onset-date\" to \"recorded-date\" in attribute group \"MII PR Diagnose Condition\""))
         .andExpect(jsonPath("$.annotations[0].details.replaced.name").value("onset-date"))
         .andExpect(jsonPath("$.annotations[0].details.replacedWith.name").value("recorded-date"));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  void upgradeCrtdl_emptyAttributes_keepsEmptyAttributesArray() throws Exception {
+    JsonNode crtdlNode;
+    try (InputStream is = UpgradeRestControllerIT.class.getResourceAsStream("crtdl-condition-onset-date.json")) {
+      crtdlNode = jsonUtil.readTree(is);
+    }
+    ((ObjectNode) crtdlNode.get("dataExtraction").get("attributeGroups").get(0))
+        .set("attributes", jsonUtil.createArrayNode());
+    var dseService = mock(DseService.class);
+    var dseProfile = DseProfile.builder()
+        .url(DIAGNOSE_PROFILE_URL)
+        .fields(List.of(Field.builder().id("Condition.code").build()))
+        .filters(List.of(
+            Filter.builder().type("date").name("recorded-date").uiType("timeRestriction").build(),
+            Filter.builder().type("token").name("code").uiType("code").build()))
+        .references(List.of())
+        .build();
+    doReturn(List.of(dseProfile)).when(dseService).getProfileData(any());
+    var realUpgradeService = new UpgradeService(dseService);
+    doReturn(List.of()).when(validationService).validateCrtdlSchema(any());
+    doAnswer(invocation -> jsonUtil.convertValue(invocation.<JsonNode>getArgument(0), Crtdl.class))
+        .when(validationService).crtdlFromJsonNode(any());
+    doAnswer(invocation -> realUpgradeService.upgrade(invocation.getArgument(0)))
+        .when(upgradeService).upgrade(any());
+
+    mockMvc.perform(post(URI.create(PATH_API + PATH_UPGRADE + PATH_CRTDL)).with(csrf())
+            .contentType(APPLICATION_JSON)
+            .content(jsonUtil.writeValueAsString(crtdlNode)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.crtdl.dataExtraction.attributeGroups[0].filter[0].name").value("recorded-date"))
+        .andExpect(jsonPath("$.crtdl.dataExtraction.attributeGroups[0].attributes").isArray())
+        .andExpect(jsonPath("$.crtdl.dataExtraction.attributeGroups[0].attributes").isEmpty());
   }
 }

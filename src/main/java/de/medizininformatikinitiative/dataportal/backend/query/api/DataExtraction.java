@@ -13,7 +13,7 @@ import java.util.Objects;
 @Builder(toBuilder = true)
 @DataExtractionValidation
 public record DataExtraction(
-    @JsonProperty(required = true) List<AttributeGroup> attributeGroups
+    @JsonInclude(Include.ALWAYS) @JsonProperty(required = true) List<AttributeGroup> attributeGroups
 ) {
   public DataExtraction {
     attributeGroups = attributeGroups == null ? List.of() : attributeGroups;
