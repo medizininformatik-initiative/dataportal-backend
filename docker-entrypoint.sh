@@ -4,8 +4,10 @@ TRUSTSTORE_FILE="/opt/dataportal-backend/truststore/self-signed-truststore.jks"
 TRUSTSTORE_PASS=${TRUSTSTORE_PASS:-changeit}
 KEY_PASS=${KEY_PASS:-changeit}
 
+# Split JAVA_OPTS on whitespace into separate JVM arguments.
+read -r -a java_opts <<< "$JAVA_OPTS"
+
 shopt -s nullglob
-IFS=$'\n'
 ca_files=(certs/*.pem)
 
 if [ ! "${#ca_files[@]}" -eq 0 ]; then
@@ -23,7 +25,7 @@ if [ ! "${#ca_files[@]}" -eq 0 ]; then
     tmp_ca_pem_file="$(mktemp)"
     trap 'rm -f "$tmp_ca_pem_file"' EXIT
 
-    for ca_file in ${ca_files[@]}; do
+    for ca_file in "${ca_files[@]}"; do
       echo "###"
       echo "### Found PEM file '$ca_file'."
       echo "###   Importing certificates:"
@@ -47,10 +49,10 @@ if [ ! "${#ca_files[@]}" -eq 0 ]; then
 
     echo "### JAVA_OPTS is set to $JAVA_OPTS"
 
-    java $JAVA_OPTS -Djavax.net.ssl.trustStore="$TRUSTSTORE_FILE" -Djavax.net.ssl.trustStorePassword="$TRUSTSTORE_PASS" -jar dataportal-backend.jar
+    java "${java_opts[@]}" -Djavax.net.ssl.trustStore="$TRUSTSTORE_FILE" -Djavax.net.ssl.trustStorePassword="$TRUSTSTORE_PASS" -jar dataportal-backend.jar
 else
     echo "# No CA *.pem cert files found in /opt/dataportal-backend/certs -> starting dataportal backend without own CAs"
     echo "### JAVA_OPTS is set to $JAVA_OPTS"
-    java $JAVA_OPTS -jar dataportal-backend.jar
+    java "${java_opts[@]}" -jar dataportal-backend.jar
 fi
 
