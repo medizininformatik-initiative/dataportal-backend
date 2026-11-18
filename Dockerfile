@@ -2,7 +2,7 @@ FROM eclipse-temurin:25.0.5_8-jre-alpine@sha256:56f273059de6b13a6b49fe0ded691ed2
 
 WORKDIR /opt/dataportal-backend
 
-ARG VERSION=9.4.1
+ARG VERSION=9.4.2
 ENV APP_VERSION=${VERSION}
 ENV DATABASE_HOST="dataportal-network"
 ENV DATABASE_PORT=5432
@@ -16,7 +16,7 @@ RUN mkdir logging && \
     mkdir -p $CERTIFICATE_PATH $TRUSTSTORE_PATH && \
     chown -R 10001:10001 /opt/dataportal-backend && \
     chown 10001:10001 $CERTIFICATE_PATH $TRUSTSTORE_PATH && \
-    apk --no-cache add curl bash
+    apk --no-cache add curl bash "zlib>=1.4-r0"
 USER 10001
 
 HEALTHCHECK --interval=5s --start-period=10s CMD curl -s -f http://localhost:8090/api/v6/actuator/health || exit 1

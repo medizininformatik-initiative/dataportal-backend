@@ -4,6 +4,12 @@ TRUSTSTORE_FILE="/opt/dataportal-backend/truststore/self-signed-truststore.jks"
 TRUSTSTORE_PASS=${TRUSTSTORE_PASS:-changeit}
 KEY_PASS=${KEY_PASS:-changeit}
 
+# Mitigation for CVE-2026-114938 (Java4Shell): disable the HotSpot Base64 intrinsics
+# until a fixed Temurin build is available.
+JAVA_OPTS="-XX:-UseBASE64Intrinsics $JAVA_OPTS"
+# Split on whitespace here, because IFS is set to newline below.
+read -r -a java_opts <<< "$JAVA_OPTS"
+
 shopt -s nullglob
 IFS=$'\n'
 ca_files=(certs/*.pem)
@@ -47,10 +53,10 @@ if [ ! "${#ca_files[@]}" -eq 0 ]; then
 
     echo "### JAVA_OPTS is set to $JAVA_OPTS"
 
-    java $JAVA_OPTS -Djavax.net.ssl.trustStore="$TRUSTSTORE_FILE" -Djavax.net.ssl.trustStorePassword="$TRUSTSTORE_PASS" -jar dataportal-backend.jar
+    java "${java_opts[@]}" -Djavax.net.ssl.trustStore="$TRUSTSTORE_FILE" -Djavax.net.ssl.trustStorePassword="$TRUSTSTORE_PASS" -jar dataportal-backend.jar
 else
     echo "# No CA *.pem cert files found in /opt/dataportal-backend/certs -> starting dataportal backend without own CAs"
     echo "### JAVA_OPTS is set to $JAVA_OPTS"
-    java $JAVA_OPTS -jar dataportal-backend.jar
+    java "${java_opts[@]}" -jar dataportal-backend.jar
 fi
 

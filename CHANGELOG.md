@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [9.4.2] - 2026-11-18
+
+- Based on ontology **[v5.1.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.1.0)**
+
+### Security
+- Disable the HotSpot Base64 intrinsics (`-XX:-UseBASE64Intrinsics`) in the docker image to mitigate CVE-2026-114938 (Java4Shell) until a fixed Temurin build is available. The flag is always prepended to `JAVA_OPTS`
+- Update zlib in the docker image to 1.4-r0 (CVE-2026-4738)
+
+### Fixed
+- `JAVA_OPTS` containing multiple options are now passed to the JVM as separate arguments by the docker entrypoint
+
 ## [9.4.1] - 2026-11-13
 
 - Based on ontology **[v5.1.0](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.1.0)**
