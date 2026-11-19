@@ -311,16 +311,102 @@ class DataqueryHandlerTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"true", "false"})
-  @DisplayName("getDataqueriesByAuthor() -> throws on json error")
-  void getDataqueriesByAuthor_throwsOnJsonException(boolean includeTemporary) throws JacksonException {
+  @DisplayName("getDataqueriesByAuthor() -> returns entry without content on json error")
+  void getDataqueriesByAuthor_returnsEntryWithoutContentOnJsonException(boolean includeTemporary) throws JacksonException {
     var dataqueryEntity = createDataqueryEntity();
 
-    try (MockedStatic<Dataquery> mockedStaticDataquery = mockStatic(Dataquery.class)) {
+    try (MockedStatic<Dataquery> mockedStaticDataquery = mockStatic(Dataquery.class, Mockito.CALLS_REAL_METHODS)) {
       mockedStaticDataquery.when(() -> Dataquery.of(any(de.medizininformatikinitiative.dataportal.backend.query.persistence.DataqueryEntity.class))).thenThrow(JacksonException.class);
       doReturn(List.of(dataqueryEntity)).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
-      assertThrows(DataqueryException.class, () -> dataqueryHandler.getDataqueriesByAuthor(CREATOR, includeTemporary));
-    }
 
+      var dataqueries = assertDoesNotThrow(() -> dataqueryHandler.getDataqueriesByAuthor(CREATOR, includeTemporary));
+
+      assertEquals(1, dataqueries.size());
+      assertEquals(dataqueryEntity.getId(), dataqueries.get(0).id());
+      assertEquals(dataqueryEntity.getLabel(), dataqueries.get(0).label());
+      assertNull(dataqueries.get(0).content());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "{\"version\":null,\"display\":\"\",\"cohortDefinition\":}",
+      "not json at all",
+      "{\"unknownProperty\":\"foo\"}"
+  })
+  @DisplayName("getDataqueriesByAuthor() -> one unreadable entry does not break the whole list")
+  void getDataqueriesByAuthor_unreadableEntryDoesNotBreakList(String brokenCrtdl) throws JacksonException {
+    var validEntity = createDataqueryEntity();
+    var brokenEntity = createDataqueryEntity();
+    brokenEntity.setId(2L);
+    brokenEntity.setCrtdl(brokenCrtdl);
+
+    doReturn(List.of(validEntity, brokenEntity)).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
+
+    var dataqueries = assertDoesNotThrow(() -> dataqueryHandler.getDataqueriesByAuthor(CREATOR));
+
+    assertEquals(2, dataqueries.size());
+    assertNotNull(dataqueries.get(0).content());
+    assertEquals(2L, dataqueries.get(1).id());
+    assertEquals(LABEL, dataqueries.get(1).label());
+    assertNull(dataqueries.get(1).content());
+  }
+
+  @Test
+  @DisplayName("getDataqueriesByAuthor() -> legacy entry that only contains a ccdl is returned as crtdl")
+  void getDataqueriesByAuthor_succeedsWithLegacyCcdlOnlyEntry() throws JacksonException {
+    var validEntity = createDataqueryEntity();
+    var legacyEntity = createDataqueryEntity();
+    legacyEntity.setId(2L);
+    legacyEntity.setCrtdl(jsonUtil.writeValueAsString(createValidCcdl()));
+
+    doReturn(List.of(validEntity, legacyEntity)).when(dataqueryRepository).findAllByCreatedBy(any(String.class), anyBoolean());
+
+    var dataqueries = assertDoesNotThrow(() -> dataqueryHandler.getDataqueriesByAuthor(CREATOR));
+
+    assertEquals(2, dataqueries.size());
+    var legacyContent = dataqueries.get(1).content();
+    assertNotNull(legacyContent);
+    assertNotNull(legacyContent.cohortDefinition());
+    assertNull(legacyContent.dataExtraction());
+    assertEquals(createValidCcdl().inclusionCriteria(), legacyContent.cohortDefinition().inclusionCriteria());
+  }
+
+  @Test
+  @DisplayName("Dataquery.of() -> legacy entry that only contains a ccdl is wrapped into a crtdl")
+  void testDataqueryOf_wrapsLegacyCcdl() throws JacksonException {
+    var legacyEntity = createDataqueryEntity();
+    var ccdl = createValidCcdl();
+    legacyEntity.setCrtdl(jsonUtil.writeValueAsString(ccdl));
+
+    var dataquery = Dataquery.of(legacyEntity);
+
+    assertNull(dataquery.content().version());
+    assertEquals("", dataquery.content().display());
+    assertEquals(ccdl.version(), dataquery.content().cohortDefinition().version());
+    assertEquals(ccdl.inclusionCriteria(), dataquery.content().cohortDefinition().inclusionCriteria());
+    assertEquals(ccdl.exclusionCriteria(), dataquery.content().cohortDefinition().exclusionCriteria());
+  }
+
+  @Test
+  @DisplayName("Dataquery.of() -> entry without stored crtdl has no content")
+  void testDataqueryOf_nullCrtdl() throws JacksonException {
+    var entity = createDataqueryEntity();
+    entity.setCrtdl(null);
+
+    var dataquery = assertDoesNotThrow(() -> Dataquery.of(entity));
+
+    assertNull(dataquery.content());
+    assertEquals(entity.getLabel(), dataquery.label());
+  }
+
+  @Test
+  @DisplayName("Dataquery.of() -> invalid json still throws")
+  void testDataqueryOf_throwsOnInvalidJson() throws JacksonException {
+    var entity = createDataqueryEntity();
+    entity.setCrtdl("{\"version\":null,\"display\":\"\",\"cohortDefinition\":}");
+
+    assertThrows(JacksonException.class, () -> Dataquery.of(entity));
   }
 
   @Test
