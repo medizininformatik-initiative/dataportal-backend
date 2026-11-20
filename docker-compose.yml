@@ -110,7 +110,7 @@ services:
 
   dataportal-postgres:
     container_name: dataportal-postgres
-    image: 'postgres:17-alpine'
+    image: 'postgres:19-alpine'
     ports:
       - ${DATAPORTAL_BACKEND_DB_PORT:-127.0.0.1:5432}:5432
     environment:

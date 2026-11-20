@@ -82,7 +82,7 @@ services:
       - ./ontology/migration/R__Load_latest_ui_profile.sql:/opt/dataportal-backend/ontology/migration/R__Load_latest_ui_profile.sql
       - ./secrets:/opt/dataportal-security
   dataportal-postgres:
-    image: 'postgres:17-alpine'
+    image: 'postgres:19-alpine'
     container_name: dataportal-postgres
     ports:
       - "5432:5432"
@@ -131,7 +131,7 @@ services:
     restart: unless-stopped
 
   auth-db:
-    image: postgres:17-alpine
+    image: postgres:19-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: "keycloakdb"
