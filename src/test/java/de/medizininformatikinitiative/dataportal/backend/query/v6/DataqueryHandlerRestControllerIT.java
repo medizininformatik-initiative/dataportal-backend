@@ -375,6 +375,47 @@ public class DataqueryHandlerRestControllerIT {
 
   @ParameterizedTest
   @CsvSource({"true", "false"})
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataqueryList_succeedsWithEntryWithoutContent(String skipValidation) throws Exception {
+    var dataqueries = new ArrayList<>(createValidApiDataqueryListToGet(1));
+    dataqueries.add(Dataquery.builder().id(42L).label("unreadable").build());
+    doReturn(dataqueries).when(dataqueryHandler).getDataqueriesByAuthor(any(String.class), anyBoolean());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "?skip-validation=" + skipValidation)).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$.[1].id").value(42))
+        .andExpect(jsonPath("$.[1].ccdl.exists").value(false))
+        .andExpect(jsonPath("$.[1].dataExtraction.exists").value(false));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
+  public void testGetDataqueryListByUser_succeedsWithEntryWithoutContent() throws Exception {
+    var dataqueries = new ArrayList<>(createValidApiDataqueryListToGet(1));
+    dataqueries.add(Dataquery.builder().id(42L).label("unreadable").build());
+    doReturn(dataqueries).when(dataqueryHandler).getDataqueriesByAuthor(any(String.class), anyBoolean());
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/by-user/123?skip-validation=false")).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$.[1].ccdl.exists").value(false))
+        .andExpect(jsonPath("$.[1].dataExtraction.exists").value(false));
+  }
+
+  @Test
+  @WithMockUser(roles = "DATAPORTAL_TEST_USER")
+  public void testGetDataquery_succeedsWithoutContent() throws Exception {
+    doReturn(Dataquery.builder().id(42L).label("empty").build()).when(dataqueryHandler).getDataqueryById(any(Long.class), any(Authentication.class));
+
+    mockMvc.perform(get(URI.create(PATH_API + PATH_QUERY + PATH_DATA + "/42")).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(42))
+        .andExpect(jsonPath("$.ccdl.exists").value(false));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"true", "false"})
   @WithMockUser(roles = "DATAPORTAL_TEST_ADMIN")
   public void testGetDataqueryListByUser_succeeds(String skipValidation) throws Exception {
     int listSize = 5;

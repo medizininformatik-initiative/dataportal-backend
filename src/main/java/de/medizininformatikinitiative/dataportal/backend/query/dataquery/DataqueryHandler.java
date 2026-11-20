@@ -126,12 +126,27 @@ public class DataqueryHandler {
     for (DataqueryEntity dataquery : dataqueries) {
       try {
         ret.add(Dataquery.of(dataquery));
-      } catch (JacksonException e) {
-        throw new DataqueryException(e.getMessage());
+      } catch (JacksonException | IllegalArgumentException e) {
+        // Do not let a single unreadable entry break the whole list. Return it without content, so the user can
+        // still see (and delete) it.
+        log.error("Could not parse content of dataquery with id {}. Returning it without content.", dataquery.getId(), e);
+        ret.add(withoutContent(dataquery));
       }
     }
 
     return ret;
+  }
+
+  private static Dataquery withoutContent(DataqueryEntity in) {
+    return Dataquery.builder()
+        .id(in.getId())
+        .label(in.getLabel())
+        .comment(in.getComment())
+        .createdBy(in.getCreatedBy())
+        .resultSize(in.getResultSize())
+        .lastModified(in.getLastModified() == null ? null : in.getLastModified().toString())
+        .expiresAt(in.getExpiresAt())
+        .build();
   }
 
   public List<Dataquery> getDataqueriesByAuthor(String userId) throws DataqueryException {

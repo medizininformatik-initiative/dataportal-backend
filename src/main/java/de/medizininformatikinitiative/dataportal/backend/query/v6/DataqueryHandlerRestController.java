@@ -2,6 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.query.v6;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
+import de.medizininformatikinitiative.dataportal.backend.query.api.Crtdl;
 import de.medizininformatikinitiative.dataportal.backend.query.api.CrtdlSectionInfo;
 import de.medizininformatikinitiative.dataportal.backend.query.api.Dataquery;
 import de.medizininformatikinitiative.dataportal.backend.query.dataquery.DataqueryCsvExportException;
@@ -83,19 +84,15 @@ public class DataqueryHandlerRestController {
           .lastModified(dataquery.lastModified())
           .createdBy(dataquery.createdBy())
           .resultSize(dataquery.resultSize())
-          .ccdl(CrtdlSectionInfo.builder()
-              .exists(dataquery.content().cohortDefinition() != null)
-              .isValid(skipValidation || (dataquery.content().cohortDefinition() != null && validationService.isValid(dataquery.content().cohortDefinition())))
-              .build())
-          .dataExtraction(CrtdlSectionInfo.builder()
-              .exists(dataquery.content().dataExtraction() != null)
-              .isValid(skipValidation || (dataquery.content().dataExtraction() != null && validationService.isValid(dataquery.content().dataExtraction())))
-              .build())
+          .ccdl(ccdlSectionInfo(dataquery.content(), skipValidation))
+          .dataExtraction(dataExtractionSectionInfo(dataquery.content(), skipValidation))
           .build();
       return new ResponseEntity<>(dataqueryWithInvalidCriteria, HttpStatus.OK);
     } catch (JacksonException e) {
+      log.error("Could not parse content of dataquery with id {}", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
+      log.debug("Dataquery with id {} not found or not accessible", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
   }
@@ -108,8 +105,10 @@ public class DataqueryHandlerRestController {
       var dataquery = dataqueryHandler.getDataqueryById(dataqueryId, authentication);
       return new ResponseEntity<>(dataquery.content(), HttpStatus.OK);
     } catch (JacksonException e) {
+      log.error("Could not parse content of dataquery with id {}", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
+      log.debug("Dataquery with id {} not found or not accessible", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
   }
@@ -126,10 +125,13 @@ public class DataqueryHandlerRestController {
       headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
       return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
     } catch (IOException | JacksonException e) {
+      log.error("Could not create csv export for dataquery with id {}", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
+      log.debug("Dataquery with id {} not found, not accessible or without ccdl", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (DataqueryCsvExportException e) {
+      log.warn("Could not convert dataquery with id {} to csv", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
     }
   }
@@ -158,10 +160,13 @@ public class DataqueryHandlerRestController {
       headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
       return new ResponseEntity<>(zipByteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
     } catch (IOException | JacksonException e) {
+      log.error("Could not create csv export for submitted crtdl", e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     } catch (DataqueryException e) {
+      log.debug("Submitted crtdl does not contain a ccdl", e);
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (DataqueryCsvExportException e) {
+      log.warn("Could not convert submitted crtdl to csv", e);
       return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
     }
   }
@@ -183,20 +188,15 @@ public class DataqueryHandlerRestController {
                 .comment(dq.comment())
                 .lastModified(dq.lastModified())
                 .resultSize(dq.resultSize())
-                .ccdl(CrtdlSectionInfo.builder()
-                    .exists(dq.content().cohortDefinition() != null)
-                    .isValid(skipValidation || (dq.content().cohortDefinition() != null && validationService.isValid(dq.content().cohortDefinition())))
-                    .build())
-                .dataExtraction(CrtdlSectionInfo.builder()
-                    .exists(dq.content().dataExtraction() != null)
-                    .isValid(skipValidation || (dq.content().dataExtraction() != null && validationService.isValid(dq.content().dataExtraction())))
-                    .build())
+                .ccdl(ccdlSectionInfo(dq.content(), skipValidation))
+                .dataExtraction(dataExtractionSectionInfo(dq.content(), skipValidation))
                 .expiresAt(dq.expiresAt())
                 .build()
         );
       });
       return new ResponseEntity<>(ret, HttpStatus.OK);
     } catch (DataqueryException e) {
+      log.error("Error while loading dataqueries of user {}", principal.getName(), e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -218,12 +218,9 @@ public class DataqueryHandlerRestController {
                 .lastModified(dq.lastModified())
                 .createdBy(dq.createdBy())
                 .resultSize(dq.resultSize())
-                .ccdl(CrtdlSectionInfo.builder()
-                    .exists(dq.content().cohortDefinition() != null)
-                    .isValid(skipValidation || validationService.isValid(dq.content().cohortDefinition()))
-                    .build())
+                .ccdl(ccdlSectionInfo(dq.content(), skipValidation))
                 .dataExtraction(CrtdlSectionInfo.builder()
-                    .exists(dq.content().dataExtraction() != null)
+                    .exists(dq.content() != null && dq.content().dataExtraction() != null)
                     .isValid(true) // TODO: Add validation for that
                     .build())
                 .expiresAt(dq.expiresAt())
@@ -232,6 +229,7 @@ public class DataqueryHandlerRestController {
       });
       return new ResponseEntity<>(ret, HttpStatus.OK);
     } catch (DataqueryException e) {
+      log.error("Error while loading dataqueries of user {}", userId, e);
       return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -271,8 +269,10 @@ public class DataqueryHandlerRestController {
       var dataquerySlots = dataqueryHandler.getDataquerySlotsJson(principal.getName());
       return new ResponseEntity<>(dataquerySlots, HttpStatus.OK);
     } catch (DataqueryException e) {
+      log.debug("Dataquery with id {} not found or not accessible", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (JacksonException e) {
+      log.warn("Could not serialize content of dataquery with id {}", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
     } catch (DataqueryStorageFullException e) {
       return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -286,6 +286,7 @@ public class DataqueryHandlerRestController {
       dataqueryHandler.deleteDataquery(dataqueryId, principal.getName());
       return new ResponseEntity<>(HttpStatus.OK);
     } catch (DataqueryException e) {
+      log.debug("Dataquery with id {} not found or not accessible", dataqueryId, e);
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
   }
@@ -293,5 +294,21 @@ public class DataqueryHandlerRestController {
   @GetMapping("/query-slots")
   public ResponseEntity<Object> getDataquerySlots(Principal principal) {
     return new ResponseEntity<>(dataqueryHandler.getDataquerySlotsJson(principal.getName()), HttpStatus.OK);
+  }
+
+  private CrtdlSectionInfo ccdlSectionInfo(Crtdl content, boolean skipValidation) {
+    var ccdl = content == null ? null : content.cohortDefinition();
+    return CrtdlSectionInfo.builder()
+        .exists(ccdl != null)
+        .isValid(skipValidation || (ccdl != null && validationService.isValid(ccdl)))
+        .build();
+  }
+
+  private CrtdlSectionInfo dataExtractionSectionInfo(Crtdl content, boolean skipValidation) {
+    var dataExtraction = content == null ? null : content.dataExtraction();
+    return CrtdlSectionInfo.builder()
+        .exists(dataExtraction != null)
+        .isValid(skipValidation || (dataExtraction != null && validationService.isValid(dataExtraction)))
+        .build();
   }
 }

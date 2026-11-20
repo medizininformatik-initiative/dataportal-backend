@@ -138,6 +138,33 @@ public class DataqueryHandlerIT {
   }
 
   @Test
+  public void testGetDataqueriesByAuthor_withLegacyAndBrokenEntries() throws JacksonException {
+    dataqueryRepository.save(createDataqueryEntity(false));
+
+    var legacyCcdlOnlyEntity = createDataqueryEntity(false);
+    legacyCcdlOnlyEntity.setCrtdl(jsonUtil.writeValueAsString(createValidCcdl()));
+    var legacyId = dataqueryRepository.save(legacyCcdlOnlyEntity).getId();
+
+    var brokenEntity = createDataqueryEntity(false);
+    brokenEntity.setCrtdl("{\"version\":null,\"display\":\"\",\"cohortDefinition\":}");
+    var brokenId = dataqueryRepository.save(brokenEntity).getId();
+
+    var nullEntity = createDataqueryEntity(false);
+    nullEntity.setCrtdl(null);
+    var nullId = dataqueryRepository.save(nullEntity).getId();
+
+    var dataqueryList = assertDoesNotThrow(() -> dataqueryHandler.getDataqueriesByAuthor(CREATOR));
+
+    assertThat(dataqueryList).hasSize(4);
+    var legacy = dataqueryList.stream().filter(dq -> dq.id() == legacyId).findFirst().orElseThrow();
+    assertThat(legacy.content()).isNotNull();
+    assertThat(legacy.content().cohortDefinition()).isNotNull();
+    assertThat(legacy.content().cohortDefinition().inclusionCriteria()).isEqualTo(createValidCcdl().inclusionCriteria());
+    assertThat(dataqueryList.stream().filter(dq -> dq.id() == brokenId).findFirst().orElseThrow().content()).isNull();
+    assertThat(dataqueryList.stream().filter(dq -> dq.id() == nullId).findFirst().orElseThrow().content()).isNull();
+  }
+
+  @Test
   public void testDeleteDataquery() throws JacksonException {
     var listSize = 10;
 
