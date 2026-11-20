@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Unreleased]
+
+### Fixed
+- The CQL mappings and the mapping tree are loaded with shared values instead of one copy per mapping, which lowers the heap they need from ~880 MB to ~250 MB. The backend no longer runs out of heap during startup with a heap of about 1 GB ([#1245](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1245))
+
 ## [9.5.2] - 2026-11-18
 
 - Based on ontology **[v5.2.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.2.2)**
