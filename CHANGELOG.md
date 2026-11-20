@@ -4,10 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Unreleased]
+## [9.6.0] - 2026-11-20
+
+- Based on ontology **[v5.2.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.2.2)**
+
+### Changed
+- Update Spring Boot to 4.2.0
+- Update HAPI FHIR to 9.0.0
 
 ### Fixed
+- Listing dataqueries no longer answers 500 when the database contains old entries that store a bare CCDL instead of a CRTDL; those are wrapped into a CRTDL when read ([#1240](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1240))
+- The profile search with pinned profiles (empty search term) no longer loads every profile document in full on each request. Only the urls are fetched for ordering and the documents of the requested page without their `fields`, which lowers the allocation per request from ~32 MB to ~1 MB ([#1246](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1246))
 - The CQL mappings and the mapping tree are loaded with shared values instead of one copy per mapping, which lowers the heap they need from ~880 MB to ~250 MB. The backend no longer runs out of heap during startup with a heap of about 1 GB ([#1245](https://github.com/medizininformatik-initiative/dataportal-backend/issues/1245))
+
+### Security
+- Update dependencies and GitHub actions
 
 ## [9.5.2] - 2026-11-18
 
