@@ -2,6 +2,7 @@ package de.medizininformatikinitiative.dataportal.backend.terminology.es;
 
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import de.medizininformatikinitiative.dataportal.backend.terminology.api.ProfileSearchEntry;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDisplay;
 import de.medizininformatikinitiative.dataportal.backend.terminology.es.model.ProfileDocument;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +25,7 @@ import org.springframework.data.elasticsearch.core.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -151,10 +157,9 @@ class ProfileServiceTest {
   void testPerformProfileSearchWithRepoAndPaging_pinsConfiguredUrlsToTopWhenKeywordEmpty() {
     var pinnedUrls = new String[]{"https://example.org/pin-1", "https://example.org/pin-2"};
     var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
-    var hits = createDummySearchHitsPageWithUrls(List.of(
+    mockPinnedSearch(List.of(
         "https://example.org/pin-2", "https://example.org/other-1",
         "https://example.org/pin-1", "https://example.org/other-2"));
-    doReturn(hits).when(operations).search(any(NativeQuery.class), any(Class.class));
 
     var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 20, 0));
 
@@ -162,6 +167,112 @@ class ProfileServiceTest {
     assertThat(result.getResults()).extracting("url").containsExactly(
         "https://example.org/pin-1", "https://example.org/pin-2",
         "https://example.org/other-1", "https://example.org/other-2");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedSearchFetchesUrlsFirstAndThenPageByIdsWithoutFields() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    mockPinnedSearch(List.of(
+        "https://example.org/other-1", "https://example.org/pin-1", "https://example.org/other-2"));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 0));
+
+    assertThat(result.getTotalHits()).isEqualTo(3L);
+    var queries = captureSearchQueries(2);
+
+    var urlQuery = queries.get(0);
+    assertThat(urlQuery.getQuery().isBool()).isTrue();
+    assertThat(urlQuery.getPageable().getPageSize()).isEqualTo(10000);
+    assertThat(urlQuery.getSourceFilter().getIncludes()).containsExactly("url", "selectable");
+
+    var pageQuery = queries.get(1);
+    assertThat(pageQuery.getQuery().isIds()).isTrue();
+    assertThat(pageQuery.getQuery().ids().values()).containsExactly(idForUrl("https://example.org/pin-1"),
+        idForUrl("https://example.org/other-1"));
+    assertThat(pageQuery.getPageable().getPageSize()).isEqualTo(2);
+    assertThat(pageQuery.getSourceFilter().getExcludes()).containsExactly("fields");
+    assertThat(pageQuery.getSourceFilter().getIncludes()).isNullOrEmpty();
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedSearchRestoresSliceOrderOfIdsQueryHits() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1", "https://example.org/pin-2", "https://example.org/pin-3"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    // mockPinnedSearch answers the ids query in reverse order
+    mockPinnedSearch(List.of(
+        "https://example.org/other-1", "https://example.org/pin-3", "https://example.org/pin-1",
+        "https://example.org/other-2", "https://example.org/pin-2"));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 4, 0));
+
+    assertThat(result.getTotalHits()).isEqualTo(5L);
+    assertThat(result.getResults()).extracting("url").containsExactly(
+        "https://example.org/pin-1", "https://example.org/pin-2", "https://example.org/pin-3",
+        "https://example.org/other-1");
+    assertThat(result.getResults()).extracting("id").containsExactly(
+        idForUrl("https://example.org/pin-1"), idForUrl("https://example.org/pin-2"),
+        idForUrl("https://example.org/pin-3"), idForUrl("https://example.org/other-1"));
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedSearchReturnsPartialLastPage() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    mockPinnedSearch(List.of(
+        "https://example.org/other-1", "https://example.org/pin-1", "https://example.org/other-2"));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 1));
+
+    assertThat(result.getTotalHits()).isEqualTo(3L);
+    assertThat(result.getResults()).extracting("url").containsExactly("https://example.org/other-2");
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedSearchSkipsIdsQueryForPageBeyondEnd() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    mockPinnedSearch(List.of("https://example.org/other-1", "https://example.org/pin-1"));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 5));
+
+    assertThat(result.getTotalHits()).isEqualTo(2L);
+    assertThat(result.getResults()).isEmpty();
+    assertThat(captureSearchQueries(1).get(0).getQuery().isIds()).isFalse();
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedSearchSkipsIdsQueryWhenNothingMatches() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    mockPinnedSearch(List.of());
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", List.of("Diagnose"), null, null, 20, 0));
+
+    assertThat(result.getTotalHits()).isZero();
+    assertThat(result.getResults()).isEmpty();
+    captureSearchQueries(1);
+  }
+
+  @Test
+  void testPerformProfileSearchWithRepoAndPaging_pinnedSearchAppliesFiltersToUrlQuery() {
+    var pinnedUrls = new String[]{"https://example.org/pin-1"};
+    var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
+    // pin-1 does not match the active filters, so the filtered url query does not return it
+    mockPinnedSearch(List.of("https://example.org/other-1"));
+
+    var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging(
+        "", List.of("Diagnose"), List.of("category-a"), List.of("Condition"), 20, 0));
+
+    assertThat(result.getTotalHits()).isEqualTo(1L);
+    assertThat(result.getResults()).extracting("url").containsExactly("https://example.org/other-1");
+
+    var urlQuery = captureSearchQueries(2).get(0);
+    assertThat(urlQuery.getQuery().bool().filter())
+        .filteredOn(Query::isTerms)
+        .extracting(q -> q.terms().field())
+        .containsExactly(ProfileService.FILTER_KEY_MODULE, ProfileService.FILTER_KEY_CATEGORIES,
+            ProfileService.FILTER_KEY_RESOURCE_TYPE);
   }
 
   @Test
@@ -182,10 +293,9 @@ class ProfileServiceTest {
   void testPerformProfileSearchWithRepoAndPaging_pinnedSearchIsPagedManually() {
     var pinnedUrls = new String[]{"https://example.org/pin-1", "https://example.org/pin-2"};
     var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
-    var hits = createDummySearchHitsPageWithUrls(List.of(
+    mockPinnedSearch(List.of(
         "https://example.org/other-1", "https://example.org/pin-2",
         "https://example.org/pin-1", "https://example.org/other-2"));
-    doReturn(hits).when(operations).search(any(NativeQuery.class), any(Class.class));
 
     var firstPage = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 0));
     var secondPage = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 1));
@@ -202,9 +312,7 @@ class ProfileServiceTest {
   void testPerformProfileSearchWithRepoAndPaging_pinnedUrlNotInResultsIsIgnored() {
     var pinnedUrls = new String[]{"https://example.org/pin-1", "https://example.org/not-present"};
     var service = new ProfileService(translatedQueryFields, originalQueryFields, pinnedUrls, operations, repo);
-    var hits = createDummySearchHitsPageWithUrls(List.of(
-        "https://example.org/other-1", "https://example.org/pin-1"));
-    doReturn(hits).when(operations).search(any(NativeQuery.class), any(Class.class));
+    mockPinnedSearch(List.of("https://example.org/other-1", "https://example.org/pin-1"));
 
     var result = assertDoesNotThrow(() -> service.performProfileSearchWithRepoAndPaging("", null, null, null, 20, 0));
 
@@ -406,19 +514,62 @@ class ProfileServiceTest {
   }
 
   private SearchHits<ProfileDocument> createDummySearchHitsPageWithUrls(List<String> urls) {
-    var searchHitsList = new ArrayList<SearchHit<ProfileDocument>>();
+    return createSearchHits(urls.stream()
+        .map(url -> ProfileDocument.builder()
+            .id(UUID.randomUUID().toString())
+            .name("some-profile")
+            .display(createDummyDisplay())
+            .selectable(true)
+            .url(url)
+            .build())
+        .toList());
+  }
 
-    for (String url : urls) {
-      var document = ProfileDocument.builder()
-          .id(UUID.randomUUID().toString())
-          .name("some-profile")
-          .display(createDummyDisplay())
-          .selectable(true)
-          .url(url)
-          .build();
-      searchHitsList.add(new SearchHit<>(null, null, null, 10.0F, null, null, null, null, null, null, document));
-    }
-    return new SearchHitsImpl<>(urls.size(), TotalHitsRelation.OFF, 10.0F, null, null, null, searchHitsList, null, null, null);
+  private SearchHits<ProfileDocument> createSearchHits(List<ProfileDocument> documents) {
+    var searchHitsList = new ArrayList<SearchHit<ProfileDocument>>();
+    documents.forEach(document ->
+        searchHitsList.add(new SearchHit<>(null, null, null, 10.0F, null, null, null, null, null, null, document)));
+    return new SearchHitsImpl<>(documents.size(), TotalHitsRelation.OFF, 10.0F, null, null, null, searchHitsList, null, null, null);
+  }
+
+  private static String idForUrl(String url) {
+    return "id-" + url;
+  }
+
+  /**
+   * Simulates the two queries of the pinned profile search: the url query returns id and url of every given
+   * profile in the given order, the ids query returns the full documents of the requested ids in reverse order
+   * (an ids query does not guarantee any order).
+   */
+  private void mockPinnedSearch(List<String> urlsInIndexOrder) {
+    var fullDocuments = urlsInIndexOrder.stream()
+        .map(url -> ProfileDocument.builder()
+            .id(idForUrl(url))
+            .name("some-profile")
+            .display(createDummyDisplay())
+            .selectable(true)
+            .url(url)
+            .build())
+        .toList();
+
+    doAnswer(invocation -> {
+      NativeQuery query = invocation.getArgument(0);
+      if (query.getQuery() != null && query.getQuery().isIds()) {
+        var requestedIds = query.getQuery().ids().values();
+        var matching = new ArrayList<>(fullDocuments.stream().filter(d -> requestedIds.contains(d.id())).toList());
+        Collections.reverse(matching);
+        return createSearchHits(matching);
+      }
+      return createSearchHits(fullDocuments.stream()
+          .map(d -> ProfileDocument.builder().id(d.id()).url(d.url()).build())
+          .toList());
+    }).when(operations).search(any(NativeQuery.class), any(Class.class));
+  }
+
+  private List<NativeQuery> captureSearchQueries(int expectedCount) {
+    var captor = ArgumentCaptor.forClass(NativeQuery.class);
+    verify(operations, times(expectedCount)).search(captor.capture(), any(Class.class));
+    return captor.getAllValues();
   }
 
   private ProfileDocument createDummyProfileDocument(String id, List<ProfileRelative> parents, List<ProfileRelative> children) {

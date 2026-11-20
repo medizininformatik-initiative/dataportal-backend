@@ -25,6 +25,8 @@ import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
+import org.springframework.data.elasticsearch.core.query.SourceFilter;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +55,8 @@ public class ProfileService {
   public static final String FIELD_BASE_CATEGORIES = "categories";
   public static final String FIELD_BASE_RESOURCE_TYPE = "resource_type";
   public static final String FIELD_SELECTABLE = "selectable";
+  public static final String FIELD_URL = "url";
+  public static final String FIELD_FIELDS = "fields";
   public static final String FILTER_NAME_MODULE = "module";
   public static final String FILTER_NAME_CATEGORY = "category";
   public static final String FILTER_NAME_RESOURCE_TYPE = "resourceType";
@@ -111,7 +116,7 @@ public class ProfileService {
       }
     }
 
-    var searchHitPage = findByNameOrDisplay(keyword, filterList, PageRequest.of(safePage, safePageSize));
+    var searchHitPage = findByNameOrDisplay(keyword, filterList, PageRequest.of(safePage, safePageSize), null);
     List<ProfileSearchEntry> profileEntries = new ArrayList<>();
 
     searchHitPage.getSearchHits().forEach(hit -> profileEntries.add(ProfileSearchEntry.of(hit.getContent())));
@@ -132,13 +137,18 @@ public class ProfileService {
   }
 
   // The "url" field is not indexed in Elasticsearch (stored, but not searchable/sortable), so
-  // pinning can't be expressed as an ES query/sort - matching hits are fetched in full and
-  // reordered here instead, then paged manually.
+  // pinning can't be expressed as an ES query/sort - it is done here in two steps instead:
+  // 1. fetch only "url" (plus the implicit id) of all matching hits and order them in memory,
+  // 2. fetch the documents of the requested page by id, without the large "fields" property.
+  // "selectable" is fetched in step 1 as well, because it maps to a primitive in ProfileDocument
+  // and can therefore not be left out of the source.
   private ProfileSearchResult performPinnedProfileSearch(List<Pair<String, List<String>>> filterList,
                                                           Map<String, Integer> pinnedRank,
                                                           int pageSize,
                                                           int page) {
-    List<ProfileDocument> allMatches = findByNameOrDisplay("", filterList, PageRequest.of(0, MAX_PINNABLE_RESULTS))
+    var orderingSourceFilter = FetchSourceFilter.of(b -> b.withIncludes(FIELD_URL, FIELD_SELECTABLE));
+    List<ProfileDocument> allMatches = findByNameOrDisplay("", filterList, PageRequest.of(0, MAX_PINNABLE_RESULTS),
+        orderingSourceFilter)
         .getSearchHits().stream()
         .map(SearchHit::getContent)
         .toList();
@@ -154,22 +164,47 @@ public class ProfileService {
     }
     pinned.sort(Comparator.comparingInt(document -> pinnedRank.get(document.url())));
 
-    List<ProfileDocument> ordered = new ArrayList<>(pinned.size() + rest.size());
-    ordered.addAll(pinned);
-    ordered.addAll(rest);
+    List<String> orderedIds = new ArrayList<>(pinned.size() + rest.size());
+    pinned.forEach(document -> orderedIds.add(document.id()));
+    rest.forEach(document -> orderedIds.add(document.id()));
 
     long rawFromIndex = (long) page * (long) pageSize;
-    int fromIndex = (int) Math.min(Math.max(0L, rawFromIndex), (long) ordered.size());
-    int toIndex = Math.min(fromIndex + pageSize, ordered.size());
+    int fromIndex = (int) Math.min(Math.max(0L, rawFromIndex), (long) orderedIds.size());
+    int toIndex = Math.min(fromIndex + pageSize, orderedIds.size());
 
-    List<ProfileSearchEntry> profileEntries = ordered.subList(fromIndex, toIndex).stream()
+    List<ProfileSearchEntry> profileEntries = findByIdsInOrder(orderedIds.subList(fromIndex, toIndex)).stream()
         .map(ProfileSearchEntry::of)
         .toList();
 
     return ProfileSearchResult.builder()
-        .totalHits(ordered.size())
+        .totalHits(orderedIds.size())
         .results(profileEntries)
         .build();
+  }
+
+  // An "ids" query returns its hits in arbitrary order, so they are put back into the order of
+  // the given ids here. Ids that are no longer present in the index are skipped.
+  private List<ProfileDocument> findByIdsInOrder(List<String> ids) {
+    if (ids.isEmpty()) {
+      return List.of();
+    }
+
+    var query = new NativeQueryBuilder()
+        .withQuery(new IdsQuery.Builder().values(ids).build()._toQuery())
+        .withSourceFilter(FetchSourceFilter.of(b -> b.withExcludes(FIELD_FIELDS)))
+        .withPageable(PageRequest.of(0, ids.size()))
+        .build();
+
+    log.debug(Objects.requireNonNull(query.getQuery()).toString());
+
+    Map<String, ProfileDocument> documentsById = new HashMap<>();
+    operations.search(query, ProfileDocument.class)
+        .forEach(hit -> documentsById.put(hit.getContent().id(), hit.getContent()));
+
+    return ids.stream()
+        .map(documentsById::get)
+        .filter(Objects::nonNull)
+        .toList();
   }
 
   public ProfileEntry getProfileListDetailsById(String id) {
@@ -324,7 +359,8 @@ public class ProfileService {
 
   private SearchHits<ProfileDocument> findByNameOrDisplay(String keyword,
                                                            List<Pair<String, List<String>>> filterList,
-                                                           PageRequest pageRequest) {
+                                                           PageRequest pageRequest,
+                                                           @Nullable SourceFilter sourceFilter) {
     List<Query> filterTerms = new ArrayList<>();
     filterTerms.add(new TermQuery.Builder().field(FIELD_SELECTABLE).value(true).build()._toQuery());
 
@@ -352,10 +388,13 @@ public class ProfileService {
           .build();
     }
 
-    var query = new NativeQueryBuilder()
+    var queryBuilder = new NativeQueryBuilder()
         .withQuery(boolQuery._toQuery())
-        .withPageable(pageRequest)
-        .build();
+        .withPageable(pageRequest);
+    if (sourceFilter != null) {
+      queryBuilder.withSourceFilter(sourceFilter);
+    }
+    var query = queryBuilder.build();
 
     log.debug(Objects.requireNonNull(query.getQuery()).toString());
 
