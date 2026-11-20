@@ -130,6 +130,25 @@ public class ProfileServiceIT {
       assertThat(page.getResults()).extracting("id")
           .startsWith("diagnose-condition-id", "pinned-procedure-id", "pinned-lab-id");
       assertThat(page.getResults()).extracting("id").contains("unpinned-other-id");
+
+      var firstPage = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 0));
+      assertThat(firstPage.getTotalHits()).isEqualTo(4L);
+      assertThat(firstPage.getResults()).extracting("id").containsExactly("diagnose-condition-id", "pinned-procedure-id");
+      assertThat(firstPage.getResults().get(0).module()).isNotNull();
+      assertThat(firstPage.getResults().get(0).resourceType()).isNotNull();
+
+      var lastPage = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 1));
+      assertThat(lastPage.getTotalHits()).isEqualTo(4L);
+      assertThat(lastPage.getResults()).extracting("id").containsExactly("pinned-lab-id", "unpinned-other-id");
+
+      var pageBeyondEnd = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, null, 2, 2));
+      assertThat(pageBeyondEnd.getTotalHits()).isEqualTo(4L);
+      assertThat(pageBeyondEnd.getResults()).isEmpty();
+
+      // the pinned procedure and lab profiles have no resource type, so they must not show up
+      var filtered = assertDoesNotThrow(() -> profileService.performProfileSearchWithRepoAndPaging("", null, null, List.of("Condition"), 20, 0));
+      assertThat(filtered.getTotalHits()).isEqualTo(1L);
+      assertThat(filtered.getResults()).extracting("id").containsExactly("diagnose-condition-id");
     } finally {
       repo.deleteAllById(List.of("pinned-procedure-id", "pinned-lab-id", "unpinned-other-id"));
       operations.indexOps(ProfileDocument.class).refresh();
