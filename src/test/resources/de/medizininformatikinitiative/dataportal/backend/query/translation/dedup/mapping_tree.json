@@ -1,0 +1,1081 @@
+[
+ {
+  "entries": [
+   {
+    "key": "I136611",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Diagnose",
+   "display": "Diagnose",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/alpha-id",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "Z99",
+    "parents": [],
+    "children": [
+     "Z99.3",
+     "Z99.2"
+    ]
+   },
+   {
+    "key": "Z99.3",
+    "parents": [
+     "Z99"
+    ],
+    "children": []
+   },
+   {
+    "key": "Z99.2",
+    "parents": [
+     "Z99"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Diagnose",
+   "display": "Diagnose",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "396519009",
+    "parents": [],
+    "children": [
+     "369785000"
+    ]
+   },
+   {
+    "key": "369785000",
+    "parents": [
+     "396519009"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Diagnose",
+   "display": "Diagnose",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20240701"
+ },
+ {
+  "entries": [
+   {
+    "key": "264200",
+    "parents": [],
+    "children": [
+     "2055"
+    ]
+   },
+   {
+    "key": "2055",
+    "parents": [
+     "264200"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Diagnose",
+   "display": "Diagnose",
+   "version": "1.0.0"
+  },
+  "system": "http://www.orpha.net",
+  "version": "2025"
+ },
+ {
+  "entries": [
+   {
+    "key": "442524009",
+    "parents": [],
+    "children": [
+     "442166002"
+    ]
+   },
+   {
+    "key": "442166002",
+    "parents": [
+     "442524009"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Specimen",
+   "display": "Bioprobe",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20250701"
+ },
+ {
+  "entries": [
+   {
+    "key": "V09IB",
+    "parents": [],
+    "children": [
+     "V09IB04",
+     "V09IB01"
+    ]
+   },
+   {
+    "key": "V09IB04",
+    "parents": [
+     "V09IB"
+    ],
+    "children": []
+   },
+   {
+    "key": "V09IB01",
+    "parents": [
+     "V09IB"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Medikamentenverordnung",
+   "display": "Verordnung von Medikamenten",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/atc",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "V09IB",
+    "parents": [],
+    "children": [
+     "V09IB04",
+     "V09IB01"
+    ]
+   },
+   {
+    "key": "V09IB04",
+    "parents": [
+     "V09IB"
+    ],
+    "children": []
+   },
+   {
+    "key": "V09IB01",
+    "parents": [
+     "V09IB"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Medikamentenverabreichung",
+   "display": "Verabreichung von Medikamenten",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/atc",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "V09IB",
+    "parents": [],
+    "children": [
+     "V09IB04",
+     "V09IB01"
+    ]
+   },
+   {
+    "key": "V09IB04",
+    "parents": [
+     "V09IB"
+    ],
+    "children": []
+   },
+   {
+    "key": "V09IB01",
+    "parents": [
+     "V09IB"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Medikamentenanordnung",
+   "display": "Anordnung von Medikamenten",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/atc",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "93418-2",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Laboruntersuchung",
+   "display": "Laboruntersuchung",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": "2.81"
+ },
+ {
+  "entries": [
+   {
+    "key": "104437007",
+    "parents": [],
+    "children": [
+     "412947008",
+     "412955001"
+    ]
+   },
+   {
+    "key": "412947008",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   },
+   {
+    "key": "412955001",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Systemtherapie",
+   "display": "MII Onkologie Systemtherapie",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20240701"
+ },
+ {
+  "entries": [
+   {
+    "key": "R1(cy+)",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Residualstatus",
+   "display": "MII Onkologie Residualstatus",
+   "version": "1.0.0"
+  },
+  "system": "https://www.medizininformatik-initiative.de/fhir/ext/modul-onko/CodeSystem/mii-cs-onko-residualstatus",
+  "version": "2025.1.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "423740007",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Leistungszustand",
+   "display": "MII Onkologie Leistungszustand",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "22034-3",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Histologiebefund",
+   "display": "MII Onkologie Histologiebefund",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "ABS",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Bioprobe",
+   "display": "MII Onkologie Bioprobe",
+   "version": "1.0.0"
+  },
+  "system": "http://terminology.hl7.org/CodeSystem/v2-0487",
+  "version": "2.0.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "OTH",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Fernmetastasen",
+   "display": "MII Onkologie Fernmetastasen",
+   "version": "1.0.0"
+  },
+  "system": "https://www.medizininformatik-initiative.de/fhir/ext/modul-onko/CodeSystem/mii-cs-onko-fernmetastasen",
+  "version": "2025.1.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "184305005",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Tod",
+   "display": "MII Onkologie Tod",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "1-995",
+    "parents": [],
+    "children": [
+     "1-995.0",
+     "1-995.2"
+    ]
+   },
+   {
+    "key": "1-995.0",
+    "parents": [
+     "1-995"
+    ],
+    "children": []
+   },
+   {
+    "key": "1-995.2",
+    "parents": [
+     "1-995"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Operation",
+   "display": "MII Onkologie Operation",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/ops",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "104437007",
+    "parents": [],
+    "children": [
+     "412947008",
+     "412955001"
+    ]
+   },
+   {
+    "key": "412947008",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   },
+   {
+    "key": "412955001",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Therapie",
+   "display": "MII Onkologie Therapie",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20240701"
+ },
+ {
+  "entries": [
+   {
+    "key": "92832-5",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Lymphknoten_Assessment",
+   "display": "MII Onkologie Lymphknoten Assessment",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "K",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Nebenwirkung",
+   "display": "MII Onkologie Nebenwirkung",
+   "version": "1.0.0"
+  },
+  "system": "https://www.medizininformatik-initiative.de/fhir/ext/modul-onko/CodeSystem/mii-cs-onko-nebenwirkung-ctcae-grad",
+  "version": "2025.1.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "J",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Studienteilnahme",
+   "display": "MII Onkologie Studienteilnahme",
+   "version": "1.0.0"
+  },
+  "system": "https://www.medizininformatik-initiative.de/fhir/ext/modul-onko/CodeSystem/mii-cs-onko-studienteilnahme",
+  "version": "2025.1.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "B",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Histologiegrading",
+   "display": "MII Onkologie Histologiegrading",
+   "version": "1.0.0"
+  },
+  "system": "https://www.medizininformatik-initiative.de/fhir/ext/modul-onko/CodeSystem/mii-cs-onko-grading",
+  "version": "2025.1.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "104437007",
+    "parents": [],
+    "children": [
+     "412947008",
+     "412955001"
+    ]
+   },
+   {
+    "key": "412947008",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   },
+   {
+    "key": "412955001",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Bestrahlung",
+   "display": "MII Onkologie Bestrahlung",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20240701"
+ },
+ {
+  "entries": [
+   {
+    "key": "399390009",
+    "parents": [],
+    "children": [
+     "399537006",
+     "399588009"
+    ]
+   },
+   {
+    "key": "399537006",
+    "parents": [
+     "399390009"
+    ],
+    "children": []
+   },
+   {
+    "key": "399588009",
+    "parents": [
+     "399390009"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_TNM_Klassifikation",
+   "display": "MII Onkologie TNM-Klassifikation",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20260701"
+ },
+ {
+  "entries": [
+   {
+    "key": "Z99",
+    "parents": [],
+    "children": [
+     "Z99.3",
+     "Z99.2"
+    ]
+   },
+   {
+    "key": "Z99.3",
+    "parents": [
+     "Z99"
+    ],
+    "children": []
+   },
+   {
+    "key": "Z99.2",
+    "parents": [
+     "Z99"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Diagnose",
+   "display": "MII Onkologie Diagnose",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "396432002",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Verlauf",
+   "display": "MII Onkologie Verlauf",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "69548-6",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Variantenassessment",
+   "display": "MII Onkologie Variantenassessment",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": null
+ },
+ {
+  "entries": [
+   {
+    "key": "postop",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_Tumorkonferenz",
+   "display": "MII Onkologie Tumorkonferenz",
+   "version": "1.0.0"
+  },
+  "system": "https://www.medizininformatik-initiative.de/fhir/ext/modul-onko/CodeSystem/mii-cs-onko-therapieplanung-typ",
+  "version": "2025.1.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "42030-7",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_TNM",
+   "display": "MII Onkologie TNM",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": null
+ },
+ {
+  "entries": [
+   {
+    "key": "277208005",
+    "parents": [],
+    "children": [
+     "371497001",
+     "399387003"
+    ]
+   },
+   {
+    "key": "371497001",
+    "parents": [
+     "277208005"
+    ],
+    "children": []
+   },
+   {
+    "key": "399387003",
+    "parents": [
+     "277208005"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "MII_Onkologie_TNM",
+   "display": "MII Onkologie TNM",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20260701"
+ },
+ {
+  "entries": [
+   {
+    "key": "51969-4",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Molekulargenetischer Befundbericht",
+   "display": "Molekulargenetischer Befundbericht",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": null
+ },
+ {
+  "entries": [
+   {
+    "key": "2.16.840.1.113883.3.1937.777.24.5.3.18",
+    "parents": [],
+    "children": [
+     "2.16.840.1.113883.3.1937.777.24.5.3.21",
+     "2.16.840.1.113883.3.1937.777.24.5.3.20"
+    ]
+   },
+   {
+    "key": "2.16.840.1.113883.3.1937.777.24.5.3.21",
+    "parents": [
+     "2.16.840.1.113883.3.1937.777.24.5.3.18"
+    ],
+    "children": []
+   },
+   {
+    "key": "2.16.840.1.113883.3.1937.777.24.5.3.20",
+    "parents": [
+     "2.16.840.1.113883.3.1937.777.24.5.3.18"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Einwilligung",
+   "display": "Einwilligung",
+   "version": "1.0.0"
+  },
+  "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
+  "version": "1.0.7"
+ },
+ {
+  "entries": [
+   {
+    "key": "AMB",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Fall",
+   "display": "Fall",
+   "version": "1.0.0"
+  },
+  "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+  "version": "9.0.0"
+ },
+ {
+  "entries": [
+   {
+    "key": "424144002",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "263495000",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Patient",
+   "display": "Patient",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": null
+ },
+ {
+  "entries": [
+   {
+    "key": "67162-8",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Vitalstatus",
+   "display": "Vitalstatus",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "16100001",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Todesursache",
+   "display": "Todesursache",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "79378-6",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Todesursache",
+   "display": "Todesursache",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "9279-1",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "85354-9",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "8302-2",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "8867-4",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "29463-7",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Vitaldaten",
+   "display": "Vitaldaten",
+   "version": "1.0.0"
+  },
+  "system": "http://loinc.org",
+  "version": "None"
+ },
+ {
+  "entries": [
+   {
+    "key": "104437007",
+    "parents": [],
+    "children": [
+     "412947008",
+     "412955001"
+    ]
+   },
+   {
+    "key": "412947008",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   },
+   {
+    "key": "412955001",
+    "parents": [
+     "104437007"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Procedure",
+   "display": "Prozedur",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20240701"
+ },
+ {
+  "entries": [
+   {
+    "key": "1-995",
+    "parents": [],
+    "children": [
+     "1-995.0",
+     "1-995.2"
+    ]
+   },
+   {
+    "key": "1-995.0",
+    "parents": [
+     "1-995"
+    ],
+    "children": []
+   },
+   {
+    "key": "1-995.2",
+    "parents": [
+     "1-995"
+    ],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Procedure",
+   "display": "Prozedur",
+   "version": "1.0.0"
+  },
+  "system": "http://fhir.de/CodeSystem/bfarm/ops",
+  "version": "2026"
+ },
+ {
+  "entries": [
+   {
+    "key": "18629005",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Procedure Category",
+   "display": "Prozedurenkategorie",
+   "version": "1.0.0"
+  },
+  "system": "http://snomed.info/sct",
+  "version": "http://snomed.info/sct/900000000000207008/version/20240701"
+ },
+ {
+  "entries": [
+   {
+    "key": "yes-yes-yes-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "yes-yes-yes-no",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "yes-yes-no-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "yes-yes-no-no",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "yes-no-yes-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "yes-no-yes-no",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "yes-no-no-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "yes-no-no-no",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-yes-yes-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-yes-yes-no",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-yes-no-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-yes-no-no",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-no-yes-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-no-yes-no",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-no-no-yes",
+    "parents": [],
+    "children": []
+   },
+   {
+    "key": "no-no-no-no",
+    "parents": [],
+    "children": []
+   }
+  ],
+  "context": {
+   "system": "fdpg.mii.cds",
+   "code": "Einwilligung",
+   "display": "Einwilligung",
+   "version": "1.0.0"
+  },
+  "system": "fdpg.consent.combined",
+  "version": "1.0.0"
+ }
+]

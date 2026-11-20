@@ -5,10 +5,6 @@ import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 import de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType;
 import de.medizininformatikinitiative.cctb.Translator;
-import de.medizininformatikinitiative.cctb.model.Mapping;
-import de.medizininformatikinitiative.cctb.model.MappingContext;
-import de.medizininformatikinitiative.cctb.model.MappingTreeBase;
-import de.medizininformatikinitiative.cctb.model.MappingTreeModuleRoot;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,14 +16,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.medizininformatikinitiative.dataportal.backend.query.QueryMediaType.*;
 import static java.util.Map.entry;
@@ -73,50 +64,46 @@ public class QueryTranslatorSpringConfig {
 
   @Lazy
   @Bean
-  Translator createCqlTranslator(@Qualifier("translation") ObjectMapper jsonUtil) throws IOException {
-    var mappings = jsonUtil.readValue(new File(mappingsFile), Mapping[].class);
-    var mappingTreeBase = new MappingTreeBase(Arrays.stream(jsonUtil.readValue(new File(conceptTreeFile), MappingTreeModuleRoot[].class)).toList());
-
-    return Translator.of(MappingContext.of(
-        Stream.of(mappings)
-            .collect(Collectors.toMap(Mapping::key, Function.identity(), (a, b) -> a)),
-        mappingTreeBase,
-        Map.ofEntries(entry("http://fhir.de/CodeSystem/bfarm/icd-10-gm", "icd10"),
-            entry("mii.abide", "abide"),
-            entry("http://fhir.de/CodeSystem/bfarm/ops", "ops"),
-            entry("http://dicom.nema.org/resources/ontology/DCM", "dcm"),
-            entry("https://www.medizininformatik-initiative.de/fhir/core/modul-person/CodeSystem/Vitalstatus", "vitalstatus"),
-            entry("http://loinc.org", "loinc"),
-            entry("https://fhir.bbmri.de/CodeSystem/SampleMaterialType", "sample"),
-            entry("http://fhir.de/CodeSystem/bfarm/atc", "atc"),
-            entry("http://snomed.info/sct", "snomed"),
-            entry("http://terminology.hl7.org/CodeSystem/condition-ver-status", "cvs"),
-            entry("http://hl7.org/fhir/administrative-gender", "gender"),
-            entry("urn:oid:1.2.276.0.76.5.409", "urn409"),
-            entry(
-                "https://www.netzwerk-universitaetsmedizin.de/fhir/CodeSystem/ecrf-parameter-codes",
-                "numecrf"),
-            entry("urn:iso:std:iso:3166", "iso3166"),
-            entry("https://www.netzwerk-universitaetsmedizin.de/fhir/CodeSystem/frailty-score",
-                "frailtyscore"),
-            entry("http://terminology.hl7.org/CodeSystem/consentcategorycodes", "consentcategory"),
-            entry("urn:oid:2.16.840.1.113883.3.1937.777.24.5.3", "consent"),
-            entry("http://hl7.org/fhir/sid/icd-o-3", "icdo3"),
-            entry("fdpg.mii.cds", "fdpgmiicds"),
-            entry("http://fhir.de/CodeSystem/bfarm/alpha-id", "alphaid"),
-            entry("urn:iso:std:iso:11073:10101", "ISO11073"),
-            entry("http://terminology.hl7.org/CodeSystem/icd-o-3", "icdo3"),
-            entry("http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel", "fachabteilungsschluessel"),
-            entry("http://terminology.hl7.org/CodeSystem/v3-ActCode", "v3actcode"),
-            entry("http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel-erweitert", "fachabteilungsschluesselerweitert"),
-            entry("http://fhir.de/CodeSystem/kontaktart-de", "kontaktart"),
-            entry("http://hl7.org/fhir/sid/icd-10", "sidicd10"),
-            entry("http://fhir.de/CodeSystem/Kontaktebene", "kontaktebene"),
-            entry("http://www.orpha.net", "orphanet"),
-            entry("fdpg.consent.combined", "fdpgcombinedconsent"),
-            entry("http://hl7.org/fhir/consent-provision-type", "provisiontype"))));
+  Translator createCqlTranslator(@Qualifier("translation") ObjectMapper jsonUtil) {
+    return Translator.of(MappingContextLoader.load(jsonUtil, new File(mappingsFile), new File(conceptTreeFile),
+        CODE_SYSTEM_ALIASES));
   }
 
+  static final Map<String, String> CODE_SYSTEM_ALIASES = Map.ofEntries(
+      entry("http://fhir.de/CodeSystem/bfarm/icd-10-gm", "icd10"),
+      entry("mii.abide", "abide"),
+      entry("http://fhir.de/CodeSystem/bfarm/ops", "ops"),
+      entry("http://dicom.nema.org/resources/ontology/DCM", "dcm"),
+      entry("https://www.medizininformatik-initiative.de/fhir/core/modul-person/CodeSystem/Vitalstatus", "vitalstatus"),
+      entry("http://loinc.org", "loinc"),
+      entry("https://fhir.bbmri.de/CodeSystem/SampleMaterialType", "sample"),
+      entry("http://fhir.de/CodeSystem/bfarm/atc", "atc"),
+      entry("http://snomed.info/sct", "snomed"),
+      entry("http://terminology.hl7.org/CodeSystem/condition-ver-status", "cvs"),
+      entry("http://hl7.org/fhir/administrative-gender", "gender"),
+      entry("urn:oid:1.2.276.0.76.5.409", "urn409"),
+      entry(
+          "https://www.netzwerk-universitaetsmedizin.de/fhir/CodeSystem/ecrf-parameter-codes",
+          "numecrf"),
+      entry("urn:iso:std:iso:3166", "iso3166"),
+      entry("https://www.netzwerk-universitaetsmedizin.de/fhir/CodeSystem/frailty-score",
+          "frailtyscore"),
+      entry("http://terminology.hl7.org/CodeSystem/consentcategorycodes", "consentcategory"),
+      entry("urn:oid:2.16.840.1.113883.3.1937.777.24.5.3", "consent"),
+      entry("http://hl7.org/fhir/sid/icd-o-3", "icdo3"),
+      entry("fdpg.mii.cds", "fdpgmiicds"),
+      entry("http://fhir.de/CodeSystem/bfarm/alpha-id", "alphaid"),
+      entry("urn:iso:std:iso:11073:10101", "ISO11073"),
+      entry("http://terminology.hl7.org/CodeSystem/icd-o-3", "icdo3"),
+      entry("http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel", "fachabteilungsschluessel"),
+      entry("http://terminology.hl7.org/CodeSystem/v3-ActCode", "v3actcode"),
+      entry("http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel-erweitert", "fachabteilungsschluesselerweitert"),
+      entry("http://fhir.de/CodeSystem/kontaktart-de", "kontaktart"),
+      entry("http://hl7.org/fhir/sid/icd-10", "sidicd10"),
+      entry("http://fhir.de/CodeSystem/Kontaktebene", "kontaktebene"),
+      entry("http://www.orpha.net", "orphanet"),
+      entry("fdpg.consent.combined", "fdpgcombinedconsent"),
+      entry("http://hl7.org/fhir/consent-provision-type", "provisiontype"));
 
   @Qualifier("cql")
   @Lazy
