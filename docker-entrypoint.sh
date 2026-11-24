@@ -4,9 +4,6 @@ TRUSTSTORE_FILE="/opt/dataportal-backend/truststore/self-signed-truststore.jks"
 TRUSTSTORE_PASS=${TRUSTSTORE_PASS:-changeit}
 KEY_PASS=${KEY_PASS:-changeit}
 
-# Mitigation for CVE-2026-114938 (Java4Shell): disable the HotSpot Base64 intrinsics
-# until a fixed Temurin build is available.
-JAVA_OPTS="-XX:-UseBASE64Intrinsics $JAVA_OPTS"
 # Split on whitespace here, because IFS is set to newline below.
 read -r -a java_opts <<< "$JAVA_OPTS"
 
