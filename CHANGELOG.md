@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [9.6.1] - 2026-11-24
+
+- Based on ontology **[v5.2.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.2.2)**
+
+### Security
+- Update the docker base image to Temurin 25.0.5.1, which fixes CVE-2026-114938 (Java4Shell)
+- Remove the CVE-2026-114938 mitigation (`-XX:-UseBASE64Intrinsics`) from the docker entrypoint, as it is no longer needed with the fixed Temurin build
+- Update dependencies
+
 ## [9.6.0] - 2026-11-20
 
 - Based on ontology **[v5.2.2](https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/tag/v5.2.2)**
